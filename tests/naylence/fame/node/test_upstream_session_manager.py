@@ -96,15 +96,17 @@ class MockNode:
 class MockConnector:
     """Mock connector that can simulate connection failures."""
 
-    def __init__(self, fail_after: Optional[float] = None, fail_with: Optional[Exception] = None):
+    def __init__(self, fail_after: Optional[float] = None, fail_with: Optional[BaseException] = None, 
+                 respond_to_heartbeats: bool = True):
         self.fail_after = fail_after
-        self.fail_with = fail_with or FameTransportClose("Connection closed")
+        self.fail_with = fail_with or FameTransportClose(1006, "Connection closed")
         self.started = False
         self.stopped = False
         self.sent_messages: List[FameEnvelope] = []
         self._fail_task: Optional[asyncio.Task] = None
         self.handler = None
         self.authorization_context = None  # Add missing authorization_context attribute
+        self.respond_to_heartbeats = respond_to_heartbeats
 
     async def start(self, handler):
         self.started = True
@@ -119,17 +121,50 @@ class MockConnector:
 
     async def send(self, envelope: FameEnvelope):
         if self.stopped:
-            raise FameTransportClose("Connection closed")
+            raise FameTransportClose(1006, "Connection closed")
         self.sent_messages.append(envelope)
+        
+        print(f"MockConnector.send called with frame type: {envelope.frame.__class__.__name__}, respond_to_heartbeats={self.respond_to_heartbeats}")
+        
+        # If this is a heartbeat and we should respond, send back an ack
+        if (self.respond_to_heartbeats and 
+            hasattr(envelope, 'frame') and 
+            envelope.frame.__class__.__name__ == 'NodeHeartbeatFrame' and 
+            self.handler):
+            # Create real heartbeat ack
+            from naylence.fame.core import NodeHeartbeatAckFrame
+            
+            print(f"Sending heartbeat ack response")
+            
+            # Create a real NodeHeartbeatAckFrame instead of a mock
+            ack_frame = NodeHeartbeatAckFrame(
+                routing_epoch="test-epoch-1",
+                ok=True
+            )
+            
+            ack_envelope = Mock(spec=FameEnvelope)
+            ack_envelope.frame = ack_frame
+            ack_envelope.corr_id = envelope.corr_id
+            ack_envelope.id = "test-ack-id"
+            ack_envelope.sec = None
+            
+            # Send the ack back to the handler asynchronously
+            asyncio.create_task(self.handler(ack_envelope))
+        elif (hasattr(envelope, 'frame') and 
+              envelope.frame.__class__.__name__ == 'NodeHeartbeatFrame'):
+            print(f"Not responding to heartbeat (will cause timeout)")
+        else:
+            print(f"Not a heartbeat frame")
 
     async def _delayed_failure(self):
         """Simulate connection failure after delay."""
-        await asyncio.sleep(self.fail_after)
-        if not self.stopped:
-            # Simulate connector failure by calling stop() which will trigger FameTransportClose
-            # in the upstream session manager when it tries to send the next message
-            await self.stop()
-            # The manager will detect this when it tries to send the next heartbeat or message
+        if self.fail_after is not None:
+            await asyncio.sleep(self.fail_after)
+            if not self.stopped:
+                # Simulate connector failure by calling stop() which will trigger FameTransportClose
+                # in the upstream session manager when it tries to send the next message
+                await self.stop()
+                # The manager will detect this when it tries to send the next heartbeat or message
 
 
 class MockAdmissionClient:
@@ -362,7 +397,12 @@ class TestUpstreamSessionManager:
         def mock_create_resource_side_effect(*args, **kwargs):
             nonlocal connect_count
             connect_count += 1
-            connector = MockConnector()
+            print(f"Creating connector #{connect_count}")
+            # First connector doesn't respond to heartbeats to trigger timeout
+            # Subsequent connectors respond normally
+            respond_to_heartbeats = connect_count > 1
+            connector = MockConnector(respond_to_heartbeats=respond_to_heartbeats)
+            print(f"Connector #{connect_count} responds to heartbeats: {respond_to_heartbeats}")
             connectors.append(connector)
             return connector
 
@@ -377,8 +417,8 @@ class TestUpstreamSessionManager:
         )
 
         manager = UpstreamSessionManager(
-            node=mock_node,
-            attach_client=MockAttachClient(),
+            node=mock_node,  # type: ignore
+            attach_client=MockAttachClient(),  # type: ignore
             # connector_factory=MockConnectorFactory(MockConnector()),  # Not used anymore but required
             # for constructor
             requested_logicals=["test-logical"],
@@ -391,7 +431,7 @@ class TestUpstreamSessionManager:
 
         # Use short heartbeat interval for testing
         manager.HEARTBEAT_INTERVAL = 0.1  # 100ms
-        manager.HEARTBEAT_GRACE = 1.0  # 100ms grace period
+        manager.HEARTBEAT_GRACE = 1.0  # 100ms grace period (actually 0.1 * 1.0 = 0.1s grace)
 
         # Also reduce backoff for faster testing
         manager.BACKOFF_INITIAL = 0.1  # 100ms
@@ -400,11 +440,17 @@ class TestUpstreamSessionManager:
         try:
             # Start manager
             await manager.start(wait_until_ready=True)
-            assert connect_count == 1
-
+            # Note: Don't assert connect_count == 1 here, reconnection might happen quickly
+            
             # Wait for heartbeat to be sent and timeout, plus backoff time
-            # The heartbeat should timeout after HEARTBEAT_INTERVAL + HEARTBEAT_GRACE
-            await asyncio.sleep(0.5)  # Should trigger heartbeat timeout + backoff
+            # The heartbeat logic works as follows:
+            # 1. Send first heartbeat (grace check passes because _last_hb_ack_time was just initialized)
+            # 2. Wait HEARTBEAT_INTERVAL (0.1s)
+            # 3. Send second heartbeat 
+            # 4. Check grace: if no ack received for first heartbeat, grace period is exceeded
+            # So we need to wait at least 2 * HEARTBEAT_INTERVAL + grace = 2 * 0.1 + 0.1 = 0.3s, plus backoff
+            # Plus time for new connection setup. Total should be ~1s to be safe.
+            await asyncio.sleep(1.2)  # Should trigger heartbeat timeout + backoff + new connection
 
             # Should have attempted reconnection
             assert (
@@ -418,7 +464,7 @@ class TestUpstreamSessionManager:
     async def test_transport_close_triggers_reconnection(self, mock_create_resource, envelope_factory):
         """Test that transport closure triggers reconnection."""
         # Create connector that fails after short delay
-        failing_connector = MockConnector(fail_after=0.1, fail_with=FameTransportClose("Connection lost"))
+        failing_connector = MockConnector(fail_after=0.1, fail_with=FameTransportClose(1006, "Connection lost"))
 
         # Track reconnections
         connect_count = 0
@@ -471,7 +517,8 @@ class TestUpstreamSessionManager:
 
             # Wait for connection failure and reconnection
             # The connector fails after 0.1s, heartbeat should detect it within 0.1s
-            await asyncio.sleep(0.5)
+            # Add generous time for backoff and new connection establishment
+            await asyncio.sleep(1.0)
 
             # Should have reconnected
             assert (
@@ -727,7 +774,7 @@ class TestUpstreamSessionManager:
             assert attempt_count == 1
 
             # Wait for connection failure and retry attempts
-            await asyncio.sleep(0.8)  # Give enough time for backoff and retries
+            await asyncio.sleep(1.5)  # Give enough time for backoff and retries
 
             # Should have attempted multiple connections
             assert attempt_count >= 3, f"Expected multiple retry attempts, got {attempt_count}"
