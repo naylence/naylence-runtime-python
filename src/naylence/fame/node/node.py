@@ -163,7 +163,7 @@ class FameNode(TaskSpawner, NodeLike):
 
         self._accepted_logicals: set[str] = set()
         self._attach_expires_at: Optional[datetime] = None
-        
+
         self._delivery_tracker = delivery_tracker
 
         self._binding_manager = BindingManager(
@@ -178,7 +178,7 @@ class FameNode(TaskSpawner, NodeLike):
             binding_factory=binding_factory,
             envelope_factory=self._envelope_factory,
             ack_timeout_ms=binding_ack_timeout_ms,
-            delivery_tracker=delivery_tracker
+            delivery_tracker=delivery_tracker,
         )
 
         self._envelope_listener_manager = EnvelopeListenerManager(

@@ -66,9 +66,9 @@ class DefaultDeliveryTrackerFactory(DeliveryTrackerFactory):
             kv_store=kv,
             retry_handler=retry_handler,
         )
-        
+
         # Add event handler if provided
         if event_handler:
             tracker.add_event_handler(event_handler)
-            
+
         return tracker

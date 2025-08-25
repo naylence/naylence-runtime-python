@@ -36,11 +36,11 @@ def no_dup(_: bytes) -> int:
 async def make_fixture():
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
-    
+
     # Create envelope tracker
     delivery_tracker_factory = DefaultDeliveryTrackerFactory()
     delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
-    
+
     node = FameNode(
         env_context=None,
         requested_logicals=["chaos.domain"],

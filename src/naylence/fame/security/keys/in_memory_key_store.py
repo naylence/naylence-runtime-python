@@ -7,8 +7,6 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, Iterable, Mapping, Optional
 
-from .key_store_factory import KeyStoreConfig, KeyStoreFactory
-
 from .key_store import KeyStore
 
 

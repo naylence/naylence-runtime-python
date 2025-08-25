@@ -5,12 +5,10 @@ from typing import Any, Optional
 from naylence.fame.core import (
     create_resource,
 )
-
 from naylence.fame.sentinel.load_balancing.load_balancing_strategy_factory import (
     LoadBalancingStrategyConfig,
     LoadBalancingStrategyFactory,
 )
-
 from naylence.fame.sentinel.routing_policy import (
     RoutingPolicy,
     RoutingPolicyConfig,

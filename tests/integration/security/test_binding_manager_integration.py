@@ -70,6 +70,7 @@ class TestBindingManagerIntegration:
 
         # Mock the delivery tracker to return success when await_ack is called
         from naylence.fame.core import DeliveryAckFrame
+
         success_ack_frame = DeliveryAckFrame(ok=True)
         success_ack_envelope = create_fame_envelope(frame=success_ack_frame)
         binding_manager._delivery_tracker.await_ack.return_value = success_ack_envelope
@@ -162,6 +163,7 @@ class TestBindingManagerIntegration:
 
         # Mock the delivery tracker to return success when await_ack is called
         from naylence.fame.core import DeliveryAckFrame
+
         success_ack_frame = DeliveryAckFrame(ok=True)
         success_ack_envelope = create_fame_envelope(frame=success_ack_frame)
         binding_manager._delivery_tracker.await_ack.return_value = success_ack_envelope
@@ -354,6 +356,7 @@ async def test_binding_manager_end_to_end():
 
     # Configure delivery tracker to return success ACKs
     from naylence.fame.core import DeliveryAckFrame
+
     success_ack_frame = DeliveryAckFrame(ok=True)
     success_ack_envelope = create_fame_envelope(frame=success_ack_frame)
     delivery_tracker.await_ack.return_value = success_ack_envelope

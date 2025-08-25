@@ -178,5 +178,3 @@ class InProcessFameFabric(FameFabric):
                 "subscriber_address": subscriber_address,
             }
         )
-
-

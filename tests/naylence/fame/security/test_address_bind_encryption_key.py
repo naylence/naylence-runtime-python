@@ -49,7 +49,7 @@ async def test_encryption_key_id_in_address_bind():
         forward_upstream=forward_upstream_mock,
         binding_store=binding_store,
         envelope_factory=envelope_factory,
-    delivery_tracker=AsyncMock(spec=DeliveryTracker),
+        delivery_tracker=AsyncMock(spec=DeliveryTracker),
         ack_timeout_ms=5000,
     )
 

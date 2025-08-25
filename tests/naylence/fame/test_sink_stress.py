@@ -12,7 +12,6 @@ from naylence.fame.service.in_memory_sink_service import InMemorySinkService
 from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
 from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
-from naylence.fame.tracking.delivery_tracker import TrackedEnvelope
 
 NUM_MESSAGES = 1000
 NUM_SUBSCRIBERS = 100
@@ -22,11 +21,11 @@ NUM_SUBSCRIBERS = 100
 async def test_fame_stress_with_timing():
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
-    
+
     # Create envelope tracker
     delivery_tracker_factory = DefaultDeliveryTrackerFactory()
     delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
-    
+
     node = FameNode(
         env_context=None,
         requested_logicals=["stress.domain"],

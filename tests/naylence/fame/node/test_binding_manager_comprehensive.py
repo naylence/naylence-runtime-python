@@ -19,7 +19,6 @@ import pytest
 from naylence.fame.channel.in_memory.in_memory_binding import InMemoryBinding
 from naylence.fame.core import (
     AddressBindAckFrame,
-    AddressUnbindAckFrame,
     CapabilityAdvertiseAckFrame,
     CapabilityWithdrawAckFrame,
     FameAddress,
@@ -53,13 +52,14 @@ class TestBindingManagerComprehensive:
     def binding_manager_with_upstream(self, envelope_factory, mock_forward_upstream, binding_store):
         """Create binding manager with upstream enabled."""
         delivery_tracker = AsyncMock(spec=DeliveryTracker)
-        
+
         # Configure delivery tracker to return success ACKs by default
         from naylence.fame.core import DeliveryAckFrame
+
         success_ack_frame = DeliveryAckFrame(ok=True)
         success_ack_envelope = create_fame_envelope(frame=success_ack_frame)
         delivery_tracker.await_ack.return_value = success_ack_envelope
-        
+
         return BindingManager(
             has_upstream=True,
             get_id=lambda: "test-node-id",
@@ -247,7 +247,6 @@ class TestBindingManagerComprehensive:
         addr = FameAddress("service@api.services")
 
         # Configure delivery tracker to raise timeout exception
-        import asyncio
         binding_manager_with_upstream._delivery_tracker.await_ack.side_effect = asyncio.TimeoutError()
 
         # Never respond to simulate timeout
@@ -261,6 +260,7 @@ class TestBindingManagerComprehensive:
 
         # Configure delivery tracker to return failure ACK
         from naylence.fame.core import DeliveryAckFrame
+
         failure_ack_frame = DeliveryAckFrame(ok=False)
         failure_ack_envelope = create_fame_envelope(frame=failure_ack_frame)
         binding_manager_with_upstream._delivery_tracker.await_ack.return_value = failure_ack_envelope
@@ -429,7 +429,6 @@ class TestBindingManagerComprehensive:
         addr = FameAddress("service@api.services")
 
         # Configure delivery tracker to raise timeout exception
-        import asyncio
         binding_manager_with_upstream._delivery_tracker.await_ack.side_effect = asyncio.TimeoutError()
 
         with pytest.raises(RuntimeError, match="Timeout waiting for unbind ack"):
@@ -442,6 +441,7 @@ class TestBindingManagerComprehensive:
 
         # Configure delivery tracker to return failure ACK
         from naylence.fame.core import DeliveryAckFrame
+
         failure_ack_frame = DeliveryAckFrame(ok=False)
         failure_ack_envelope = create_fame_envelope(frame=failure_ack_frame)
         binding_manager_with_upstream._delivery_tracker.await_ack.return_value = failure_ack_envelope
@@ -463,7 +463,9 @@ class TestBindingManagerComprehensive:
         await binding_manager_with_upstream.handle_ack(envelope)
 
         # Verify the delivery tracker's on_envelope_delivered was called
-        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(envelope, None)
+        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
+            envelope, None
+        )
 
     @pytest.mark.asyncio
     async def test_handle_ack_bind_failure(self, binding_manager_with_upstream):
@@ -477,7 +479,9 @@ class TestBindingManagerComprehensive:
         await binding_manager_with_upstream.handle_ack(envelope)
 
         # Verify the delivery tracker's on_envelope_delivered was called
-        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(envelope, None)
+        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
+            envelope, None
+        )
 
     @pytest.mark.asyncio
     async def test_handle_ack_capability_success(self, binding_manager_with_upstream):
@@ -492,7 +496,9 @@ class TestBindingManagerComprehensive:
         await binding_manager_with_upstream.handle_ack(envelope)
 
         # Verify the delivery tracker's on_envelope_delivered was called
-        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(envelope, None)
+        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
+            envelope, None
+        )
 
     @pytest.mark.asyncio
     async def test_handle_ack_capability_withdraw_success(self, binding_manager_with_upstream):
@@ -507,7 +513,9 @@ class TestBindingManagerComprehensive:
         await binding_manager_with_upstream.handle_ack(envelope)
 
         # Verify the delivery tracker's on_envelope_delivered was called
-        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(envelope, None)
+        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
+            envelope, None
+        )
 
     @pytest.mark.asyncio
     async def test_handle_ack_missing_correlation_id(self, binding_manager_with_upstream):
@@ -540,7 +548,9 @@ class TestBindingManagerComprehensive:
 
         # Should delegate to delivery tracker without error
         await binding_manager_with_upstream.handle_ack(envelope)
-        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(envelope, None)
+        binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
+            envelope, None
+        )
 
     # Test capability management
     @pytest.mark.asyncio
@@ -579,7 +589,6 @@ class TestBindingManagerComprehensive:
         caps = ["capability1"]
 
         # Configure delivery tracker to raise timeout exception
-        import asyncio
         binding_manager_with_upstream._delivery_tracker.await_ack.side_effect = asyncio.TimeoutError()
 
         with pytest.raises(RuntimeError, match="Timeout waiting for advertise ack"):
@@ -597,7 +606,8 @@ class TestBindingManagerComprehensive:
         binding_manager_with_upstream._delivery_tracker.await_ack.return_value = failure_ack_envelope
 
         with pytest.raises(RuntimeError, match="Capability advertise rejected"):
-            await binding_manager_with_upstream._advertise_capabilities(addr, caps)    @pytest.mark.asyncio
+            await binding_manager_with_upstream._advertise_capabilities(addr, caps) @ pytest.mark.asyncio
+
     async def test_withdraw_capabilities_empty_list(self, binding_manager_with_upstream):
         """Test withdrawing empty capabilities list."""
         addr = FameAddress("service@api.services")
@@ -654,7 +664,6 @@ class TestBindingManagerComprehensive:
         caps = ["capability1"]
 
         # Configure delivery tracker to raise timeout exception
-        import asyncio
         binding_manager_with_upstream._delivery_tracker.await_ack.side_effect = asyncio.TimeoutError()
 
         with pytest.raises(RuntimeError, match="Timeout waiting for withdraw caps"):
@@ -672,7 +681,10 @@ class TestBindingManagerComprehensive:
         binding_manager_with_upstream._delivery_tracker.await_ack.return_value = failure_ack_envelope
 
         with pytest.raises(RuntimeError, match="Capability withdraw rejected"):
-            await binding_manager_with_upstream.withdraw_capabilities(addr, caps)    # Test rebind addresses upstream
+            await binding_manager_with_upstream.withdraw_capabilities(
+                addr, caps
+            )  # Test rebind addresses upstream
+
     @pytest.mark.asyncio
     async def test_rebind_addresses_upstream_no_upstream(self, binding_manager_no_upstream):
         """Test rebind addresses when no upstream is configured."""

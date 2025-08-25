@@ -17,12 +17,12 @@ from naylence.fame.core import (
     CapabilityAdvertiseFrame,
     CapabilityWithdrawAckFrame,
     CapabilityWithdrawFrame,
+    DeliveryAckFrame,
     EnvelopeFactory,
     FameAddress,
     FameDeliveryContext,
     FameEnvelope,
     FameResponseType,
-    DeliveryAckFrame,
     format_address,
     format_address_from_components,
     generate_id,
@@ -116,7 +116,7 @@ class BindingManager:
         self._capabilities_by_address: dict[FameAddress, set[str]] = defaultdict(set)
 
         self._envelope_factory = envelope_factory
-        
+
         self._delivery_tracker = delivery_tracker
 
     def get_binding(self, address: FameAddress) -> Optional[Binding]:
@@ -458,7 +458,7 @@ class BindingManager:
         env = self._envelope_factory.create_envelope(
             trace_id=current_trace_id(), frame=frame, reply_to=reply_to, corr_id=corr_id
         )
-        
+
         try:
             ok = await self._send_and_wait_for_ack(env, timeout_ms=self._ack_timeout_ms)
         except asyncio.TimeoutError:
@@ -467,7 +467,9 @@ class BindingManager:
         if not ok:
             raise RuntimeError(f"Unbind of {addr!r} was rejected")
 
-    async def handle_ack(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
+    async def handle_ack(
+        self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
+    ) -> None:
         """
         Handle AddressBindAckFrame, AddressUnbindAckFrame,
         CapabilityAdvertiseAckFrame and CapabilityWithdrawAckFrame by matching
@@ -570,9 +572,7 @@ class BindingManager:
             capabilities=caps,
         )
         reply_to = format_address(SYSTEM_INBOX, self._get_physical_path())
-        envelope = self._envelope_factory.create_envelope(
-            frame=frame, corr_id=corr_id, reply_to=reply_to
-        )
+        envelope = self._envelope_factory.create_envelope(frame=frame, corr_id=corr_id, reply_to=reply_to)
 
         try:
             ok = await self._send_and_wait_for_ack(envelope, timeout_ms=self._ack_timeout_ms)
@@ -656,31 +656,24 @@ class BindingManager:
         # Check for exact match (not a pool pattern)
         return logical in accepted_logicals and not is_pool_logical(logical)
 
-
-    async def _send_and_wait_for_ack(
-        self,
-        envelope: FameEnvelope,
-        timeout_ms: int
-    ) -> bool:
+    async def _send_and_wait_for_ack(self, envelope: FameEnvelope, timeout_ms: int) -> bool:
         """Send an RPC request envelope."""
-        
+
         logger.debug(
             "sending_binding_request",
             envp_id=envelope.id,
             corr_id=envelope.corr_id,
             target_address=envelope.to,
-            expected_response_type=FameResponseType.ACK
+            expected_response_type=FameResponseType.ACK,
         )
 
         await self._delivery_tracker.track(
-            envelope,
-            timeout_ms=timeout_ms,
-            expected_response_type=FameResponseType.ACK
+            envelope, timeout_ms=timeout_ms, expected_response_type=FameResponseType.ACK
         )
 
         envelope.rtype = FameResponseType.ACK
         await self._forward_upstream(envelope, local_delivery_context(self._get_id()))
-        
+
         reply_envelope: FameEnvelope = await self._delivery_tracker.await_ack(envelope.id)
 
         assert isinstance(reply_envelope.frame, DeliveryAckFrame)

@@ -6,10 +6,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-
-from .key_store_factory import KeyStoreConfig, KeyStoreFactory
-
 from .key_store import KeyStore
+from .key_store_factory import KeyStoreConfig, KeyStoreFactory
 
 
 class InMemoryKeyStoreConfig(KeyStoreConfig):

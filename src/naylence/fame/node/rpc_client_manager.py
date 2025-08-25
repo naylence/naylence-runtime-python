@@ -10,10 +10,7 @@ This module is responsible for:
 
 from __future__ import annotations
 
-import asyncio
-from math import exp
-import time
-from typing import Any, AsyncIterator, Awaitable, Callable, Dict, Optional
+from typing import Any, AsyncIterator, Awaitable, Callable, Optional
 
 from naylence.fame.core import (
     DEFAULT_INVOKE_TIMEOUT_MILLIS,
@@ -121,7 +118,7 @@ class RPCClientManager(DeliveryTrackerEventHandler):
             capabilities=capabilities,
             reply_to=self._rpc_reply_address,
             corr_id=request_id,
-            response_type=FameResponseType.REPLY
+            response_type=FameResponseType.REPLY,
         )
 
         await self._send_rpc_request(request_id, envelope, FameResponseType.REPLY, timeout_ms)
@@ -175,9 +172,9 @@ class RPCClientManager(DeliveryTrackerEventHandler):
             capabilities=capabilities,
             reply_to=self._rpc_reply_address,
             corr_id=request_id,
-            response_type=FameResponseType.STREAM
+            response_type=FameResponseType.STREAM,
         )
-        
+
         await self._send_rpc_request(request_id, envelope, FameResponseType.STREAM, timeout_ms)
 
         logger.debug(
@@ -186,9 +183,7 @@ class RPCClientManager(DeliveryTrackerEventHandler):
             target_address=target_addr,
         )
 
-        async for reply_envelope in self._delivery_tracker.iter_stream(
-            envelope.id, timeout_ms=timeout_ms
-        ):
+        async for reply_envelope in self._delivery_tracker.iter_stream(envelope.id, timeout_ms=timeout_ms):
             assert isinstance(reply_envelope, FameEnvelope)
             if isinstance(reply_envelope.frame, DataFrame):
                 res = parse_response(reply_envelope.frame.payload)
@@ -200,14 +195,15 @@ class RPCClientManager(DeliveryTrackerEventHandler):
             elif isinstance(reply_envelope.frame, DeliveryAckFrame):
                 assert reply_envelope.frame.ok is False  # NACK ⇒ propagate as an exception
                 error_message = self._create_delivery_error_message(
-                    reply_envelope.frame.code, reply_envelope.frame.reason)
+                    reply_envelope.frame.code, reply_envelope.frame.reason
+                )
                 yield JSONRPCResponse(
                     error=JSONRPCError(
                         code=-32099,  # Undeliverable message
                         message=error_message,
                     )
                 )
-        
+
     async def _setup_rpc_reply_listener(self) -> None:
         """Set up the RPC reply listener for handling invoke() responses."""
         recipient = f"rpc-{generate_id()}"
@@ -222,7 +218,9 @@ class RPCClientManager(DeliveryTrackerEventHandler):
         self._rpc_bound = True
         logger.debug("rpc_reply_listener_bound", address=self._rpc_listener_address)
 
-    def _create_delivery_error_message(self, code: Optional[str] = None, reason: Optional[str] = None) -> str:
+    def _create_delivery_error_message(
+        self, code: Optional[str] = None, reason: Optional[str] = None
+    ) -> str:
         """Create a user-friendly error message for delivery failures."""
         if code == "crypto_level_violation":
             return (
@@ -259,16 +257,15 @@ class RPCClientManager(DeliveryTrackerEventHandler):
     async def on_envelope_replied(self, envelope: TrackedEnvelope, reply_envelope: FameEnvelope) -> None:
         logger.debug("rpc_envelope_replied", request_id=envelope.envelope_id, reply_id=reply_envelope.id)
 
-
     async def _send_rpc_request(
         self,
         request_id: str,
         envelope: FameEnvelope,
         expected_response_type: FameResponseType,
-        timeout_ms: int
+        timeout_ms: int,
     ) -> None:
         """Send an RPC request envelope."""
-        
+
         logger.debug(
             "sending_rpc_request",
             envp_id=envelope.id,
@@ -279,9 +276,7 @@ class RPCClientManager(DeliveryTrackerEventHandler):
         )
 
         await self._delivery_tracker.track(
-            envelope,
-            timeout_ms=timeout_ms,
-            expected_response_type=expected_response_type
+            envelope, timeout_ms=timeout_ms, expected_response_type=expected_response_type
         )
 
         context = FameDeliveryContext(

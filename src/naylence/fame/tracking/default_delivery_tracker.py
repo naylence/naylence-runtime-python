@@ -13,7 +13,6 @@ import time
 from typing import Any, AsyncIterator, Dict, Optional
 
 from naylence.fame.core import (
-    DataFrame,
     DeliveryAckFrame,
     DeliveryOriginType,
     FameAddress,
@@ -26,9 +25,8 @@ from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.node_like import NodeLike
 from naylence.fame.storage.key_value_store import KeyValueStore
 from naylence.fame.tracking.delivery_tracker import (
-    EnvelopeStatus,
     DeliveryTracker,
-    FameResponseType,
+    EnvelopeStatus,
     RetryEventHandler,
     RetryPolicy,
     TrackedEnvelope,
@@ -129,25 +127,24 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         #         expected_response_type=context.expected_response_type,
         #     )
         return envelope
-    
+
     async def on_deliver_local(
         self,
         node: NodeLike,
         address: FameAddress,
         envelope: FameEnvelope,
-        context: FameDeliveryContext | None = None
+        context: FameDeliveryContext | None = None,
     ) -> FameEnvelope | None:
         if context and context.origin_type == DeliveryOriginType.LOCAL:
             return await self._on_forward_envelope(envelope, context=context)
         return envelope
-    
+
     async def on_envelope_delivered(
         self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
     ) -> None:
-        
         if not envelope.corr_id:
             logger.debug("tracker_envelope_delivered_no_corr_id", envelope_id=envelope.id)  # type: ignore
-        
+
         if isinstance(envelope.frame, DeliveryAckFrame):
             if envelope.frame.ok:
                 await self.on_ack(envelope, context)
@@ -160,7 +157,11 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
             if entry:
                 await self.on_reply(envelope, context)
             else:
-                logger.debug("tracker_envelope_delivered_no_tracked_request", envelope_id=envelope.id, corr_id=envelope.corr_id)
+                logger.debug(
+                    "tracker_envelope_delivered_no_tracked_request",
+                    envelope_id=envelope.id,
+                    corr_id=envelope.corr_id,
+                )
         # else: It's an original data frame without correlation ID - no tracking needed
 
     async def track(
@@ -200,7 +201,7 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
             if expected_response_type & FameResponseType.STREAM:
                 self._stream_queues[envelope.id] = asyncio.Queue()
                 self._stream_done[envelope.id] = asyncio.Event()
-                
+
         tracked = TrackedEnvelope(
             envelope_id=envelope.id,
             corr_id=corr_id,
@@ -274,7 +275,6 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         return result
 
     async def on_ack(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
-
         assert isinstance(envelope.frame, DeliveryAckFrame), "Ack must be from a DeliveryAckFrame"
         assert envelope.corr_id, "Reply envelope must have a correlation ID"
 
@@ -320,7 +320,7 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         if not entry:
             logger.debug("tracker_nack_for_unknown_envelope", envp_id=envelope.id)
             return
-        
+
         if entry.envelope_id == envelope.id:
             # Received the original envelope instead of a nack, happens in local-to-local calls
             return
@@ -329,7 +329,7 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         entry.status = EnvelopeStatus.NACKED
         if envelope.frame.reason:
             entry.meta["nack_reason"] = envelope.frame.reason
-            
+
         await self._kv_store.set(entry.envelope_id, entry)
 
         # Resolve ack future with error
@@ -357,7 +357,6 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         logger.debug("tracker_envelope_nacked", envp_id=entry.envelope_id, reason=envelope.frame.reason)
 
     async def on_reply(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
-
         assert envelope.corr_id, "Reply envelope must have a correlation ID"
 
         entry = await self.get_tracked_envelope_by_corr_id(envelope.corr_id)
@@ -365,7 +364,7 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         if not entry:
             logger.debug("tracker_reply_for_unknown_envelope", envp_id=envelope.id)
             return
-        
+
         if entry.envelope_id == envelope.id:
             # Received the original envelope instead of a reply, happens in local-to-local calls
             return

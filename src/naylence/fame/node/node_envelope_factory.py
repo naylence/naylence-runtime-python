@@ -6,8 +6,8 @@ from naylence.fame.core import (
     FameAddress,
     FameEnvelope,
     FameFrame,
-    FlowFlags,
     FameResponseType,
+    FlowFlags,
     generate_id,
 )
 from naylence.fame.util.envelope_context import current_trace_id

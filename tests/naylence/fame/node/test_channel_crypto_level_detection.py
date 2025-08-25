@@ -16,7 +16,6 @@ from naylence.fame.core import (
     generate_id,
 )
 from naylence.fame.core.protocol.security_header import EncryptionHeader, SecurityHeader
-from naylence.fame.core.protocol.envelope import EnvelopeFactory
 from naylence.fame.node.envelope_listener_manager import EnvelopeListenerManager
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
 from naylence.fame.security.policy.security_policy import CryptoLevel
@@ -127,7 +126,6 @@ async def test_classify_message_crypto_level_precedence_order():
 async def test_channel_context_preservation_in_responses():
     """Test that channel encryption context is preserved in response contexts."""
     from naylence.fame.core import EnvelopeFactory, FameMessageResponse
-    from naylence.fame.node.envelope_listener_manager import EnvelopeListenerManager
 
     # Mock dependencies
     mock_binding_manager = Mock()

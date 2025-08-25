@@ -4,7 +4,7 @@ Comprehensive test suite for RPCClientManager.
 Tests the redesigned RPCClientManager that uses delivery_tracker for
 reply functionality, including:
 - Basic invoke() functionality
-- Streaming invoke_stream() functionality  
+- Streaming invoke_stream() functionality
 - Timeout handling
 - Error handling (delivery failures, RPC errors)
 - Event handler integration
@@ -12,13 +12,12 @@ reply functionality, including:
 """
 
 import asyncio
-from typing import Any, Dict, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, call
+from typing import Any
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from naylence.fame.core import (
-    DEFAULT_INVOKE_TIMEOUT_MILLIS,
     DataFrame,
     DeliveryAckFrame,
     DeliveryOriginType,
@@ -30,8 +29,6 @@ from naylence.fame.core import (
     JSONRPCResponse,
     create_fame_envelope,
     format_address,
-    generate_id,
-    make_request,
     make_response,
 )
 from naylence.fame.node.node_envelope_factory import NodeEnvelopeFactory
@@ -71,27 +68,26 @@ class TestRPCClientManager:
     @pytest.fixture
     def envelope_factory(self, mock_get_physical_path, mock_get_sid):
         """Create envelope factory for testing."""
-        return NodeEnvelopeFactory(
-            physical_path_fn=mock_get_physical_path,
-            sid_fn=mock_get_sid
-        )
+        return NodeEnvelopeFactory(physical_path_fn=mock_get_physical_path, sid_fn=mock_get_sid)
 
     @pytest.fixture
     def mock_listen_callback(self):
         """Mock listen callback for RPC reply addresses."""
+
         async def mock_callback(recipient: str, handler: Any) -> FameAddress:
             return FameAddress(f"{recipient}@/test/path")
+
         return AsyncMock(side_effect=mock_callback)
 
     @pytest.fixture
     async def rpc_client_manager(
-        self, 
+        self,
         delivery_tracker,
         mock_get_physical_path,
         mock_get_sid,
         mock_deliver_wrapper,
         envelope_factory,
-        mock_listen_callback
+        mock_listen_callback,
     ):
         """Create RPCClientManager instance for testing."""
         manager = RPCClientManager(
@@ -100,7 +96,7 @@ class TestRPCClientManager:
             deliver_wrapper=mock_deliver_wrapper,
             envelope_factory=envelope_factory,
             listen_callback=mock_listen_callback,
-            delivery_tracker=delivery_tracker
+            delivery_tracker=delivery_tracker,
         )
         yield manager
         await manager.cleanup()
@@ -124,33 +120,30 @@ class TestRPCClientManager:
 
     @pytest.mark.asyncio
     async def test_invoke_basic_success(
-        self, 
-        rpc_client_manager, 
-        target_address, 
+        self,
+        rpc_client_manager,
+        target_address,
         sample_request_params,
         mock_deliver_wrapper,
-        delivery_tracker
+        delivery_tracker,
     ):
         """Test successful basic invoke() call."""
         # Setup mock response
         response_payload = make_response(id="test-id", result={"success": True, "data": "test-result"})
         response_envelope = create_fame_envelope(
-            frame=DataFrame(payload=response_payload),
-            corr_id="test-correlation-id"
+            frame=DataFrame(payload=response_payload), corr_id="test-correlation-id"
         )
 
         # Mock the envelope tracker to return our response
-        original_await_reply = delivery_tracker.await_reply
+
         async def mock_await_reply(envelope_id: str, **kwargs):
             return response_envelope
+
         delivery_tracker.await_reply = AsyncMock(side_effect=mock_await_reply)
 
         # Execute invoke
         result = await rpc_client_manager.invoke(
-            target_addr=target_address,
-            method="test_method",
-            params=sample_request_params,
-            timeout_ms=5000
+            target_addr=target_address, method="test_method", params=sample_request_params, timeout_ms=5000
         )
 
         # Verify result
@@ -159,18 +152,18 @@ class TestRPCClientManager:
         # Verify deliver was called
         deliver_func = mock_deliver_wrapper.return_value
         assert deliver_func.call_count == 1
-        
+
         # Verify the envelope that was delivered
         call_args = deliver_func.call_args
         envelope, context = call_args[0]
-        
+
         assert isinstance(envelope, FameEnvelope)
         assert envelope.to == target_address
         assert isinstance(envelope.frame, DataFrame)
         assert envelope.frame.payload["method"] == "test_method"
         assert envelope.frame.payload["params"] == sample_request_params
         assert envelope.reply_to is not None  # Should have reply address set
-        
+
         # Verify context
         assert isinstance(context, FameDeliveryContext)
         assert context.origin_type == DeliveryOriginType.LOCAL
@@ -178,18 +171,13 @@ class TestRPCClientManager:
 
     @pytest.mark.asyncio
     async def test_invoke_with_capabilities(
-        self,
-        rpc_client_manager,
-        sample_request_params,
-        mock_deliver_wrapper,
-        delivery_tracker
+        self, rpc_client_manager, sample_request_params, mock_deliver_wrapper, delivery_tracker
     ):
         """Test invoke() call with capabilities instead of target address."""
         # Setup mock response
         response_payload = make_response(id="test-id", result="capability-result")
         response_envelope = create_fame_envelope(
-            frame=DataFrame(payload=response_payload),
-            corr_id="test-correlation-id"
+            frame=DataFrame(payload=response_payload), corr_id="test-correlation-id"
         )
 
         delivery_tracker.await_reply = AsyncMock(return_value=response_envelope)
@@ -197,9 +185,7 @@ class TestRPCClientManager:
         # Execute invoke with capabilities
         capabilities = ["test-capability", "another-capability"]
         result = await rpc_client_manager.invoke(
-            capabilities=capabilities,
-            method="test_method",
-            params=sample_request_params
+            capabilities=capabilities, method="test_method", params=sample_request_params
         )
 
         # Verify result
@@ -221,47 +207,29 @@ class TestRPCClientManager:
         # Test both target_addr and capabilities provided
         with pytest.raises(ValueError, match="Both target address or capabilities must not be provided"):
             await rpc_client_manager.invoke(
-                target_addr=target_address,
-                capabilities=["test"],
-                method="test",
-                params={}
+                target_addr=target_address, capabilities=["test"], method="test", params={}
             )
 
     @pytest.mark.asyncio
-    async def test_invoke_rpc_error_response(
-        self,
-        rpc_client_manager,
-        target_address,
-        delivery_tracker
-    ):
+    async def test_invoke_rpc_error_response(self, rpc_client_manager, target_address, delivery_tracker):
         """Test invoke() handling of RPC error responses."""
         # Setup error response
         error_payload = make_response(
-            id="test-id",
-            error=JSONRPCError(code=-32600, message="Invalid Request")
+            id="test-id", error=JSONRPCError(code=-32600, message="Invalid Request")
         )
         response_envelope = create_fame_envelope(
-            frame=DataFrame(payload=error_payload),
-            corr_id="test-correlation-id"
+            frame=DataFrame(payload=error_payload), corr_id="test-correlation-id"
         )
 
         delivery_tracker.await_reply = AsyncMock(return_value=response_envelope)
 
         # Execute invoke and expect exception
         with pytest.raises(Exception, match="Invalid Request"):
-            await rpc_client_manager.invoke(
-                target_addr=target_address,
-                method="failing_method",
-                params={}
-            )
+            await rpc_client_manager.invoke(target_addr=target_address, method="failing_method", params={})
 
     @pytest.mark.asyncio
     async def test_invoke_stream_basic_success(
-        self,
-        rpc_client_manager,
-        target_address,
-        delivery_tracker,
-        mock_deliver_wrapper
+        self, rpc_client_manager, target_address, delivery_tracker, mock_deliver_wrapper
     ):
         """Test successful invoke_stream() call."""
         # Setup mock streaming responses
@@ -269,9 +237,9 @@ class TestRPCClientManager:
             make_response(id="test-id", result={"item": 1}),
             make_response(id="test-id", result={"item": 2}),
             make_response(id="test-id", result={"item": 3}),
-            make_response(id="test-id", result=None)  # End marker
+            make_response(id="test-id", result=None),  # End marker
         ]
-        
+
         response_envelopes = [
             create_fame_envelope(frame=DataFrame(payload=resp), corr_id="test-correlation-id")
             for resp in responses
@@ -286,13 +254,12 @@ class TestRPCClientManager:
         delivery_tracker.iter_stream = mock_iter_stream
 
         # Execute invoke_stream
-        results = []
-        async for result in rpc_client_manager.invoke_stream(
-            target_addr=target_address,
-            method="stream_method",
-            params={"count": 3}
-        ):
-            results.append(result)
+        results = [
+            result
+            async for result in rpc_client_manager.invoke_stream(
+                target_addr=target_address, method="stream_method", params={"count": 3}
+            )
+        ]
 
         # Verify results
         expected_results = [{"item": 1}, {"item": 2}, {"item": 3}]
@@ -305,22 +272,12 @@ class TestRPCClientManager:
 
     @pytest.mark.asyncio
     async def test_invoke_stream_with_delivery_failure(
-        self,
-        rpc_client_manager,
-        target_address,
-        delivery_tracker
+        self, rpc_client_manager, target_address, delivery_tracker
     ):
         """Test invoke_stream() handling delivery failure (NACK)."""
         # Setup NACK response
-        nack_frame = DeliveryAckFrame(
-            ok=False,
-            code="signature_required",
-            reason="Message must be signed"
-        )
-        nack_envelope = create_fame_envelope(
-            frame=nack_frame,
-            corr_id="test-correlation-id"
-        )
+        nack_frame = DeliveryAckFrame(ok=False, code="signature_required", reason="Message must be signed")
+        nack_envelope = create_fame_envelope(frame=nack_frame, corr_id="test-correlation-id")
 
         async def mock_iter_stream(envelope_id: str, **kwargs):
             yield nack_envelope
@@ -328,13 +285,12 @@ class TestRPCClientManager:
         delivery_tracker.iter_stream = mock_iter_stream
 
         # Execute invoke_stream and collect results
-        results = []
-        async for result in rpc_client_manager.invoke_stream(
-            target_addr=target_address,
-            method="failing_stream",
-            params={}
-        ):
-            results.append(result)
+        results = [
+            result
+            async for result in rpc_client_manager.invoke_stream(
+                target_addr=target_address, method="failing_stream", params={}
+            )
+        ]
 
         # Should get JSONRPCResponse with error
         assert len(results) == 1
@@ -344,21 +300,14 @@ class TestRPCClientManager:
         assert "signature" in results[0].error.message.lower()
 
     @pytest.mark.asyncio
-    async def test_invoke_stream_rpc_error(
-        self,
-        rpc_client_manager,
-        target_address,
-        delivery_tracker
-    ):
+    async def test_invoke_stream_rpc_error(self, rpc_client_manager, target_address, delivery_tracker):
         """Test invoke_stream() handling RPC error in stream."""
         # Setup error response
         error_response = make_response(
-            id="test-id",
-            error=JSONRPCError(code=-32601, message="Method not found")
+            id="test-id", error=JSONRPCError(code=-32601, message="Method not found")
         )
         error_envelope = create_fame_envelope(
-            frame=DataFrame(payload=error_response),
-            corr_id="test-correlation-id"
+            frame=DataFrame(payload=error_response), corr_id="test-correlation-id"
         )
 
         async def mock_iter_stream(envelope_id: str, **kwargs):
@@ -369,18 +318,13 @@ class TestRPCClientManager:
         # Execute invoke_stream and expect exception
         with pytest.raises(Exception, match="Method not found"):
             async for result in rpc_client_manager.invoke_stream(
-                target_addr=target_address,
-                method="unknown_method",
-                params={}
+                target_addr=target_address, method="unknown_method", params={}
             ):
                 pass
 
     @pytest.mark.asyncio
     async def test_setup_rpc_reply_listener(
-        self,
-        rpc_client_manager,
-        mock_listen_callback,
-        mock_get_physical_path
+        self, rpc_client_manager, mock_listen_callback, mock_get_physical_path
     ):
         """Test the setup of RPC reply listener."""
         # Initially not bound
@@ -429,7 +373,7 @@ class TestRPCClientManager:
         mock_get_sid,
         mock_deliver_wrapper,
         envelope_factory,
-        mock_listen_callback
+        mock_listen_callback,
     ):
         """Test that RPCClientManager properly integrates as an event handler."""
         # Create manager and verify it's registered as event handler
@@ -439,7 +383,7 @@ class TestRPCClientManager:
             deliver_wrapper=mock_deliver_wrapper,
             envelope_factory=envelope_factory,
             listen_callback=mock_listen_callback,
-            delivery_tracker=delivery_tracker
+            delivery_tracker=delivery_tracker,
         )
 
         # Verify event handler was added
@@ -450,12 +394,11 @@ class TestRPCClientManager:
             envelope_id="test-envelope-id",
             timeout_at_ms=1000000,
             expected_response_type=FameResponseType.REPLY,
-            created_at_ms=1000000
+            created_at_ms=1000000,
         )
-        
+
         reply_envelope = create_fame_envelope(
-            frame=DataFrame(payload={"result": "test"}),
-            corr_id="test-correlation-id"
+            frame=DataFrame(payload={"result": "test"}), corr_id="test-correlation-id"
         )
 
         # This should not raise an exception
@@ -466,17 +409,23 @@ class TestRPCClientManager:
     def test_create_delivery_error_message(self, rpc_client_manager):
         """Test delivery error message creation."""
         # Test crypto level violation
-        msg = rpc_client_manager._create_delivery_error_message("crypto_level_violation", "Plaintext not allowed")
+        msg = rpc_client_manager._create_delivery_error_message(
+            "crypto_level_violation", "Plaintext not allowed"
+        )
         assert "encryption" in msg.lower()
         assert "plaintext" in msg.lower()
 
         # Test signature required
-        msg = rpc_client_manager._create_delivery_error_message("signature_required", "Message must be signed")
+        msg = rpc_client_manager._create_delivery_error_message(
+            "signature_required", "Message must be signed"
+        )
         assert "signature" in msg.lower()
         assert "sign" in msg.lower()
 
         # Test signature verification failed
-        msg = rpc_client_manager._create_delivery_error_message("signature_verification_failed", "Invalid signature")
+        msg = rpc_client_manager._create_delivery_error_message(
+            "signature_verification_failed", "Invalid signature"
+        )
         assert "signature" in msg.lower()
         assert "verified" in msg.lower()
 
@@ -490,26 +439,18 @@ class TestRPCClientManager:
         assert "test_code" in msg
 
     @pytest.mark.asyncio
-    async def test_invoke_timeout_propagation(
-        self,
-        rpc_client_manager,
-        target_address,
-        delivery_tracker
-    ):
+    async def test_invoke_timeout_propagation(self, rpc_client_manager, target_address, delivery_tracker):
         """Test that timeout is properly passed to delivery_tracker."""
         # Mock await_reply to capture the timeout parameter
         delivery_tracker.await_reply = AsyncMock()
-        
+
         # Setup a response that won't be reached due to timeout
         timeout_ms = 1000
-        
+
         # Execute invoke with specific timeout
         try:
             await rpc_client_manager.invoke(
-                target_addr=target_address,
-                method="test_method",
-                params={},
-                timeout_ms=timeout_ms
+                target_addr=target_address, method="test_method", params={}, timeout_ms=timeout_ms
             )
         except Exception:
             pass  # We expect this to fail since we mocked await_reply
@@ -517,49 +458,45 @@ class TestRPCClientManager:
         # Verify await_reply was called (timeout handling is done by delivery_tracker)
         delivery_tracker.await_reply.assert_called_once()
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_invoke_uses_correlation_id_as_request_id(
-        self,
-        rpc_client_manager,
-        target_address,
-        mock_deliver_wrapper,
-        delivery_tracker
+        self, rpc_client_manager, target_address, mock_deliver_wrapper, delivery_tracker
     ):
         """Test that invoke() uses correlation ID as JSON-RPC request ID."""
         # Mock response
-        delivery_tracker.await_reply = AsyncMock(return_value=create_fame_envelope(
-            frame=DataFrame(payload=make_response(id="test-id", result="success")),
-            corr_id="test-correlation-id"
-        ))
-
-        await rpc_client_manager.invoke(
-            target_addr=target_address,
-            method="test_method",
-            params={}
+        delivery_tracker.await_reply = AsyncMock(
+            return_value=create_fame_envelope(
+                frame=DataFrame(payload=make_response(id="test-id", result="success")),
+                corr_id="test-correlation-id",
+            )
         )
+
+        await rpc_client_manager.invoke(target_addr=target_address, method="test_method", params={})
 
         # Check the delivered envelope
         deliver_func = mock_deliver_wrapper.return_value
         envelope, _ = deliver_func.call_args[0]
-        
+
         # The correlation ID should match the JSON-RPC request ID
         request_payload = envelope.frame.payload
         assert request_payload["id"] == envelope.corr_id
 
     @pytest.mark.asyncio
     async def test_multiple_invokes_reuse_listener(
-        self,
-        rpc_client_manager,
-        target_address,
-        mock_listen_callback,
-        delivery_tracker
+        self, rpc_client_manager, target_address, mock_listen_callback, delivery_tracker
     ):
         """Test that multiple invokes reuse the same RPC listener."""
         # Mock responses
-        delivery_tracker.await_reply = AsyncMock(side_effect=[
-            create_fame_envelope(frame=DataFrame(payload=make_response(id="1", result="first")), corr_id="1"),
-            create_fame_envelope(frame=DataFrame(payload=make_response(id="2", result="second")), corr_id="2")
-        ])
+        delivery_tracker.await_reply = AsyncMock(
+            side_effect=[
+                create_fame_envelope(
+                    frame=DataFrame(payload=make_response(id="1", result="first")), corr_id="1"
+                ),
+                create_fame_envelope(
+                    frame=DataFrame(payload=make_response(id="2", result="second")), corr_id="2"
+                ),
+            ]
+        )
 
         # First invoke
         result1 = await rpc_client_manager.invoke(target_addr=target_address, method="test1", params={})
@@ -574,22 +511,25 @@ class TestRPCClientManager:
 
     @pytest.mark.asyncio
     async def test_concurrent_invokes(
-        self,
-        rpc_client_manager,
-        target_address,
-        delivery_tracker,
-        mock_deliver_wrapper
+        self, rpc_client_manager, target_address, delivery_tracker, mock_deliver_wrapper
     ):
         """Test concurrent invoke() calls work correctly."""
         # Setup different responses for each call
         responses = {
-            "call1": create_fame_envelope(frame=DataFrame(payload=make_response(id="1", result="result1")), corr_id="1"),
-            "call2": create_fame_envelope(frame=DataFrame(payload=make_response(id="2", result="result2")), corr_id="2"),
-            "call3": create_fame_envelope(frame=DataFrame(payload=make_response(id="3", result="result3")), corr_id="3")
+            "call1": create_fame_envelope(
+                frame=DataFrame(payload=make_response(id="1", result="result1")), corr_id="1"
+            ),
+            "call2": create_fame_envelope(
+                frame=DataFrame(payload=make_response(id="2", result="result2")), corr_id="2"
+            ),
+            "call3": create_fame_envelope(
+                frame=DataFrame(payload=make_response(id="3", result="result3")), corr_id="3"
+            ),
         }
 
         # Mock await_reply to return different responses based on envelope_id
         call_count = 0
+
         async def mock_await_reply(envelope_id: str, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -602,7 +542,7 @@ class TestRPCClientManager:
             rpc_client_manager.invoke(target_addr=target_address, method=f"method{i}", params={})
             for i in range(1, 4)
         ]
-        
+
         results = await asyncio.gather(*tasks)
 
         # Verify all results

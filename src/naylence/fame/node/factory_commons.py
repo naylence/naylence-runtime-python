@@ -11,7 +11,6 @@ from naylence.fame.node.admission.default_node_attach_client import (
 )
 from naylence.fame.node.node_config import FameNodeConfig
 from naylence.fame.node.node_meta import NodeMeta
-
 from naylence.fame.security.auth.none_token_provider_factory import (
     NoneTokenProviderConfig,
 )

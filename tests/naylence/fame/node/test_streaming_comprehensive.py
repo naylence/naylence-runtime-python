@@ -188,8 +188,10 @@ class CompleteStreamingService(FameService):
                         payload=rpc_response, corr_id=str(request_id) if request_id is not None else None
                     )
                     response_envelope = create_fame_envelope(
-                        frame=frame, to=reply_to, trace_id=envelope.trace_id,
-                        corr_id=str(request_id) if request_id is not None else None
+                        frame=frame,
+                        to=reply_to,
+                        trace_id=envelope.trace_id,
+                        corr_id=str(request_id) if request_id is not None else None,
                     )
 
                     yield FameMessageResponse(envelope=response_envelope)
@@ -204,8 +206,10 @@ class CompleteStreamingService(FameService):
                     payload=final_response, corr_id=str(request_id) if request_id is not None else None
                 )
                 final_envelope = create_fame_envelope(
-                    frame=frame, to=reply_to, trace_id=envelope.trace_id,
-                    corr_id=str(request_id) if request_id is not None else None
+                    frame=frame,
+                    to=reply_to,
+                    trace_id=envelope.trace_id,
+                    corr_id=str(request_id) if request_id is not None else None,
                 )
 
                 yield FameMessageResponse(envelope=final_envelope)
@@ -222,8 +226,10 @@ class CompleteStreamingService(FameService):
                 payload=error_response, corr_id=str(request_id) if request_id is not None else None
             )
             response_envelope = create_fame_envelope(
-                frame=frame, to=reply_to, trace_id=envelope.trace_id,
-                corr_id=str(request_id) if request_id is not None else None
+                frame=frame,
+                to=reply_to,
+                trace_id=envelope.trace_id,
+                corr_id=str(request_id) if request_id is not None else None,
             )
 
             return FameMessageResponse(envelope=response_envelope)

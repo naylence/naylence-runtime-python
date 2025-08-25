@@ -106,8 +106,6 @@ class KeyStore(ABC, KeyProvider):
             )
 
 
-
-
 _instance: Optional[KeyStore] = None
 
 

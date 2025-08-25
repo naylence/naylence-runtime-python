@@ -1,8 +1,6 @@
-from typing import Any, Iterable, Optional, Sequence
+from typing import Iterable, Optional, Sequence
 
-from pydantic import Field
-
-from naylence.fame.core import FameDeliveryContext, FameEnvelope, create_resource
+from naylence.fame.core import FameDeliveryContext, FameEnvelope
 from naylence.fame.sentinel.router import Drop, RouterState, RoutingAction
 from naylence.fame.sentinel.routing_policy import (
     RoutingPolicy,
@@ -32,4 +30,3 @@ class CompositeRoutingPolicy(RoutingPolicy):
             if not isinstance(action, Drop):
                 return action
         return Drop()  # nobody handled it
-

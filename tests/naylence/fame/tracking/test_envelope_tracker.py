@@ -1,10 +1,15 @@
 import asyncio
-from math import e
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from naylence.fame.core import DataFrame, DeliveryAckFrame, FameAddress, FameResponseType, create_fame_envelope
+from naylence.fame.core import (
+    DataFrame,
+    DeliveryAckFrame,
+    FameAddress,
+    FameResponseType,
+    create_fame_envelope,
+)
 from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 from naylence.fame.tracking.default_delivery_tracker import DefaultDeliveryTracker
 from naylence.fame.tracking.default_delivery_tracker_factory import (
@@ -125,7 +130,7 @@ class TestDefaultDeliveryTracker:
     async def test_ack_handling(self, default_tracker, sample_envelope):
         """Test ACK handling functionality."""
         # Register envelope that expects ACK
-        tracked = await default_tracker.track(
+        await default_tracker.track(
             sample_envelope,
             # target=FameAddress("target@/service"),
             timeout_ms=5000,
@@ -173,7 +178,7 @@ class TestDefaultDeliveryTracker:
     async def test_await_reply_functionality(self, default_tracker, sample_envelope):
         """Test await_reply functionality."""
         # Register envelope that expects reply
-        tracked = await default_tracker.track(
+        await default_tracker.track(
             sample_envelope,
             # target=FameAddress("target@/service"),
             timeout_ms=5000,
@@ -469,7 +474,7 @@ class TestDefaultDeliveryTrackerWithStorage:
 
                 # Check status updated
                 tracked = await new_tracker.get_tracked_envelope(sample_envelope.id)
-                assert tracked.status == EnvelopeStatus.ACKED # type: ignore
+                assert tracked.status == EnvelopeStatus.ACKED  # type: ignore
 
             finally:
                 await new_tracker.cleanup()
@@ -535,7 +540,7 @@ class TestTrackedEnvelope:
         assert restored.envelope_id == original.id
         assert restored.original_envelope is not None
         assert restored.original_envelope.id == original.id
-        assert restored.original_envelope.frame.payload == {"test": "data"} # type: ignore
+        assert restored.original_envelope.frame.payload == {"test": "data"}  # type: ignore
 
 
 class TestDeliveryTrackerFactory:

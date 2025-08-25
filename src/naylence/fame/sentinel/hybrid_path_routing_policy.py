@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 from naylence.fame.core import (
     DeliveryOriginType,
     FameDeliveryContext,
     FameEnvelope,
     KeyRequestFrame,
-    create_resource,
     parse_address,
     parse_address_components,
 )
@@ -16,10 +15,6 @@ from naylence.fame.sentinel.load_balancing.hrw_load_balancing_strategy import (
 )
 from naylence.fame.sentinel.load_balancing.load_balancing_strategy import (
     LoadBalancingStrategy,
-)
-from naylence.fame.sentinel.load_balancing.load_balancing_strategy_factory import (
-    LoadBalancingStrategyConfig,
-    LoadBalancingStrategyFactory,
 )
 from naylence.fame.sentinel.router import (
     DeliverLocal,
@@ -32,8 +27,6 @@ from naylence.fame.sentinel.router import (
 )
 from naylence.fame.sentinel.routing_policy import (
     RoutingPolicy,
-    RoutingPolicyConfig,
-    RoutingPolicyFactory,
 )
 from naylence.fame.util.logging import getLogger
 from naylence.fame.util.logicals_util import is_pool_logical, matches_pool_logical

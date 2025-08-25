@@ -39,11 +39,11 @@ async def test_crypto_level_inheritance():
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
-    
+
     # Create envelope tracker
     delivery_tracker_factory = DefaultDeliveryTrackerFactory()
     delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
-    
+
     node = FameNode(
         env_context=None,
         requested_logicals=["test.domain"],
@@ -138,7 +138,9 @@ async def test_crypto_level_inheritance():
         )
 
         # Track the outbound request with the envelope tracker
-        await delivery_tracker.track(request_envelope, timeout_ms=5000, expected_response_type=FameResponseType.REPLY)
+        await delivery_tracker.track(
+            request_envelope, timeout_ms=5000, expected_response_type=FameResponseType.REPLY
+        )
 
         # Deliver the request
         await node.deliver(request_envelope, request_context)
@@ -216,11 +218,11 @@ async def test_crypto_level_inheritance_no_context():
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
-    
+
     # Create envelope tracker
     delivery_tracker_factory = DefaultDeliveryTrackerFactory()
     delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
-    
+
     node = FameNode(
         env_context=None,
         requested_logicals=["test2.domain"],
@@ -281,7 +283,9 @@ async def test_crypto_level_inheritance_no_context():
         )
 
         # Track the outbound request with the envelope tracker
-        await delivery_tracker.track(request_envelope, timeout_ms=5000, expected_response_type=FameResponseType.REPLY)
+        await delivery_tracker.track(
+            request_envelope, timeout_ms=5000, expected_response_type=FameResponseType.REPLY
+        )
 
         await node.deliver(request_envelope, request_context)
         await asyncio.sleep(0.5)

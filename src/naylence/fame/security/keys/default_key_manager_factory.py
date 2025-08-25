@@ -6,12 +6,11 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from naylence.fame.security.keys.key_store import KeyStore
 from naylence.fame.security.keys.key_store_factory import KeyStoreConfig
 
-from .key_manager_factory import KeyManagerConfig, KeyManagerFactory
-from naylence.fame.security.keys.key_store import KeyStore
-
 from .key_manager import KeyManager
+from .key_manager_factory import KeyManagerConfig, KeyManagerFactory
 
 
 class DefaultKeyManagerConfig(KeyManagerConfig):

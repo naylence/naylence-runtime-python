@@ -70,7 +70,6 @@ async def test_attachment_ttl_limited_by_earliest_key_expiry():
     # Setup times
     now = datetime.now(timezone.utc)
     max_ttl_sec = 3600  # 1 hour
-    calculated_expire = now + timedelta(seconds=max_ttl_sec)
 
     # Create keys with different expiration times
     early_expire = now + timedelta(minutes=30)  # Expires in 30 minutes
@@ -314,9 +313,6 @@ async def test_attachment_ttl_with_no_max_ttl_but_keys_have_expiry():
 @pytest.mark.asyncio
 async def test_attachment_ttl_with_no_max_ttl_and_no_key_expiry():
     """Test that no TTL is set when no max TTL is configured and keys have no expiry."""
-
-    # Setup times
-    now = datetime.now(timezone.utc)
 
     # Create keys without expiration times
     key_infos = [

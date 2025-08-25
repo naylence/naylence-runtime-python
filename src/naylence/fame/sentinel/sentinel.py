@@ -89,7 +89,7 @@ class Sentinel(FameNode, RoutingNodeLike):
             # Create a default envelope tracker without async factory for simplicity
             from naylence.fame.tracking.default_delivery_tracker import DefaultDeliveryTracker
             from naylence.fame.tracking.delivery_tracker import TrackedEnvelope
-            
+
             # Create a simple in-memory KV store for the envelope tracker
             envelope_kv_store = InMemoryKVStore[TrackedEnvelope](TrackedEnvelope)
             kwargs["delivery_tracker"] = DefaultDeliveryTracker(kv_store=envelope_kv_store)

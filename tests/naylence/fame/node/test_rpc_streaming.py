@@ -77,15 +77,15 @@ async def test_non_streaming_rpc(fabric, simple_service_address):
     # Debug: Check if envelope tracker is present
     node = fabric.node
     print(f"Node event listeners: {[type(listener).__name__ for listener in node.event_listeners]}")
-    
+
     # Check if any listener is an envelope tracker
     for listener in node.event_listeners:
-        if hasattr(listener, 'track'):
+        if hasattr(listener, "track"):
             print(f"Found envelope tracker: {type(listener).__name__}")
             break
     else:
         print("No envelope tracker found in event listeners!")
-    
+
     result = await fabric.invoke(simple_service_address, "simple_add", {"a": 5, "b": 3})
     assert result == 8, f"Expected 8, got {result}"
 
