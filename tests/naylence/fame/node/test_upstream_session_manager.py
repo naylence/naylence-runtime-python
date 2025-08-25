@@ -238,9 +238,9 @@ def envelope_factory():
             mock_envelope.frame = kwargs["frame"]
         else:
             mock_envelope.frame = Mock()
-            mock_envelope.corr_id = "test-corr-id"
 
         mock_envelope.id = "test-env-id"
+        mock_envelope.corr_id = kwargs.get("corr_id", "test-corr-id")
         mock_envelope.reply_to = kwargs.get("reply_to")
         mock_envelope.to = kwargs.get("to")
 
@@ -559,8 +559,11 @@ class TestUpstreamSessionManager:
         # Start manager
         await upstream_session_manager.start(wait_until_ready=True)
 
-        # Create test envelope
+        # Create test envelope with mock frame
         test_envelope = Mock(spec=FameEnvelope)
+        mock_frame = Mock()
+        mock_frame.__class__.__name__ = 'TestFrame'
+        test_envelope.frame = mock_frame
 
         # Send message
         await upstream_session_manager.send(test_envelope)
