@@ -249,10 +249,10 @@ files = [
 name = "cffi"
 version = "1.17.1"
 description = "Foreign Function Interface for Python calling C code."
-optional = true
+optional = false
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "(extra == \"crypto\" or extra == \"x25519\") and platform_python_implementation != \"PyPy\""
+markers = "platform_python_implementation != \"PyPy\""
 files = [
     {file = "cffi-1.17.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:df8b1c11f177bc2313ec4b2d46baec87a5f3e71fc8b45dab2ee7cae86d9aba14"},
     {file = "cffi-1.17.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:8f2cdc858323644ab277e9bb925ad72ae0e67f69e804f4898c070998d50b1a67"},
@@ -460,10 +460,9 @@ toml = ["tomli ; python_full_version <= \"3.11.0a6\""]
 name = "cryptography"
 version = "45.0.6"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
-optional = true
+optional = false
 python-versions = "!=3.9.0,!=3.9.1,>=3.7"
 groups = ["main"]
-markers = "extra == \"crypto\" or extra == \"x25519\""
 files = [
     {file = "cryptography-45.0.6-cp311-abi3-macosx_10_9_universal2.whl", hash = "sha256:048e7ad9e08cf4c0ab07ff7f36cc3115924e22e2266e034450a890d9e312dd74"},
     {file = "cryptography-45.0.6-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:44647c5d796f5fc042bbc6d61307d04bf29bccb74d188f18051b635f20a9c75f"},
@@ -984,21 +983,45 @@ files = [
 ]
 
 [[package]]
-name = "naylence-fame-core"
-version = "0.1.9"
-description = "Naylence Fame Core"
+name = "naylence-core"
+version = "0.1.13"
+description = "Naylence Core"
 optional = false
 python-versions = ">=3.12"
 groups = ["main"]
-files = []
-develop = true
+files = [
+    {file = "naylence_core-0.1.13-py3-none-any.whl", hash = "sha256:aec99fb7332a52a41be1ef90458bcda3ead4e07bc646e6052a856f4aec07df09"},
+    {file = "naylence_core-0.1.13.tar.gz", hash = "sha256:aa281f4f6e2588287f39508db2a97382de30f312ffadf596d93e65695c665ad2"},
+]
+
+[package.dependencies]
+naylence-factory = ">=0.1.1,<0.2.0"
+pydantic = ">=2.11.4,<3.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://test.pypi.org/simple"
+reference = "testpypi"
+
+[[package]]
+name = "naylence-factory"
+version = "0.1.1"
+description = "Naylence resource factory and extension management framework"
+optional = false
+python-versions = ">=3.12"
+groups = ["main"]
+files = [
+    {file = "naylence_factory-0.1.1-py3-none-any.whl", hash = "sha256:f7225004fd9c817cd37499f4a1afd9beaaf2cf23cc1e717078f87735fbcb05e9"},
+    {file = "naylence_factory-0.1.1.tar.gz", hash = "sha256:32728bd1ce04e8a0ffdbfcb03463ef9aeaf650f94225c0cfcaabb242f3e0ade9"},
+]
 
 [package.dependencies]
 pydantic = ">=2.11.4,<3.0.0"
 
 [package.source]
-type = "directory"
-url = "../naylence-fame-core"
+type = "legacy"
+url = "https://test.pypi.org/simple"
+reference = "testpypi"
 
 [[package]]
 name = "nodeenv"
@@ -1181,10 +1204,10 @@ files = [
 name = "pycparser"
 version = "2.22"
 description = "C parser in Python"
-optional = true
+optional = false
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "(extra == \"crypto\" or extra == \"x25519\") and platform_python_implementation != \"PyPy\""
+markers = "platform_python_implementation != \"PyPy\""
 files = [
     {file = "pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc"},
     {file = "pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6"},
@@ -1367,10 +1390,9 @@ windows-terminal = ["colorama (>=0.4.6)"]
 name = "pyjwt"
 version = "2.10.1"
 description = "JSON Web Token implementation in Python"
-optional = true
+optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"crypto\" or extra == \"jwt\""
 files = [
     {file = "PyJWT-2.10.1-py3-none-any.whl", hash = "sha256:dcdd193e30abefd5debf142f9adfcdd2b58004e644f25406ffaebd50bd98dacb"},
     {file = "pyjwt-2.10.1.tar.gz", hash = "sha256:3cc5772eb20009233caf06e9d8a0577824723b44e6648ee0a2aedb6cf9381953"},
@@ -1872,14 +1894,14 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.14.1"
+version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "api", "dev", "mcp"]
 files = [
-    {file = "typing_extensions-4.14.1-py3-none-any.whl", hash = "sha256:d1e1e3b58374dc93031d6eda2420a48ea44a36c2b4766a4fdeb3710755731d76"},
-    {file = "typing_extensions-4.14.1.tar.gz", hash = "sha256:38b39f4aeeab64884ce9f74c94263ef78f3c22467c8724005483154c26648d36"},
+    {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
+    {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
 ]
 
 [[package]]
@@ -2115,12 +2137,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 propcache = ">=0.2.1"
 
-[extras]
-crypto = ["cryptography", "pyjwt"]
-jwt = ["pyjwt"]
-x25519 = ["cryptography"]
-
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "f2502eac668eb0887766553c1f1e885648805de3a91ccefe483c67366b15dcf6"
+content-hash = "c9c58e422357947d68b13eab656f5616df3d0062c6fb179b73468ecc23db23be"

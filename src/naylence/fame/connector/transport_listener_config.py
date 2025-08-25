@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from naylence.fame.core.util.resource_config import ResourceConfig
+from naylence.fame.factory import ResourceConfig
 
 
 class TransportListenerConfig(ResourceConfig):

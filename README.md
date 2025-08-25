@@ -28,13 +28,3 @@ This runtime powers agents and routers in a Fame-enabled environment, integratin
 - **Support for WebSocket and custom transport connectors**
 
 ---
-
-## 🧰 Usage
-
-To start a Fame node:
-
-```python
-from naylence.fame.node.node_factory import NodeFactory
-
-node = await NodeFactory.create_node()  # loads config from env or fame-config.yaml
-await node.start()

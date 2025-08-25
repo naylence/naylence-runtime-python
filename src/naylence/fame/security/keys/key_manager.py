@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional
 
 from naylence.fame.core import (
     DeliveryOriginType,

@@ -2,7 +2,7 @@ from naylence.fame.security.keys.key_manager import KeyManager
 from naylence.fame.security.keys.key_store import KeyStore
 
 
-from naylence.fame.core import ResourceConfig, ResourceFactory, create_default_resource
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_default_resource
 
 
 from typing import Any, Optional, TypeVar

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from naylence.fame.core.util.resource_config import ResourceConfig
+from naylence.fame.factory import ResourceConfig
 
 
 class ConnectorConfig(ResourceConfig):

@@ -1,7 +1,7 @@
 from pydantic import ConfigDict
 from pydantic.alias_generators import to_camel
 
-from naylence.fame.core.util.resource_config import ResourceConfig
+from naylence.fame.factory import ResourceConfig
 
 
 class HttpServerConfig(ResourceConfig):

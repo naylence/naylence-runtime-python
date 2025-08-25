@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Optional, TypeVar
 
 from naylence.fame.connector.transport_listener_config import TransportListenerConfig
-from naylence.fame.core.util.resource_factory_registry import ResourceFactory
+from naylence.fame.factory import ResourceFactory
 
 if TYPE_CHECKING:
     from naylence.fame.connector.transport_listener import TransportListener

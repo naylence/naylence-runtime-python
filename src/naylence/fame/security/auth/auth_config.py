@@ -3,7 +3,7 @@ from __future__ import annotations
 from pydantic import ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from naylence.fame.core.util.resource_config import ResourceConfig
+from naylence.fame.factory import ResourceConfig
 from naylence.fame.security.auth.token_provider_factory import TokenProviderConfig
 
 
