@@ -20,6 +20,12 @@ classifiers = [
     "Topic :: System :: Distributed Computing",
 ]
 
+[project.urls]
+Homepage = "https://github.com/naylence/naylence-runtime-python"
+Repository = "https://github.com/naylence/naylence-runtime-python"
+"Bug Tracker" = "https://github.com/naylence/naylence-runtime-python/issues"
+Documentation = "https://github.com/naylence/naylence-runtime-python#readme"
+
 [tool.poetry]
 packages = [
   { include = "naylence", from = "src"},
@@ -45,6 +51,7 @@ pytest-asyncio = "^0.26.0"
 hypothesis = "^6.131.30"
 coverage = "^7.9.2"
 pytest-cov = "^6.2.1"
+twine = "^6.1.0"
 
 [tool.poetry.group.api.dependencies]
 fastapi = "^0.115.12"

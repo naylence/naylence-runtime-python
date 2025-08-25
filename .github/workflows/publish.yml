@@ -69,6 +69,7 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: dist
+          verbose: true
 
   publish-pypi:
     # Run on release, or on dispatch with target == pypi
