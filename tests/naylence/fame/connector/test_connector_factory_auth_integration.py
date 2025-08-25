@@ -11,7 +11,9 @@ from naylence.fame.connector.http_stateless_connector_factory import (
     HttpStatelessConnectorFactory,
 )
 from naylence.fame.security.auth.auth_config import BearerTokenHeaderAuth
-from naylence.fame.security.auth.static_token_provider_factory import StaticTokenProviderConfig
+from naylence.fame.security.auth.static_token_provider_factory import (
+    StaticTokenProviderConfig,
+)
 
 
 class TestConnectorFactoryAuthIntegration:

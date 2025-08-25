@@ -5,11 +5,17 @@ import pytest
 from naylence.fame.core import create_resource
 from naylence.fame.security.auth.authorizer_factory import AuthorizerFactory
 from naylence.fame.security.auth.default_authorizer import DefaultAuthorizer
-from naylence.fame.security.auth.default_authorizer_factory import DefaultAuthorizerConfig
-from naylence.fame.security.auth.jwks_jwt_token_verifier_factory import JWKSVerifierConfig
+from naylence.fame.security.auth.default_authorizer_factory import (
+    DefaultAuthorizerConfig,
+)
+from naylence.fame.security.auth.jwks_jwt_token_verifier_factory import (
+    JWKSVerifierConfig,
+)
 from naylence.fame.security.auth.noop_authorizer import NoopAuthorizer
 from naylence.fame.security.auth.noop_authorizer_factory import NoopAuthorizerConfig
-from naylence.fame.security.auth.noop_token_verifier_factory import NoopTokenVerifierConfig
+from naylence.fame.security.auth.noop_token_verifier_factory import (
+    NoopTokenVerifierConfig,
+)
 from naylence.fame.security.auth.oauth2_authorizer import OAuth2Authorizer
 from naylence.fame.security.auth.oauth2_authorizer_factory import (
     OAuth2AuthorizerConfig,
@@ -20,7 +26,9 @@ from naylence.fame.security.auth.shared_secret_authorizer import (
 from naylence.fame.security.auth.shared_secret_authorizer_factory import (
     SharedSecretAuthorizerConfig,
 )
-from naylence.fame.security.credential.credential_provider_factory import StaticCredentialProviderConfig
+from naylence.fame.security.credential.credential_provider_factory import (
+    StaticCredentialProviderConfig,
+)
 
 
 class TestNodeAttachAuthorizerFactory:
@@ -86,7 +94,10 @@ class TestNodeAttachAuthorizerFactory:
         """Test SharedSecret factory with dictionary configuration."""
         config = {
             "type": "SharedSecretAuthorizer",
-            "secret": {"type": "StaticCredentialProvider", "credential_value": "dict-secret"},
+            "secret": {
+                "type": "StaticCredentialProvider",
+                "credential_value": "dict-secret",
+            },
         }
         authorizer = await create_resource(AuthorizerFactory, config)
 

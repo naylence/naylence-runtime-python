@@ -55,7 +55,11 @@ async def test_node_attach_frame_handler_no_authorization_checks():
     connector_config = ConnectorConfig(type="test")
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     # Create handler (no authorizer parameter needed)
     handler = NodeAttachFrameHandler(
@@ -134,7 +138,11 @@ async def test_node_attach_frame_handler_certificate_validation_still_works():
     connector_config = ConnectorConfig(type="test")
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     # Create a mock validator
     mock_validator = AsyncMock()

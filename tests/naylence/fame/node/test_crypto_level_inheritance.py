@@ -21,7 +21,9 @@ from naylence.fame.node.node import FameNode
 from naylence.fame.node.node_meta import NodeMeta
 from naylence.fame.security.policy.security_policy import CryptoLevel
 from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
-from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
+from naylence.fame.tracking.default_delivery_tracker_factory import (
+    DefaultDeliveryTrackerFactory,
+)
 
 
 @pytest.mark.asyncio
@@ -139,7 +141,9 @@ async def test_crypto_level_inheritance():
 
         # Track the outbound request with the envelope tracker
         await delivery_tracker.track(
-            request_envelope, timeout_ms=5000, expected_response_type=FameResponseType.REPLY
+            request_envelope,
+            timeout_ms=5000,
+            expected_response_type=FameResponseType.REPLY,
         )
 
         # Deliver the request
@@ -174,9 +178,9 @@ async def test_crypto_level_inheritance():
         )
 
         # Verify inheritance
-        assert response_context.origin_type == DeliveryOriginType.LOCAL, (
-            f"Expected LOCAL origin for response, got {response_context.origin_type}"
-        )
+        assert (
+            response_context.origin_type == DeliveryOriginType.LOCAL
+        ), f"Expected LOCAL origin for response, got {response_context.origin_type}"
         print("✅ Response origin is LOCAL as expected")
 
         # For local responses, the inbound_crypto_level should reflect the actual security level
@@ -284,7 +288,9 @@ async def test_crypto_level_inheritance_no_context():
 
         # Track the outbound request with the envelope tracker
         await delivery_tracker.track(
-            request_envelope, timeout_ms=5000, expected_response_type=FameResponseType.REPLY
+            request_envelope,
+            timeout_ms=5000,
+            expected_response_type=FameResponseType.REPLY,
         )
 
         await node.deliver(request_envelope, request_context)

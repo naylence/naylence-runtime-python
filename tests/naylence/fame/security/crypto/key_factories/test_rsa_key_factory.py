@@ -4,7 +4,9 @@ from unittest.mock import patch
 
 import pytest
 
-from naylence.fame.security.crypto.key_factories.rsa_key_factory import create_rsa_keypair
+from naylence.fame.security.crypto.key_factories.rsa_key_factory import (
+    create_rsa_keypair,
+)
 from naylence.fame.util.crypto_util import DevKeyPair
 
 

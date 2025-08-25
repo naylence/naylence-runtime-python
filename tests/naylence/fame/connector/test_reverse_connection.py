@@ -7,7 +7,9 @@ import asyncio
 from unittest.mock import Mock
 
 from naylence.fame.core import DeliveryOriginType, NodeWelcomeFrame
-from naylence.fame.node.admission.default_node_attach_client import DefaultNodeAttachClient
+from naylence.fame.node.admission.default_node_attach_client import (
+    DefaultNodeAttachClient,
+)
 from naylence.fame.node.admission.direct_admission_client import (
     DirectAdmissionClient,
 )
@@ -69,7 +71,10 @@ async def test_attach_client_with_reverse_connections():
 
     # Create inbound connectors to test
     inbound_connectors = [
-        {"type": "WebSocketConnector", "params": {"host": "test.example.com", "port": 9090}}
+        {
+            "type": "WebSocketConnector",
+            "params": {"host": "test.example.com", "port": 9090},
+        }
     ]
 
     # Create attach client

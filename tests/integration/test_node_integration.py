@@ -44,7 +44,10 @@ async def test_node_http_listener():
         return {"event_listeners": [mock_transport_listener]}
 
     # Apply the mock to the import
-    with patch("naylence.fame.node.factory_commons.make_common_opts", side_effect=mock_make_common_opts):
+    with patch(
+        "naylence.fame.node.factory_commons.make_common_opts",
+        side_effect=mock_make_common_opts,
+    ):
         print("Creating event listeners...")
         common_opts = await make_common_opts(node_config)
         event_listeners = common_opts["event_listeners"]
@@ -114,7 +117,10 @@ async def test_config_serialization():
     print("============================================================")
 
     # Test config serialization
-    config_data = {"type": "Node", "listeners": [{"type": "HttpListener", "host": "0.0.0.0", "port": 8080}]}
+    config_data = {
+        "type": "Node",
+        "listeners": [{"type": "HttpListener", "host": "0.0.0.0", "port": 8080}],
+    }
 
     # Parse config
     node_config = FameNodeConfig(**config_data)

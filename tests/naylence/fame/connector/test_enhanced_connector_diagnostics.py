@@ -9,7 +9,9 @@ import pytest
 from naylence.fame.connector.base_async_connector import BaseAsyncConnector
 from naylence.fame.core.connector.connector_state import ConnectorState
 from naylence.fame.errors.errors import FameTransportClose
-from naylence.fame.node.admission.default_node_attach_client import DefaultNodeAttachClient
+from naylence.fame.node.admission.default_node_attach_client import (
+    DefaultNodeAttachClient,
+)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

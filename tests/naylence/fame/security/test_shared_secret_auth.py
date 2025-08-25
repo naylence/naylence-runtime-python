@@ -4,7 +4,9 @@ from naylence.fame.core import NodeAttachFrame
 from naylence.fame.security.auth.shared_secret_authorizer import (
     SharedSecretAuthorizer,
 )
-from naylence.fame.security.auth.shared_secret_token_provider import SharedSecretTokenProvider
+from naylence.fame.security.auth.shared_secret_token_provider import (
+    SharedSecretTokenProvider,
+)
 from naylence.fame.security.auth.shared_secret_token_verifier import (
     SharedSecretTokenVerifier,
 )

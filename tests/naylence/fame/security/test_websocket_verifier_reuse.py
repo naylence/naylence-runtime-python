@@ -6,7 +6,9 @@ when no explicit verifier is provided, implementing the two-level authentication
 
 from unittest.mock import AsyncMock, MagicMock
 
-from naylence.fame.fastapi.websocket_attach_api_router import create_websocket_attach_router
+from naylence.fame.fastapi.websocket_attach_api_router import (
+    create_websocket_attach_router,
+)
 from naylence.fame.security.auth.default_authorizer import DefaultAuthorizer
 from naylence.fame.security.auth.oauth2_authorizer import OAuth2Authorizer
 from naylence.fame.security.auth.token_verifier import TokenVerifier

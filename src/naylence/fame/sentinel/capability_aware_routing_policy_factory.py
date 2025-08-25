@@ -31,7 +31,9 @@ class CapabilityAwareRoutingPolicyFactory(RoutingPolicyFactory):
         config: Optional[CapabilityAwareRoutingPolicyConfig | dict[str, Any]] = None,
         **kwargs: Any,
     ) -> RoutingPolicy:
-        from naylence.fame.sentinel.capability_aware_routing_policy import CapabilityAwareRoutingPolicy
+        from naylence.fame.sentinel.capability_aware_routing_policy import (
+            CapabilityAwareRoutingPolicy,
+        )
 
         assert config
         lbs_config = getattr(config, "load_balancing_strategy", None)

@@ -8,7 +8,9 @@ def test_crypto_provider_interface():
     """Test that CryptoProvider interface methods work properly."""
     print("=== Testing CryptoProvider Interface (No hasattr() checks) ===\n")
 
-    from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
+    from naylence.fame.security.crypto.providers.crypto_provider import (
+        get_crypto_provider,
+    )
 
     # Get the default crypto provider
     provider = get_crypto_provider()

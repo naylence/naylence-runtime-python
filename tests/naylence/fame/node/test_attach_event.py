@@ -51,7 +51,10 @@ async def test_attach_event_with_parent_keys():
     node._key_management_handler = None
 
     # Mock attach info with parent keys
-    parent_keys = [{"kid": "parent-key-1", "kty": "OKP"}, {"kid": "parent-key-2", "kty": "RSA"}]
+    parent_keys = [
+        {"kid": "parent-key-1", "kty": "OKP"},
+        {"kid": "parent-key-2", "kty": "RSA"},
+    ]
     attach_info = {
         "target_system_id": "parent-node",
         "target_physical_path": "/parent",

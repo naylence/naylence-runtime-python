@@ -5,7 +5,9 @@ Test that the ResourceConfig fix preserves polymorphic behavior while fixing ser
 import json
 
 from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
-from naylence.fame.node.admission.direct_admission_client_factory import DirectNodeAdmissionConfig
+from naylence.fame.node.admission.direct_admission_client_factory import (
+    DirectNodeAdmissionConfig,
+)
 
 
 def test_polymorphic_deserialization():
@@ -17,7 +19,10 @@ def test_polymorphic_deserialization():
     # Test 1: Direct deserialization should create the right subclass
     print("\n1. Testing polymorphic creation from dict...")
 
-    websocket_data = {"type": "WebSocketConnector", "params": {"host": "test.com", "port": 8080}}
+    websocket_data = {
+        "type": "WebSocketConnector",
+        "params": {"host": "test.com", "port": 8080},
+    }
 
     try:
         # This should work with dict format directly
@@ -69,7 +74,10 @@ def test_direct_instantiation():
     print("\n1. Testing direct dict creation...")
 
     try:
-        connector = {"type": "WebSocketConnector", "params": {"host": "direct.test.com", "port": 8080}}
+        connector = {
+            "type": "WebSocketConnector",
+            "params": {"host": "direct.test.com", "port": 8080},
+        }
 
         print(f"✓ Created: {type(connector).__name__}")
         print(f"✓ Has keys: {bool(connector)}")
@@ -98,8 +106,14 @@ def test_direct_instantiation():
                 "params": {"host": "upstream.com", "port": 8080},
             },
             supported_inbound_connectors=[
-                {"type": "WebSocketConnector", "params": {"host": "downstream.com", "port": 9090}},
-                {"type": "HttpConnector", "params": {"base_url": "https://callback.com"}},
+                {
+                    "type": "WebSocketConnector",
+                    "params": {"host": "downstream.com", "port": 9090},
+                },
+                {
+                    "type": "HttpConnector",
+                    "params": {"base_url": "https://callback.com"},
+                },
             ],
             ttl_sec=3600,
         )
@@ -154,8 +168,14 @@ def test_mixed_scenarios():
                 "params": {"host": "upstream.com", "port": 8080},
             },
             "supported_inbound_connectors": [
-                {"type": "WebSocketConnector", "params": {"host": "callback1.com", "port": 9090}},
-                {"type": "HttpConnector", "params": {"base_url": "https://callback2.com"}},
+                {
+                    "type": "WebSocketConnector",
+                    "params": {"host": "callback1.com", "port": 9090},
+                },
+                {
+                    "type": "HttpConnector",
+                    "params": {"base_url": "https://callback2.com"},
+                },
             ],
             "ttl_sec": 3600,
         }

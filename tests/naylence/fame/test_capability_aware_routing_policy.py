@@ -9,7 +9,9 @@ from naylence.fame.core import (
     create_fame_envelope,
     format_address,
 )
-from naylence.fame.sentinel.capability_aware_routing_policy import CapabilityAwareRoutingPolicy
+from naylence.fame.sentinel.capability_aware_routing_policy import (
+    CapabilityAwareRoutingPolicy,
+)
 from naylence.fame.sentinel.router import (
     DeliverLocal,
     Drop,

@@ -5,7 +5,9 @@ from naylence.fame.node.node_context import FameNodeAuthorizationContext
 from naylence.fame.security.auth.default_authorizer import DefaultAuthorizer
 from naylence.fame.security.auth.jwt_token_issuer import JWTTokenIssuer
 from naylence.fame.security.auth.token_issuer import TokenIssuer
-from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
+from naylence.fame.security.crypto.providers.default_crypto_provider import (
+    DefaultCryptoProvider,
+)
 
 
 class MockNodeLike:

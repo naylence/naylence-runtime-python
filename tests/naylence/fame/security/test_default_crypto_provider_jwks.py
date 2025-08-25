@@ -3,7 +3,9 @@
 Test script to verify DefaultCryptoProvider JWKS generation after simplification
 """
 
-from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
+from naylence.fame.security.crypto.providers.default_crypto_provider import (
+    DefaultCryptoProvider,
+)
 
 
 def test_jwks_generation():
@@ -55,8 +57,12 @@ def test_jwks_with_provided_keys():
     """Test JWKS generation with user-provided keys."""
 
     # Generate test keys first
-    from naylence.fame.security.crypto.key_factories.ed25519_key_factory import create_ed25519_keypair
-    from naylence.fame.security.crypto.key_factories.x25519_key_factory import create_x25519_keypair
+    from naylence.fame.security.crypto.key_factories.ed25519_key_factory import (
+        create_ed25519_keypair,
+    )
+    from naylence.fame.security.crypto.key_factories.x25519_key_factory import (
+        create_x25519_keypair,
+    )
 
     sig_keypair = create_ed25519_keypair("test-sig")
     enc_keypair = create_x25519_keypair("test-enc")

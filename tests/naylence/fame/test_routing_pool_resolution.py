@@ -12,7 +12,9 @@ from naylence.fame.core import FameAddress, KeyRequestFrame
 
 # Import routing components
 from naylence.fame.sentinel.hybrid_path_routing_policy import HybridPathRoutingPolicy
-from naylence.fame.sentinel.load_balancing.hrw_load_balancing_strategy import HRWLoadBalancingStrategy
+from naylence.fame.sentinel.load_balancing.hrw_load_balancing_strategy import (
+    HRWLoadBalancingStrategy,
+)
 from naylence.fame.sentinel.router import RouterState
 
 
@@ -34,7 +36,10 @@ async def test_pool_resolution():
     # Pool patterns must start with '*.' to be considered logical pools
     pools = {
         ("math", "*.fabric"): {"child-a", "child-b"},  # Wildcard match for *.fabric
-        ("agent", "*.fabric"): {"sentinel-1", "sentinel-2"},  # Wildcard match for *.fabric
+        ("agent", "*.fabric"): {
+            "sentinel-1",
+            "sentinel-2",
+        },  # Wildcard match for *.fabric
         ("*", "*.domain"): {"fallback-node"},  # Catch-all for *.domain
     }
 
@@ -44,7 +49,13 @@ async def test_pool_resolution():
         physical_segments=["self", "child-a", "child-b", "sentinel-1", "sentinel-2"],
         downstream_address_routes={},
         peer_address_routes={},
-        child_segments={"child-a", "child-b", "sentinel-1", "sentinel-2", "fallback-node"},
+        child_segments={
+            "child-a",
+            "child-b",
+            "sentinel-1",
+            "sentinel-2",
+            "fallback-node",
+        },
         peer_segments=set(),
         has_parent=True,
         pools=pools,
@@ -63,15 +74,23 @@ async def test_pool_resolution():
     # Test cases: logical address -> expected behavior
     test_cases = [
         ("math@fame.fabric", ["child-a", "child-b"]),  # Should route to a pool member
-        ("agent@fame.fabric", ["sentinel-1", "sentinel-2"]),  # Should route to a pool member
+        (
+            "agent@fame.fabric",
+            ["sentinel-1", "sentinel-2"],
+        ),  # Should route to a pool member
         ("unknown@fame.fabric", None),  # Should return ForwardUp (no matching pool)
-        ("math@other.domain", None),  # Should return ForwardUp (doesn't match pool pattern)
+        (
+            "math@other.domain",
+            None,
+        ),  # Should return ForwardUp (doesn't match pool pattern)
     ]
 
     for logical_address, expected_members in test_cases:
         # Create a KeyRequest envelope
         frame = KeyRequestFrame(
-            corr_id="test-corr-id", address=FameAddress(logical_address), physical_path="/test/path"
+            corr_id="test-corr-id",
+            address=FameAddress(logical_address),
+            physical_path="/test/path",
         )
 
         # Create test envelope

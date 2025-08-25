@@ -14,7 +14,9 @@ class MockNode:
     """Mock node for testing"""
 
     def __init__(
-        self, has_security_manager: bool = True, security_manager_authorizer: Optional[Authorizer] = None
+        self,
+        has_security_manager: bool = True,
+        security_manager_authorizer: Optional[Authorizer] = None,
     ):
         self.id = "test-node"
         self.physical_path = "/test/node"
@@ -95,9 +97,7 @@ def test_authorization_fallback():
         + (
             "listener authorizer"
             if authorizer == listener_auth
-            else "node authorizer"
-            if authorizer == node_auth
-            else "no authorizer"
+            else "node authorizer" if authorizer == node_auth else "no authorizer"
         )
     )
 
@@ -116,9 +116,7 @@ def test_authorization_fallback():
         + (
             "listener authorizer"
             if authorizer == listener_auth
-            else "node authorizer"
-            if authorizer == node_auth
-            else "no authorizer"
+            else "node authorizer" if authorizer == node_auth else "no authorizer"
         )
     )
 
@@ -153,9 +151,7 @@ def test_authorization_fallback():
         + (
             "HTTP listener authorizer"
             if authorizer == http_listener_auth
-            else "node authorizer"
-            if authorizer == node_auth
-            else "no authorizer"
+            else "node authorizer" if authorizer == node_auth else "no authorizer"
         )
     )
 
@@ -173,9 +169,7 @@ def test_authorization_fallback():
         + (
             "HTTP listener authorizer"
             if authorizer == http_listener_auth
-            else "node authorizer"
-            if authorizer == node_auth
-            else "no authorizer"
+            else "node authorizer" if authorizer == node_auth else "no authorizer"
         )
     )
 

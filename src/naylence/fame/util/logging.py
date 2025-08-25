@@ -125,9 +125,7 @@ structlog.configure(
         _stringify_non_primitives,  # 3 – make every value JSON-safe
         add_log_level,  # 4 – inject "level"
         TimeStamper(fmt="iso"),  # 5 – inject "timestamp"
-        ConsoleRenderer(  # pretty-prints & colorises
-            colors=True, sort_keys=False, pad_event=30
-        ),
+        ConsoleRenderer(colors=True, sort_keys=False, pad_event=30),  # pretty-prints & colorises
     ],
 )
 

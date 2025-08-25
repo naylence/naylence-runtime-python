@@ -66,7 +66,9 @@ async def test_http_listener_lifecycle():
             test_data = test_envelope.model_dump_json().encode("utf-8")
 
             response = await client.post(
-                downstream_url, content=test_data, headers={"Content-Type": "application/octet-stream"}
+                downstream_url,
+                content=test_data,
+                headers={"Content-Type": "application/octet-stream"},
             )
             print(f"✓ Downstream ingress response: {response.status_code}")
             print(f"  Content: {response.json()}")

@@ -40,7 +40,10 @@ def test_x509_chain_with_settings():
 def test_raw_key_with_cert_validation_modified_fails():
     """Test that RAW_KEY with modified cert validation settings fails validation."""
     with pytest.raises(ValidationError) as exc_info:
-        SigningConfig(signing_material=SigningMaterial.RAW_KEY, validate_cert_name_constraints=False)
+        SigningConfig(
+            signing_material=SigningMaterial.RAW_KEY,
+            validate_cert_name_constraints=False,
+        )
 
     assert "X.509 validation options present but signing_material is RAW_KEY" in str(exc_info.value)
     print("✓ RAW_KEY with modified cert validation correctly fails")
@@ -49,7 +52,10 @@ def test_raw_key_with_cert_validation_modified_fails():
 def test_raw_key_with_cert_validation_disabled_fails():
     """Test that RAW_KEY with cert validation disabled fails."""
     with pytest.raises(ValidationError) as exc_info:
-        SigningConfig(signing_material=SigningMaterial.RAW_KEY, validate_cert_name_constraints=False)
+        SigningConfig(
+            signing_material=SigningMaterial.RAW_KEY,
+            validate_cert_name_constraints=False,
+        )
 
     assert "X.509 validation options present but signing_material is RAW_KEY" in str(exc_info.value)
     print("✓ RAW_KEY with disabled cert validation correctly fails")

@@ -69,7 +69,10 @@ def test_dual_key_integration():
 
     if cert_keys:
         cert_key = cert_keys[0]
-        assert cert_key.get("use") in [None, "sig"], "Certificate should only be on signing key"
+        assert cert_key.get("use") in [
+            None,
+            "sig",
+        ], "Certificate should only be on signing key"
         print("  ✓ Certificate is correctly attached to signing key")
 
     print("\n✓ All dual-key integration tests passed!")

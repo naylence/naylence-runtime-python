@@ -12,7 +12,10 @@ def test_polymorphic_deserialization():
     print("Testing dict-based connector directives...")
 
     # Test dict format - should work directly
-    json_data = {"type": "WebSocketConnector", "params": {"host": "test.com", "port": 8080}}
+    json_data = {
+        "type": "WebSocketConnector",
+        "params": {"host": "test.com", "port": 8080},
+    }
 
     try:
         # Just verify the dict structure is correct
@@ -39,7 +42,10 @@ def test_direct_instantiation():
     print("\nTesting direct dict creation...")
 
     try:
-        result = {"type": "WebSocketConnector", "params": {"host": "direct.com", "port": 8080}}
+        result = {
+            "type": "WebSocketConnector",
+            "params": {"host": "direct.com", "port": 8080},
+        }
         print(f"✓ Direct result type: {type(result)}")
         print(f"✓ Direct result dict: {result}")
         if "type" in result:

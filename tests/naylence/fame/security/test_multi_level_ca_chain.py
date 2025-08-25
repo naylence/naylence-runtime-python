@@ -43,9 +43,17 @@ async def test_multi_level_intermediate_ca_chain():
     print("🏗️ Starting Multi-Level Intermediate CA Chain Test\n")
 
     try:
-        from naylence.fame.fastapi.ca_signing_router import CertificateSigningRequest, LocalCASigningService
-        from naylence.fame.security.cert.ca_service import CASigningService, create_test_ca
-        from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
+        from naylence.fame.fastapi.ca_signing_router import (
+            CertificateSigningRequest,
+            LocalCASigningService,
+        )
+        from naylence.fame.security.cert.ca_service import (
+            CASigningService,
+            create_test_ca,
+        )
+        from naylence.fame.security.crypto.providers.default_crypto_provider import (
+            DefaultCryptoProvider,
+        )
 
         # Step 1: Create Root CA
         print("1️⃣ Creating Root CA...")
@@ -59,7 +67,8 @@ async def test_multi_level_intermediate_ca_chain():
         intermediate1_public_key_pem = (
             intermediate1_private_key.public_key()
             .public_bytes(
-                encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
             .decode()
         )
@@ -85,7 +94,8 @@ async def test_multi_level_intermediate_ca_chain():
         intermediate2_public_key_pem = (
             intermediate2_private_key.public_key()
             .public_bytes(
-                encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
             .decode()
         )
@@ -177,9 +187,9 @@ async def test_multi_level_intermediate_ca_chain():
                 current_cert += line + "\n"
 
         expected_chain_length = 4  # End Entity + Level 2 + Level 1 + Root
-        assert len(chain_certs) == expected_chain_length, (
-            f"Expected {expected_chain_length} certificates in chain, got {len(chain_certs)}"
-        )
+        assert (
+            len(chain_certs) == expected_chain_length
+        ), f"Expected {expected_chain_length} certificates in chain, got {len(chain_certs)}"
 
         # Validate the complete chain: End Entity → Level 2 → Level 1 → Root
         end_entity_cert = chain_certs[0]
@@ -189,12 +199,12 @@ async def test_multi_level_intermediate_ca_chain():
 
         # Validate chain relationships
         assert end_entity_cert.issuer == signing_ca_cert.subject, "End entity cert not issued by signing CA"
-        assert signing_ca_cert.issuer == intermediate1_cert.subject, (
-            "Signing CA not issued by intermediate CA level 1"
-        )
-        assert intermediate1_cert.issuer == root_ca_cert.subject, (
-            "Intermediate CA level 1 not issued by root CA"
-        )
+        assert (
+            signing_ca_cert.issuer == intermediate1_cert.subject
+        ), "Signing CA not issued by intermediate CA level 1"
+        assert (
+            intermediate1_cert.issuer == root_ca_cert.subject
+        ), "Intermediate CA level 1 not issued by root CA"
 
         print("   ✅ Complete certificate chain validation passed")
         print("   🔗 Complete Chain: End Entity → Signing CA → Org CA → Root CA")

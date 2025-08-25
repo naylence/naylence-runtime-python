@@ -1,6 +1,11 @@
 from typing import Any, Optional
 
-from naylence.fame.core import FameConfig, FameFabric, FameFabricConfig, FameFabricFactory
+from naylence.fame.core import (
+    FameConfig,
+    FameFabric,
+    FameFabricConfig,
+    FameFabricFactory,
+)
 from naylence.fame.fabric.in_process_fame_fabric import InProcessFameFabric
 
 

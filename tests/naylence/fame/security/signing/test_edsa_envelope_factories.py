@@ -68,7 +68,10 @@ class TestEdDSAEnvelopeSignerFactory:
         config = EdDSAEnvelopeSignerConfig(type="EdDSAEnvelopeSigner")
 
         signer = await factory.create(
-            config, crypto_provider=mock_crypto, extra_param="ignored", another_param=123
+            config,
+            crypto_provider=mock_crypto,
+            extra_param="ignored",
+            another_param=123,
         )
 
         assert isinstance(signer, EdDSAEnvelopeSigner)
@@ -148,7 +151,9 @@ class TestEdDSAEnvelopeVerifierConfig:
 
     def test_config_inheritance(self):
         """Test that config inherits from base class."""
-        from naylence.fame.security.signing.envelope_verifier import EnvelopeVerifierConfig
+        from naylence.fame.security.signing.envelope_verifier import (
+            EnvelopeVerifierConfig,
+        )
 
         config = EdDSAEnvelopeVerifierConfig(type="EdDSAEnvelopeVerifier")
         assert isinstance(config, EnvelopeVerifierConfig)

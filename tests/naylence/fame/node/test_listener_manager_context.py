@@ -59,7 +59,9 @@ async def test_envelope_listener_manager_delivery_context():
 
     # Setup mock envelope factory
     response_envelope = FameEnvelope(
-        id=generate_id(), frame=DataFrame(payload={"result": "test"}), to=FameAddress("client@/test/client")
+        id=generate_id(),
+        frame=DataFrame(payload={"result": "test"}),
+        to=FameAddress("client@/test/client"),
     )
     envelope_factory.create_envelope.return_value = response_envelope
 

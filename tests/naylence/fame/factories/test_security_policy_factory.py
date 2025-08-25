@@ -4,9 +4,13 @@ import pytest
 
 from naylence.fame.core import create_resource
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
-from naylence.fame.security.policy.default_security_policy_factory import DefaultSecurityPolicyConfig
+from naylence.fame.security.policy.default_security_policy_factory import (
+    DefaultSecurityPolicyConfig,
+)
 from naylence.fame.security.policy.no_security_policy import NoSecurityPolicy
-from naylence.fame.security.policy.no_security_policy_factory import NoSecurityPolicyConfig
+from naylence.fame.security.policy.no_security_policy_factory import (
+    NoSecurityPolicyConfig,
+)
 from naylence.fame.security.policy.security_policy_factory import SecurityPolicyFactory
 
 

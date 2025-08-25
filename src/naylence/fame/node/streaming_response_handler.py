@@ -215,7 +215,10 @@ class StreamingResponseHandler:
             final_frame = DataFrame(payload=final_response)
 
             final_envelope = self._envelope_factory.create_envelope(
-                trace_id=request_envelope.trace_id, frame=final_frame, to=reply_to, corr_id=request_id
+                trace_id=request_envelope.trace_id,
+                frame=final_frame,
+                to=reply_to,
+                corr_id=request_id,
             )
 
             # Create final response context

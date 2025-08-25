@@ -19,7 +19,10 @@ def test_reverse_connection_feature():
         "params": {"host": "callback.example.com", "port": 8080},
     }
 
-    http_connector = {"type": "HttpStatelessConnector", "url": "http://callback.example.com:8081/outbox"}
+    http_connector = {
+        "type": "HttpStatelessConnector",
+        "url": "http://callback.example.com:8081/outbox",
+    }
 
     print(f"✓ WebSocket connector: {type(websocket_connector)}")
     print(f"✓ HTTP connector: {type(http_connector)}")
@@ -63,8 +66,14 @@ def test_frame_deserialization():
         "system_id": "downstream-system-456",
         "instance_id": "downstream-instance-456",
         "supported_inbound_connectors": [
-            {"type": "WebSocketConnector", "params": {"host": "ws.example.com", "port": 9090}},
-            {"type": "HttpStatelessConnector", "url": "http://http.example.com:9091/outbox"},
+            {
+                "type": "WebSocketConnector",
+                "params": {"host": "ws.example.com", "port": 9090},
+            },
+            {
+                "type": "HttpStatelessConnector",
+                "url": "http://http.example.com:9091/outbox",
+            },
         ],
     }
 
@@ -79,8 +88,12 @@ def test_frame_deserialization():
             print(f"    Connector {i + 1}: {type(conn)} - {conn.type}")
 
         # Verify polymorphic types
-        from naylence.fame.connector.http_stateless_connector_factory import HttpStatelessConnectorConfig
-        from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
+        from naylence.fame.connector.http_stateless_connector_factory import (
+            HttpStatelessConnectorConfig,
+        )
+        from naylence.fame.connector.websocket_connector_factory import (
+            WebSocketConnectorConfig,
+        )
 
         ws_conn = frame.supported_inbound_connectors[0]
         http_conn = frame.supported_inbound_connectors[1]

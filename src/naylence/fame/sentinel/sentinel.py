@@ -44,7 +44,9 @@ from naylence.fame.sentinel.route_manager import AddressRouteInfo, RouteManager
 from naylence.fame.sentinel.router import RouterState, RoutingAction
 from naylence.fame.sentinel.routing_policy import RoutingPolicy
 from naylence.fame.sentinel.store.route_store import RouteStore, get_default_route_store
-from naylence.fame.stickiness.load_balancer_stickiness_manager import LoadBalancerStickinessManager
+from naylence.fame.stickiness.load_balancer_stickiness_manager import (
+    LoadBalancerStickinessManager,
+)
 from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
 from naylence.fame.util.envelope_context import current_trace_id
 from naylence.fame.util.logging import getLogger, summarize_env
@@ -87,7 +89,9 @@ class Sentinel(FameNode, RoutingNodeLike):
         # Ensure delivery_tracker is included in kwargs if not already present
         if "delivery_tracker" not in kwargs:
             # Create a default envelope tracker without async factory for simplicity
-            from naylence.fame.tracking.default_delivery_tracker import DefaultDeliveryTracker
+            from naylence.fame.tracking.default_delivery_tracker import (
+                DefaultDeliveryTracker,
+            )
             from naylence.fame.tracking.delivery_tracker import TrackedEnvelope
 
             # Create a simple in-memory KV store for the envelope tracker
@@ -232,15 +236,15 @@ class Sentinel(FameNode, RoutingNodeLike):
         async def gated_handler(env: FameEnvelope, context: Optional[FameDeliveryContext] = None):
             security_context = None
             if context:
-                assert not context.from_connector or connector == context.from_connector, (
-                    "Context connector mismatch"
-                )
-                assert not context.from_system_id or system_id == context.from_system_id, (
-                    "Context system_id mismatch"
-                )
-                assert not context.origin_type or origin_type == context.origin_type, (
-                    "Context origin_type mismatch"
-                )
+                assert (
+                    not context.from_connector or connector == context.from_connector
+                ), "Context connector mismatch"
+                assert (
+                    not context.from_system_id or system_id == context.from_system_id
+                ), "Context system_id mismatch"
+                assert (
+                    not context.origin_type or origin_type == context.origin_type
+                ), "Context origin_type mismatch"
 
                 security_context = context.security
 

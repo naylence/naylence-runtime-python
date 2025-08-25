@@ -74,7 +74,10 @@ def real_mcp_endpoint(free_tcp_port_factory):
                             "description": "A test tool",
                             "inputSchema": {
                                 "type": "object",
-                                "properties": {"x": {"type": "integer"}, "y": {"type": "string"}},
+                                "properties": {
+                                    "x": {"type": "integer"},
+                                    "y": {"type": "string"},
+                                },
                             },
                         }
                     ]

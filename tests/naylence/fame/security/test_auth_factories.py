@@ -99,7 +99,9 @@ class TestAuthenticationFactories:
         from naylence.fame.core import NodeAttachFrame
 
         request = NodeAttachFrame(
-            system_id="test-node", instance_id="test-instance", attach_token="test-secret"
+            system_id="test-node",
+            instance_id="test-instance",
+            attach_token="test-secret",
         )
 
         # Use new two-phase API

@@ -31,7 +31,9 @@ async def test_encrypted_request_encrypted_response():
 
     # Create a node
     from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
+    from naylence.fame.tracking.default_delivery_tracker_factory import (
+        DefaultDeliveryTrackerFactory,
+    )
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
@@ -162,9 +164,9 @@ async def test_encrypted_request_encrypted_response():
         )
 
         # Verify inheritance - the key test!
-        assert response_context.origin_type == DeliveryOriginType.LOCAL, (
-            f"Expected LOCAL origin for response, got {response_context.origin_type}"
-        )
+        assert (
+            response_context.origin_type == DeliveryOriginType.LOCAL
+        ), f"Expected LOCAL origin for response, got {response_context.origin_type}"
         print("✅ Response origin is LOCAL as expected")
 
         # The critical assertion: when we receive a SEALED request, the response should also be SEALED
@@ -195,7 +197,9 @@ async def test_plaintext_request_plaintext_response():
         return {"result": "processed"}
 
     from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
+    from naylence.fame.tracking.default_delivery_tracker_factory import (
+        DefaultDeliveryTrackerFactory,
+    )
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)

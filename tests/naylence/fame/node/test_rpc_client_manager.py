@@ -34,7 +34,9 @@ from naylence.fame.core import (
 from naylence.fame.node.node_envelope_factory import NodeEnvelopeFactory
 from naylence.fame.node.rpc_client_manager import RPCClientManager
 from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
+from naylence.fame.tracking.default_delivery_tracker_factory import (
+    DefaultDeliveryTrackerFactory,
+)
 from naylence.fame.tracking.delivery_tracker import TrackedEnvelope
 
 
@@ -143,7 +145,10 @@ class TestRPCClientManager:
 
         # Execute invoke
         result = await rpc_client_manager.invoke(
-            target_addr=target_address, method="test_method", params=sample_request_params, timeout_ms=5000
+            target_addr=target_address,
+            method="test_method",
+            params=sample_request_params,
+            timeout_ms=5000,
         )
 
         # Verify result
@@ -171,7 +176,11 @@ class TestRPCClientManager:
 
     @pytest.mark.asyncio
     async def test_invoke_with_capabilities(
-        self, rpc_client_manager, sample_request_params, mock_deliver_wrapper, delivery_tracker
+        self,
+        rpc_client_manager,
+        sample_request_params,
+        mock_deliver_wrapper,
+        delivery_tracker,
     ):
         """Test invoke() call with capabilities instead of target address."""
         # Setup mock response
@@ -185,7 +194,9 @@ class TestRPCClientManager:
         # Execute invoke with capabilities
         capabilities = ["test-capability", "another-capability"]
         result = await rpc_client_manager.invoke(
-            capabilities=capabilities, method="test_method", params=sample_request_params
+            capabilities=capabilities,
+            method="test_method",
+            params=sample_request_params,
         )
 
         # Verify result
@@ -207,7 +218,10 @@ class TestRPCClientManager:
         # Test both target_addr and capabilities provided
         with pytest.raises(ValueError, match="Both target address or capabilities must not be provided"):
             await rpc_client_manager.invoke(
-                target_addr=target_address, capabilities=["test"], method="test", params={}
+                target_addr=target_address,
+                capabilities=["test"],
+                method="test",
+                params={},
             )
 
     @pytest.mark.asyncio
@@ -450,7 +464,10 @@ class TestRPCClientManager:
         # Execute invoke with specific timeout
         try:
             await rpc_client_manager.invoke(
-                target_addr=target_address, method="test_method", params={}, timeout_ms=timeout_ms
+                target_addr=target_address,
+                method="test_method",
+                params={},
+                timeout_ms=timeout_ms,
             )
         except Exception:
             pass  # We expect this to fail since we mocked await_reply
@@ -490,10 +507,12 @@ class TestRPCClientManager:
         delivery_tracker.await_reply = AsyncMock(
             side_effect=[
                 create_fame_envelope(
-                    frame=DataFrame(payload=make_response(id="1", result="first")), corr_id="1"
+                    frame=DataFrame(payload=make_response(id="1", result="first")),
+                    corr_id="1",
                 ),
                 create_fame_envelope(
-                    frame=DataFrame(payload=make_response(id="2", result="second")), corr_id="2"
+                    frame=DataFrame(payload=make_response(id="2", result="second")),
+                    corr_id="2",
                 ),
             ]
         )
@@ -517,13 +536,16 @@ class TestRPCClientManager:
         # Setup different responses for each call
         responses = {
             "call1": create_fame_envelope(
-                frame=DataFrame(payload=make_response(id="1", result="result1")), corr_id="1"
+                frame=DataFrame(payload=make_response(id="1", result="result1")),
+                corr_id="1",
             ),
             "call2": create_fame_envelope(
-                frame=DataFrame(payload=make_response(id="2", result="result2")), corr_id="2"
+                frame=DataFrame(payload=make_response(id="2", result="result2")),
+                corr_id="2",
             ),
             "call3": create_fame_envelope(
-                frame=DataFrame(payload=make_response(id="3", result="result3")), corr_id="3"
+                frame=DataFrame(payload=make_response(id="3", result="result3")),
+                corr_id="3",
             ),
         }
 

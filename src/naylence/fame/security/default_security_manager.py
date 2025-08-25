@@ -1216,9 +1216,9 @@ class DefaultSecurityManager(SecurityManager):
         )
 
         assert not isinstance(original_env.frame, CreditUpdateFrame)
-        assert not isinstance(original_env.frame, NodeHeartbeatFrame), (
-            "Cannot send NACK for system heartbeat frames"
-        )
+        assert not isinstance(
+            original_env.frame, NodeHeartbeatFrame
+        ), "Cannot send NACK for system heartbeat frames"
         dest = original_env.reply_to
         if not dest:
             from naylence.fame.util.logging import getLogger

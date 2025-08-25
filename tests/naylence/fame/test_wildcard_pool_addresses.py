@@ -16,7 +16,11 @@ from naylence.fame.core import (
     format_address,
     parse_address,
 )
-from naylence.fame.util.logicals_util import extract_pool_base, is_pool_logical, matches_pool_logical
+from naylence.fame.util.logicals_util import (
+    extract_pool_base,
+    is_pool_logical,
+    matches_pool_logical,
+)
 
 
 class TestWildcardPoolAddresses:

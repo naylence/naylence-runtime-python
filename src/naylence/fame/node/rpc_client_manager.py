@@ -126,7 +126,9 @@ class RPCClientManager(DeliveryTrackerEventHandler):
         reply_envelope: FameEnvelope = await self._delivery_tracker.await_reply(envelope.id)
         if isinstance(reply_envelope.frame, DataFrame):
             logger.debug(
-                "rpc_received_reply_with_tracker", request_id=request_id, reply_envp_id=reply_envelope.id
+                "rpc_received_reply_with_tracker",
+                request_id=request_id,
+                reply_envp_id=reply_envelope.id,
             )
             result = parse_response(reply_envelope.frame.payload)
             if result.error:
@@ -255,7 +257,11 @@ class RPCClientManager(DeliveryTrackerEventHandler):
         self._rpc_listener_address = None
 
     async def on_envelope_replied(self, envelope: TrackedEnvelope, reply_envelope: FameEnvelope) -> None:
-        logger.debug("rpc_envelope_replied", request_id=envelope.envelope_id, reply_id=reply_envelope.id)
+        logger.debug(
+            "rpc_envelope_replied",
+            request_id=envelope.envelope_id,
+            reply_id=reply_envelope.id,
+        )
 
     async def _send_rpc_request(
         self,
@@ -276,7 +282,9 @@ class RPCClientManager(DeliveryTrackerEventHandler):
         )
 
         await self._delivery_tracker.track(
-            envelope, timeout_ms=timeout_ms, expected_response_type=expected_response_type
+            envelope,
+            timeout_ms=timeout_ms,
+            expected_response_type=expected_response_type,
         )
 
         context = FameDeliveryContext(

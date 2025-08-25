@@ -102,7 +102,9 @@ def create_oauth2_token_router(
         """Get or create a JWT token issuer."""
         try:
             from naylence.fame.security.auth.jwt_token_issuer import JWTTokenIssuer
-            from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
+            from naylence.fame.security.crypto.providers.crypto_provider import (
+                get_crypto_provider,
+            )
 
             crypto_provider = get_crypto_provider()
 
@@ -181,7 +183,10 @@ def create_oauth2_token_router(
 
         # Verify client credentials
         if not verify_client_credentials(
-            request_client_id, request_client_secret, configured_client_id, configured_client_secret
+            request_client_id,
+            request_client_secret,
+            configured_client_id,
+            configured_client_secret,
         ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

@@ -247,9 +247,9 @@ async def test_control_frame_upstream_loop_prevention():
     )
 
     action = await policy.decide(env, state, upstream_context)
-    assert isinstance(action, Drop), (
-        "Should drop control frames from upstream instead of forwarding upstream"
-    )
+    assert isinstance(
+        action, Drop
+    ), "Should drop control frames from upstream instead of forwarding upstream"
 
 
 @pytest.mark.asyncio

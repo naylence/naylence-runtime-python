@@ -3,9 +3,14 @@
 from typing import Any, Optional
 
 from naylence.fame.security.keys.key_provider import KeyProvider
-from naylence.fame.sentinel.load_balancing.load_balancing_strategy import LoadBalancingStrategy
+from naylence.fame.sentinel.load_balancing.load_balancing_strategy import (
+    LoadBalancingStrategy,
+)
 
-from .load_balancing_strategy_factory import LoadBalancingStrategyConfig, LoadBalancingStrategyFactory
+from .load_balancing_strategy_factory import (
+    LoadBalancingStrategyConfig,
+    LoadBalancingStrategyFactory,
+)
 
 
 class RoundRobinLoadBalancingStrategyConfig(LoadBalancingStrategyConfig):

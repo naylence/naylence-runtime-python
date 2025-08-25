@@ -5,7 +5,11 @@ import asyncio
 
 import pytest
 
-from naylence.fame.errors.errors import FameConnectError, FameProtocolError, FameTransportClose
+from naylence.fame.errors.errors import (
+    FameConnectError,
+    FameProtocolError,
+    FameTransportClose,
+)
 
 
 @pytest.mark.asyncio

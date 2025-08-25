@@ -26,7 +26,9 @@ from naylence.fame.sentinel.load_balancing.load_balancing_strategy_factory impor
     LoadBalancingStrategyConfig,
     LoadBalancingStrategyFactory,
 )
-from naylence.fame.sentinel.load_balancing.sticky_load_balancing_strategy import StickyLoadBalancingStrategy
+from naylence.fame.sentinel.load_balancing.sticky_load_balancing_strategy import (
+    StickyLoadBalancingStrategy,
+)
 from naylence.fame.sentinel.peer import Peer
 from naylence.fame.sentinel.routing_policy import (
     RoutingPolicy,
@@ -35,7 +37,9 @@ from naylence.fame.sentinel.routing_policy import (
 )
 from naylence.fame.sentinel.sentinel import Sentinel
 from naylence.fame.sentinel.store.route_store import RouteEntry
-from naylence.fame.stickiness.load_balancer_stickiness_manager import LoadBalancerStickinessManager
+from naylence.fame.stickiness.load_balancer_stickiness_manager import (
+    LoadBalancerStickinessManager,
+)
 from naylence.fame.stickiness.load_balancer_stickiness_manager_factory import (
     LoadBalancerStickinessManagerConfig,
     LoadBalancerStickinessManagerFactory,
@@ -177,7 +181,8 @@ class SentinelFactory(NodeLikeFactory):
                     auth=WebSocketSubprotocolAuth(token_provider=NoneTokenProviderConfig()),
                 )
                 admission_client = DirectAdmissionClient(
-                    connector_directive.model_dump(by_alias=True), ttl_sec=TTL_NEVER_EXPIRES
+                    connector_directive.model_dump(by_alias=True),
+                    ttl_sec=TTL_NEVER_EXPIRES,
                 )
             assert admission_client is not None, "Admission client must be created"
 

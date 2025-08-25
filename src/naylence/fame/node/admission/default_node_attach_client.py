@@ -157,9 +157,9 @@ class DefaultNodeAttachClient(NodeAttachClient):
 
         assert target_physical_path
 
-        assert node_attach_ack_frame.target_system_id, (
-            "Target system ID must be set in NodeAttachAckFrame on success"
-        )
+        assert (
+            node_attach_ack_frame.target_system_id
+        ), "Target system ID must be set in NodeAttachAckFrame on success"
         # Pass negotiated policy (if any) to the replica-side stickiness manager
         try:
             if self._replica_stickiness_manager is not None:

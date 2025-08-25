@@ -14,7 +14,10 @@ from naylence.fame.security.auth.authorizer_factory import (
     AuthorizerFactory,
 )
 from naylence.fame.security.auth.noop_authorizer import NoopAuthorizer
-from naylence.fame.security.auth.noop_authorizer_factory import NoopAuthorizerConfig, NoopAuthorizerFactory
+from naylence.fame.security.auth.noop_authorizer_factory import (
+    NoopAuthorizerConfig,
+    NoopAuthorizerFactory,
+)
 
 
 class TestAuthorizerFactory:

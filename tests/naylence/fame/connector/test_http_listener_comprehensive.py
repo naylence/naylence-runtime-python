@@ -320,7 +320,9 @@ class TestHttpListenerComprehensive:
 
         # Test request should fail with 503 (no upstream connector)
         response = client.post(
-            "/fame/v1/ingress/upstream", content=envelope_json, headers={"Content-Type": "application/json"}
+            "/fame/v1/ingress/upstream",
+            content=envelope_json,
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 503
@@ -351,7 +353,9 @@ class TestHttpListenerComprehensive:
 
         # Test successful request
         response = client.post(
-            "/fame/v1/ingress/upstream", content=envelope_json, headers={"Content-Type": "application/json"}
+            "/fame/v1/ingress/upstream",
+            content=envelope_json,
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 202
@@ -438,7 +442,10 @@ class TestHttpListenerComprehensive:
         response = client.post(
             "/fame/v1/ingress/upstream",
             content=envelope_json,
-            headers={"Authorization": "Bearer token123", "Content-Type": "application/json"},
+            headers={
+                "Authorization": "Bearer token123",
+                "Content-Type": "application/json",
+            },
         )
 
         assert response.status_code == 202
@@ -486,7 +493,10 @@ class TestHttpListenerComprehensive:
         response = client.post(
             "/fame/v1/ingress/upstream",
             content=envelope_json,
-            headers={"Authorization": "Bearer invalid", "Content-Type": "application/json"},
+            headers={
+                "Authorization": "Bearer invalid",
+                "Content-Type": "application/json",
+            },
         )
 
         assert response.status_code == 401
@@ -519,7 +529,10 @@ class TestHttpListenerComprehensive:
         response = client.post(
             "/fame/v1/ingress/upstream",
             content=envelope_json,
-            headers={"Authorization": "Bearer token", "Content-Type": "application/json"},
+            headers={
+                "Authorization": "Bearer token",
+                "Content-Type": "application/json",
+            },
         )
 
         assert response.status_code == 500
@@ -550,7 +563,9 @@ class TestHttpListenerComprehensive:
 
         # Test request with queue full - upstream now handles QueueFull specifically
         response = client.post(
-            "/fame/v1/ingress/upstream", content=envelope_json, headers={"Content-Type": "application/json"}
+            "/fame/v1/ingress/upstream",
+            content=envelope_json,
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 429
@@ -578,7 +593,9 @@ class TestHttpListenerComprehensive:
 
             # Create NodeAttach frame
             attach_frame = NodeAttachFrame(
-                system_id="test-child", instance_id="test-instance", supported_inbound_connectors=[]
+                system_id="test-child",
+                instance_id="test-instance",
+                supported_inbound_connectors=[],
             )
             envelope = FameEnvelope(frame=attach_frame)
 
@@ -608,7 +625,9 @@ class TestHttpListenerComprehensive:
 
         # Create NodeAttach frame with different system_id
         attach_frame = NodeAttachFrame(
-            system_id="different-child", instance_id="test-instance", supported_inbound_connectors=[]
+            system_id="different-child",
+            instance_id="test-instance",
+            supported_inbound_connectors=[],
         )
         envelope = FameEnvelope(frame=attach_frame)
 
@@ -627,7 +646,9 @@ class TestHttpListenerComprehensive:
         """Test downstream endpoint when node attach fails."""
         # Set up node attach handler to fail
         with patch.object(
-            http_listener, "_handle_node_attach_frame", side_effect=Exception("Attach failed")
+            http_listener,
+            "_handle_node_attach_frame",
+            side_effect=Exception("Attach failed"),
         ):
             http_listener._node = mock_node
             router = await http_listener.create_router()
@@ -641,7 +662,9 @@ class TestHttpListenerComprehensive:
 
             # Create NodeAttach frame
             attach_frame = NodeAttachFrame(
-                system_id="test-child", instance_id="test-instance", supported_inbound_connectors=[]
+                system_id="test-child",
+                instance_id="test-instance",
+                supported_inbound_connectors=[],
             )
             envelope = FameEnvelope(frame=attach_frame)
 
@@ -791,7 +814,9 @@ class TestHttpListenerComprehensive:
         """Test successful node attach frame handling."""
         # Create test frame and envelope
         attach_frame = NodeAttachFrame(
-            system_id="test-child", instance_id="test-instance", supported_inbound_connectors=[]
+            system_id="test-child",
+            instance_id="test-instance",
+            supported_inbound_connectors=[],
         )
         envelope = FameEnvelope(frame=attach_frame)
 
@@ -810,7 +835,10 @@ class TestHttpListenerComprehensive:
                 mock_policy.select_connector.return_value = mock_selection_result
 
                 result = await http_listener._handle_node_attach_frame(
-                    child_id="test-child", attach_frame=attach_frame, envelope=envelope, node=mock_node
+                    child_id="test-child",
+                    attach_frame=attach_frame,
+                    envelope=envelope,
+                    node=mock_node,
                 )
 
                 assert result is mock_connector
@@ -826,7 +854,9 @@ class TestHttpListenerComprehensive:
         """Test node attach frame handling with authorization."""
         # Create test frame and envelope
         attach_frame = NodeAttachFrame(
-            system_id="test-child", instance_id="test-instance", supported_inbound_connectors=[]
+            system_id="test-child",
+            instance_id="test-instance",
+            supported_inbound_connectors=[],
         )
         envelope = FameEnvelope(frame=attach_frame)
         auth_context = AuthorizationContext(system_id="test-child")
@@ -866,7 +896,9 @@ class TestHttpListenerComprehensive:
         """Test node attach frame handling with fallback connector."""
         # Create test frame and envelope
         attach_frame = NodeAttachFrame(
-            system_id="test-child", instance_id="test-instance", supported_inbound_connectors=[]
+            system_id="test-child",
+            instance_id="test-instance",
+            supported_inbound_connectors=[],
         )
         envelope = FameEnvelope(frame=attach_frame)
 
@@ -885,7 +917,10 @@ class TestHttpListenerComprehensive:
                 mock_policy.select_connector.return_value = mock_selection_result
 
                 result = await http_listener._handle_node_attach_frame(
-                    child_id="test-child", attach_frame=attach_frame, envelope=envelope, node=mock_node
+                    child_id="test-child",
+                    attach_frame=attach_frame,
+                    envelope=envelope,
+                    node=mock_node,
                 )
 
                 assert result is mock_connector
@@ -1034,7 +1069,9 @@ class TestHttpListenerComprehensive:
 
         # Test request should fail with 503
         response = client.post(
-            "/fame/v1/ingress/upstream", content=envelope_json, headers={"Content-Type": "application/json"}
+            "/fame/v1/ingress/upstream",
+            content=envelope_json,
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 503
@@ -1090,13 +1127,16 @@ class TestHttpListenerComprehensive:
 
             # Create NodeAttach frame
             attach_frame = NodeAttachFrame(
-                system_id="test-child", instance_id="test-instance", supported_inbound_connectors=[]
+                system_id="test-child",
+                instance_id="test-instance",
+                supported_inbound_connectors=[],
             )
             envelope = FameEnvelope(frame=attach_frame)
 
             # Test request with queue full during attach
             response = client.post(
-                "/fame/v1/ingress/downstream/test-child", content=envelope.model_dump_json()
+                "/fame/v1/ingress/downstream/test-child",
+                content=envelope.model_dump_json(),
             )
 
             assert response.status_code == 400
@@ -1106,15 +1146,23 @@ class TestHttpListenerComprehensive:
     async def test_downstream_endpoint_specific_error_messages(self, http_listener, mock_node):
         """Test downstream endpoint error message mapping."""
         error_cases = [
-            ("No suitable connector found", "No compatible connector configuration available"),
-            ("ConnectError occurred", "Cannot establish outbound connection for attachment"),
+            (
+                "No suitable connector found",
+                "No compatible connector configuration available",
+            ),
+            (
+                "ConnectError occurred",
+                "Cannot establish outbound connection for attachment",
+            ),
             ("Invalid connector config", "Connector configuration error"),
             ("certificate validation failed", "Certificate validation failed"),
         ]
 
         for original_error, expected_message in error_cases:
             with patch.object(
-                http_listener, "_handle_node_attach_frame", side_effect=Exception(original_error)
+                http_listener,
+                "_handle_node_attach_frame",
+                side_effect=Exception(original_error),
             ):
                 http_listener._node = mock_node
                 router = await http_listener.create_router()
@@ -1128,13 +1176,16 @@ class TestHttpListenerComprehensive:
 
                 # Create NodeAttach frame
                 attach_frame = NodeAttachFrame(
-                    system_id="test-child", instance_id="test-instance", supported_inbound_connectors=[]
+                    system_id="test-child",
+                    instance_id="test-instance",
+                    supported_inbound_connectors=[],
                 )
                 envelope = FameEnvelope(frame=attach_frame)
 
                 # Test request with specific error
                 response = client.post(
-                    "/fame/v1/ingress/downstream/test-child", content=envelope.model_dump_json()
+                    "/fame/v1/ingress/downstream/test-child",
+                    content=envelope.model_dump_json(),
                 )
 
                 assert response.status_code == 400
@@ -1165,7 +1216,9 @@ class TestHttpListenerComprehensive:
 
         # Test request with general exception
         response = client.post(
-            "/fame/v1/ingress/upstream", content=envelope_json, headers={"Content-Type": "application/json"}
+            "/fame/v1/ingress/upstream",
+            content=envelope_json,
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 500
@@ -1238,7 +1291,10 @@ class TestHttpListenerComprehensive:
             response = client.post(
                 "/fame/v1/ingress/downstream/test-child",
                 content=envelope_json,
-                headers={"Authorization": "Bearer token123", "Content-Type": "application/json"},
+                headers={
+                    "Authorization": "Bearer token123",
+                    "Content-Type": "application/json",
+                },
             )
 
             assert response.status_code == 202
@@ -1278,7 +1334,10 @@ class TestHttpListenerComprehensive:
         response = client.post(
             "/fame/v1/ingress/upstream",
             content=envelope_json,
-            headers={"Authorization": "Bearer token123", "Content-Type": "application/json"},
+            headers={
+                "Authorization": "Bearer token123",
+                "Content-Type": "application/json",
+            },
         )
 
         assert response.status_code == 202

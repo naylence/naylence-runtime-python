@@ -5,8 +5,12 @@ from unittest.mock import Mock
 import pytest
 
 from naylence.fame.core import FameDeliveryContext, FameEnvelope
-from naylence.fame.security.keys.key_management_handler_base import KeyManagementHandlerBase
-from naylence.fame.security.keys.null_key_management_handler import NullKeyManagementHandler
+from naylence.fame.security.keys.key_management_handler_base import (
+    KeyManagementHandlerBase,
+)
+from naylence.fame.security.keys.null_key_management_handler import (
+    NullKeyManagementHandler,
+)
 
 
 class TestNullKeyManagementHandler:

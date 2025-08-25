@@ -40,7 +40,9 @@ def test_admission_config_polymorphic():
         print(f"✓ Created: {type(result)}")
 
         # Check if it's the right type
-        from naylence.fame.node.admission.direct_admission_client import DirectNodeAdmissionConfig
+        from naylence.fame.node.admission.direct_admission_client import (
+            DirectNodeAdmissionConfig,
+        )
 
         if isinstance(result, DirectNodeAdmissionConfig):
             print("✓ Polymorphic dispatch worked - created DirectNodeAdmissionConfig")
@@ -70,12 +72,17 @@ def test_direct_instantiation():
     print("Testing direct AdmissionConfig instantiation...")
 
     try:
-        from naylence.fame.node.admission.direct_admission_client import DirectNodeAdmissionConfig
+        from naylence.fame.node.admission.direct_admission_client import (
+            DirectNodeAdmissionConfig,
+        )
 
         # Direct instantiation should also work
         config = AdmissionConfig(
             type="DirectAdmissionClient",
-            connector_directive={"type": "HttpStatelessConnector", "url": "http://test.com/outbox"},
+            connector_directive={
+                "type": "HttpStatelessConnector",
+                "url": "http://test.com/outbox",
+            },
             token_provider={"type": "SharedSecretTokenProvider", "secret": "test"},
         )
 

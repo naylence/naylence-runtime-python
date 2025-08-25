@@ -4,7 +4,9 @@ import pytest
 
 from naylence.fame.core import create_resource
 from naylence.fame.security.keys.default_key_manager import DefaultKeyManager
-from naylence.fame.security.keys.default_key_manager_factory import DefaultKeyManagerConfig
+from naylence.fame.security.keys.default_key_manager_factory import (
+    DefaultKeyManagerConfig,
+)
 from naylence.fame.security.keys.key_manager_factory import KeyManagerFactory
 
 
@@ -17,7 +19,9 @@ class TestKeyManagerFactory:
         config = DefaultKeyManagerConfig()
 
         # Need to provide crypto provider for key manager
-        from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
+        from naylence.fame.security.crypto.providers.crypto_provider import (
+            get_crypto_provider,
+        )
 
         crypto_provider = get_crypto_provider()
 
@@ -31,7 +35,9 @@ class TestKeyManagerFactory:
         """Test factory with dictionary configuration."""
         config = {"type": "DefaultKeyManager"}
 
-        from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
+        from naylence.fame.security.crypto.providers.crypto_provider import (
+            get_crypto_provider,
+        )
 
         crypto_provider = get_crypto_provider()
 
@@ -44,7 +50,9 @@ class TestKeyManagerFactory:
         """Test factory with node context configuration."""
         config = DefaultKeyManagerConfig(has_upstream=True, node_id="test-node-123")
 
-        from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
+        from naylence.fame.security.crypto.providers.crypto_provider import (
+            get_crypto_provider,
+        )
 
         crypto_provider = get_crypto_provider()
 
@@ -57,7 +65,9 @@ class TestKeyManagerFactory:
         """Test factory with invalid type raises error."""
         config = {"type": "InvalidKeyManager"}
 
-        from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
+        from naylence.fame.security.crypto.providers.crypto_provider import (
+            get_crypto_provider,
+        )
 
         crypto_provider = get_crypto_provider()
 

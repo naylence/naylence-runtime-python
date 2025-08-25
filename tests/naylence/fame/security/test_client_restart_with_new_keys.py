@@ -143,7 +143,11 @@ async def test_client_restart_with_new_keys():
     # Set up pending route (required by attach handler)
     route_manager._pending_route_metadata[client_system_id] = Mock()
     route_manager._pending_route_metadata[client_system_id].durable = False
-    route_manager._pending_routes[client_system_id] = (context.from_connector, Mock(), [])
+    route_manager._pending_routes[client_system_id] = (
+        context.from_connector,
+        Mock(),
+        [],
+    )
 
     # Mock the envelope creation
     envelope_factory = Mock()

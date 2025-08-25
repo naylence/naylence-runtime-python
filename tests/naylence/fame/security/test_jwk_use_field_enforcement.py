@@ -168,9 +168,9 @@ async def test_signing_key_use_enforcement():
         print(f"✅ Valid signing key passed use field validation (failed later: {type(e).__name__})")
 
     # Test with encryption key used for signing (should be rejected)
-    assert envelope.sec is not None and envelope.sec.sig is not None, (
-        "Envelope should have security header with signature"
-    )
+    assert (
+        envelope.sec is not None and envelope.sec.sig is not None
+    ), "Envelope should have security header with signature"
     envelope.sec.sig.kid = "test-encryption-valid"
     try:
         await verifier.verify_envelope(envelope, check_payload=False)
@@ -215,7 +215,8 @@ async def test_security_policy_use_field_lookup():
 
     # Create a test envelope looking for test-system
     envelope = FameEnvelope(
-        frame=DataFrame(payload="test"), to=FameAddress("test-system@/test-system/service")
+        frame=DataFrame(payload="test"),
+        to=FameAddress("test-system@/test-system/service"),
     )
 
     context = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL, from_system_id="sender")

@@ -8,7 +8,9 @@ from typing import Optional, Sequence
 
 from naylence.fame.core import FameEnvelope, Stickiness
 from naylence.fame.node.node_event_listener import NodeEventListener
-from naylence.fame.stickiness.load_balancer_stickiness_manager import LoadBalancerStickinessManager
+from naylence.fame.stickiness.load_balancer_stickiness_manager import (
+    LoadBalancerStickinessManager,
+)
 from naylence.fame.stickiness.simple_load_balancer_stickiness_manager_factory import (
     SimpleLoadBalanderStickinessManagerConfig,
 )

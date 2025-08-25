@@ -10,7 +10,9 @@ import pytest
 
 from naylence.fame.core.address import parse_address_components
 from naylence.fame.sentinel.hybrid_path_routing_policy import HybridPathRoutingPolicy
-from naylence.fame.sentinel.load_balancing_strategy import RoundRobinLoadBalancingStrategy
+from naylence.fame.sentinel.load_balancing_strategy import (
+    RoundRobinLoadBalancingStrategy,
+)
 from naylence.fame.sentinel.router import RouterState
 
 
@@ -182,9 +184,9 @@ class TestPoolRoutingEndToEnd:
             chosen_nodes.add(chosen)
 
         # Should have distributed across multiple nodes (round-robin)
-        assert len(chosen_nodes) > 1, (
-            f"Load balancing should distribute across nodes, only got {chosen_nodes}"
-        )
+        assert (
+            len(chosen_nodes) > 1
+        ), f"Load balancing should distribute across nodes, only got {chosen_nodes}"
 
     def test_complex_host_patterns(self):
         """Test pool routing with complex host patterns."""
@@ -215,7 +217,10 @@ class TestPoolRoutingEndToEnd:
         for address in matching_addresses:
             participant, host, path = parse_address_components(address)
             chosen = policy._find_host_pool_route(participant, host, state, None)
-            assert chosen in {"api-node1", "api-node2"}, f"Expected pool route for {address}"
+            assert chosen in {
+                "api-node1",
+                "api-node2",
+            }, f"Expected pool route for {address}"
 
         # Test non-matching addresses
         non_matching_addresses = [

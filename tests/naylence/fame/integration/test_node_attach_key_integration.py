@@ -15,7 +15,9 @@ from naylence.fame.core import (
     DeliveryOriginType,
     FameEnvelope,
 )
-from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
+from naylence.fame.security.crypto.providers.default_crypto_provider import (
+    DefaultCryptoProvider,
+)
 from naylence.fame.security.keys.default_key_manager import DefaultKeyManager
 from naylence.fame.security.keys.key_provider import get_key_provider
 from naylence.fame.security.keys.key_store import get_key_store
@@ -208,7 +210,9 @@ async def test_key_manager_factory_creates_consistent_instances():
     """
     print("Testing KeyManager factory consistency...")
 
-    from naylence.fame.security.keys.default_key_manager_factory import DefaultKeyManagerFactory
+    from naylence.fame.security.keys.default_key_manager_factory import (
+        DefaultKeyManagerFactory,
+    )
 
     # 1. Create KeyManager via factory (how it's done in production)
     factory = DefaultKeyManagerFactory()
@@ -236,9 +240,9 @@ async def test_key_manager_factory_creates_consistent_instances():
     )
 
     # 4. Verify the key is available via direct manager
-    assert await key_manager_direct.has_key("test-key-id"), (
-        "Key added via factory manager should be available via direct manager"
-    )
+    assert await key_manager_direct.has_key(
+        "test-key-id"
+    ), "Key added via factory manager should be available via direct manager"
 
     # 5. Verify EnvelopeVerifier can access the key
     verifier = EdDSAEnvelopeVerifier(key_provider=get_key_provider())

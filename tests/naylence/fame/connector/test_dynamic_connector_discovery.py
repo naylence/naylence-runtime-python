@@ -135,7 +135,12 @@ def test_multiple_listener_discovery():
 
     # Mock connector discovery for both listeners
     def mock_http_connectors():
-        return [{"connector_type": "http", "config": {"port": 8080, "url": "http://localhost:8080"}}]
+        return [
+            {
+                "connector_type": "http",
+                "config": {"port": 8080, "url": "http://localhost:8080"},
+            }
+        ]
 
     def mock_ws_connectors():
         return [

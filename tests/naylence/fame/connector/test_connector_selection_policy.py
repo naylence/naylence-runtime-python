@@ -18,7 +18,11 @@ def test_prefer_same_type_strategy():
     # Create mock NodeAttachFrame with HTTP and WebSocket connectors
     attach_frame = Mock()
     attach_frame.supported_inbound_connectors = [
-        {"config": {"port": 8080}, "type": "HttpStatelessConnector", "url": "http://localhost:8080"},
+        {
+            "config": {"port": 8080},
+            "type": "HttpStatelessConnector",
+            "url": "http://localhost:8080",
+        },
         {
             "config": {"port": 8081},
             "type": "WebSocketConnector",
@@ -108,7 +112,11 @@ def test_client_preference_strategy():
     # Create mock NodeAttachFrame with multiple connectors
     attach_frame = Mock()
     attach_frame.supported_inbound_connectors = [
-        {"config": {"port": 8080}, "type": "HttpStatelessConnector", "url": "http://localhost:8080"},
+        {
+            "config": {"port": 8080},
+            "type": "HttpStatelessConnector",
+            "url": "http://localhost:8080",
+        },
         {
             "config": {"port": 8081},
             "type": "WebSocketConnector",

@@ -12,7 +12,9 @@ This test verifies that:
 import pytest
 
 from naylence.fame.core import DataFrame, FameEnvelope, NodeHeartbeatFrame
-from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
+from naylence.fame.security.crypto.providers.default_crypto_provider import (
+    DefaultCryptoProvider,
+)
 from naylence.fame.security.keys.key_provider import get_key_provider
 from naylence.fame.security.keys.key_store import get_key_store
 from naylence.fame.security.signing.eddsa_envelope_signer import EdDSAEnvelopeSigner

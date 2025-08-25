@@ -6,9 +6,15 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from naylence.fame.core.protocol.envelope import FameEnvelope
 from naylence.fame.core.protocol.frames import DataFrame, KeyRequestFrame
-from naylence.fame.security.crypto.key_factories.ed25519_key_factory import create_ed25519_keypair
-from naylence.fame.security.crypto.key_factories.rsa_key_factory import create_rsa_keypair
-from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
+from naylence.fame.security.crypto.key_factories.ed25519_key_factory import (
+    create_ed25519_keypair,
+)
+from naylence.fame.security.crypto.key_factories.rsa_key_factory import (
+    create_rsa_keypair,
+)
+from naylence.fame.security.crypto.providers.default_crypto_provider import (
+    DefaultCryptoProvider,
+)
 from naylence.fame.security.keys.key_provider import get_key_provider
 from naylence.fame.security.keys.key_store import get_key_store
 from naylence.fame.security.signing.eddsa_envelope_signer import EdDSAEnvelopeSigner
@@ -254,7 +260,10 @@ class TestRealCryptoOperations:
         # Test RSA key properties
         rsa_keypair = create_rsa_keypair(kid="property-test-rsa")
 
-        from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
+        from cryptography.hazmat.primitives.serialization import (
+            load_pem_private_key,
+            load_pem_public_key,
+        )
 
         # Load and verify RSA key
         rsa_private = load_pem_private_key(rsa_keypair.private_pem.encode(), password=None)

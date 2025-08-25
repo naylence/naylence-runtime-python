@@ -6,7 +6,12 @@ from __future__ import annotations
 
 from typing import Any, Optional, TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory, create_default_resource, create_resource
+from naylence.fame.core import (
+    ResourceConfig,
+    ResourceFactory,
+    create_default_resource,
+    create_resource,
+)
 from naylence.fame.security.keys.key_provider import KeyProvider
 
 from .load_balancer_stickiness_manager import LoadBalancerStickinessManager
@@ -39,7 +44,10 @@ class LoadBalancerStickinessManagerFactory(ResourceFactory[LoadBalancerStickines
 
         if cfg_dict is not None:
             return await create_resource(
-                LoadBalancerStickinessManagerFactory, cfg_dict, key_provider=key_provider, **kwargs
+                LoadBalancerStickinessManagerFactory,
+                cfg_dict,
+                key_provider=key_provider,
+                **kwargs,
             )
 
         return await create_default_resource(

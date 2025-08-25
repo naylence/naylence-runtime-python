@@ -3,8 +3,13 @@
 import pytest
 
 from naylence.fame.core import create_resource
-from naylence.fame.security.auth.auth_injection_strategy import BearerTokenHeaderStrategy, NoAuthStrategy
-from naylence.fame.security.auth.auth_injection_strategy_factory import AuthInjectionStrategyFactory
+from naylence.fame.security.auth.auth_injection_strategy import (
+    BearerTokenHeaderStrategy,
+    NoAuthStrategy,
+)
+from naylence.fame.security.auth.auth_injection_strategy_factory import (
+    AuthInjectionStrategyFactory,
+)
 
 
 class TestAuthStrategyFactory:

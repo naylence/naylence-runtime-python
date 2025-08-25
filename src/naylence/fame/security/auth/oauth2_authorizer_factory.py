@@ -46,10 +46,12 @@ class OAuth2AuthorizerConfig(AuthorizerConfig):
     )
     require_scope: bool = Field(default=True, description="Whether to enforce scope validation")
     default_ttl_sec: int = Field(
-        default=DEFAULT_OAUTH2_TTL_SEC, description="Default TTL for authorized connections in seconds"
+        default=DEFAULT_OAUTH2_TTL_SEC,
+        description="Default TTL for authorized connections in seconds",
     )
     max_ttl_sec: int = Field(
-        default=MAX_OAUTH2_TTL_SEC, description="Maximum TTL for authorized connections in seconds"
+        default=MAX_OAUTH2_TTL_SEC,
+        description="Maximum TTL for authorized connections in seconds",
     )
 
     @field_validator("default_ttl_sec")

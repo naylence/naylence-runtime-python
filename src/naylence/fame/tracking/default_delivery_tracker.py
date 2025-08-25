@@ -78,7 +78,10 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         logger.debug("created_default_delivery_tracker")
 
     async def on_forward_upstream(
-        self, node: NodeLike, envelope: FameEnvelope, context: FameDeliveryContext | None = None
+        self,
+        node: NodeLike,
+        envelope: FameEnvelope,
+        context: FameDeliveryContext | None = None,
     ) -> FameEnvelope | None:
         return await self._on_forward_envelope(envelope, context=context)
 
@@ -248,7 +251,10 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         return await self._await_envelope_future(envelope_id, future, timeout_ms=timeout_ms)
 
     async def _await_envelope_future(
-        self, envelope_id: str, future: asyncio.Future[FameEnvelope], timeout_ms: Optional[int] = None
+        self,
+        envelope_id: str,
+        future: asyncio.Future[FameEnvelope],
+        timeout_ms: Optional[int] = None,
     ) -> FameEnvelope:
         # Use provided timeout or calculate from tracked envelope
         if timeout_ms is None:
@@ -354,7 +360,11 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         for event_handler in self._event_handlers:
             await event_handler.on_envelope_nacked(entry, envelope.frame.reason)
 
-        logger.debug("tracker_envelope_nacked", envp_id=entry.envelope_id, reason=envelope.frame.reason)
+        logger.debug(
+            "tracker_envelope_nacked",
+            envp_id=entry.envelope_id,
+            reason=envelope.frame.reason,
+        )
 
     async def on_reply(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
         assert envelope.corr_id, "Reply envelope must have a correlation ID"

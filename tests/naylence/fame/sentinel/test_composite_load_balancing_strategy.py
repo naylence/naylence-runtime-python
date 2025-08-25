@@ -23,12 +23,18 @@ from naylence.fame.sentinel.load_balancing.composite_load_balancing_strategy_fac
     CompositeLoadBalancingStrategyConfig,
     CompositeLoadBalancingStrategyFactory,
 )
-from naylence.fame.sentinel.load_balancing.hrw_load_balancing_strategy import HRWLoadBalancingStrategy
+from naylence.fame.sentinel.load_balancing.hrw_load_balancing_strategy import (
+    HRWLoadBalancingStrategy,
+)
 from naylence.fame.sentinel.load_balancing.hrw_load_balancing_strategy_factory import (
     HRWLoadBalancingStrategyConfig,
 )
-from naylence.fame.sentinel.load_balancing.load_balancing_strategy import LoadBalancingStrategy
-from naylence.fame.sentinel.load_balancing.random_load_balancing_strategy import RandomLoadBalancingStrategy
+from naylence.fame.sentinel.load_balancing.load_balancing_strategy import (
+    LoadBalancingStrategy,
+)
+from naylence.fame.sentinel.load_balancing.random_load_balancing_strategy import (
+    RandomLoadBalancingStrategy,
+)
 from naylence.fame.sentinel.load_balancing.random_load_balancing_strategy_factory import (
     RandomLoadBalancingStrategyConfig,
 )
@@ -38,7 +44,9 @@ from naylence.fame.sentinel.load_balancing.round_robin_load_balancing_strategy i
 from naylence.fame.sentinel.load_balancing.round_robin_load_balancing_strategy_factory import (
     RoundRobinLoadBalancingStrategyConfig,
 )
-from naylence.fame.sentinel.load_balancing.sticky_load_balancing_strategy import StickyLoadBalancingStrategy
+from naylence.fame.sentinel.load_balancing.sticky_load_balancing_strategy import (
+    StickyLoadBalancingStrategy,
+)
 from naylence.fame.sentinel.load_balancing.sticky_load_balancing_strategy_factory import (
     StickyLoadBalancingStrategyConfig,
 )
@@ -225,7 +233,9 @@ class TestCompositeStrategyFactory:
 
         factory = CompositeLoadBalancingStrategyFactory()
         strategy = await factory.create(
-            config, key_provider=get_key_provider(), stickiness_manager=stickiness_manager
+            config,
+            key_provider=get_key_provider(),
+            stickiness_manager=stickiness_manager,
         )
 
         assert isinstance(strategy, CompositeLoadBalancingStrategy)
@@ -292,7 +302,9 @@ class TestStickyCompositeIntegration:
 
         factory = CompositeLoadBalancingStrategyFactory()
         strategy = await factory.create(
-            config, key_provider=get_key_provider(), stickiness_manager=stickiness_manager
+            config,
+            key_provider=get_key_provider(),
+            stickiness_manager=stickiness_manager,
         )
 
         pool_key = "test_pool"

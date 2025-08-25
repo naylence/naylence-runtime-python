@@ -40,7 +40,9 @@ async def test_key_request_by_address_with_encryption_key_id():
     test_physical_path = "/test/physical/path"
 
     route_info = AddressRouteInfo(
-        segment="test-segment", physical_path=test_physical_path, encryption_key_id=test_encryption_key_id
+        segment="test-segment",
+        physical_path=test_physical_path,
+        encryption_key_id=test_encryption_key_id,
     )
 
     route_manager._downstream_addresses_routes = {test_address: route_info}

@@ -7,7 +7,12 @@ Test that correlation mapping works correctly for pool addresses after removing 
 import asyncio
 from unittest.mock import AsyncMock, Mock
 
-from naylence.fame.core import DeliveryOriginType, FameAddress, FameDeliveryContext, KeyRequestFrame
+from naylence.fame.core import (
+    DeliveryOriginType,
+    FameAddress,
+    FameDeliveryContext,
+    KeyRequestFrame,
+)
 from naylence.fame.sentinel.key_frame_handler import KeyFrameHandler
 
 

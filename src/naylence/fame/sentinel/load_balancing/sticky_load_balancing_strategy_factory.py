@@ -3,9 +3,14 @@
 from typing import Any, Optional
 
 from naylence.fame.security.keys.key_provider import KeyProvider
-from naylence.fame.stickiness.load_balancer_stickiness_manager import LoadBalancerStickinessManager
+from naylence.fame.stickiness.load_balancer_stickiness_manager import (
+    LoadBalancerStickinessManager,
+)
 
-from .load_balancing_strategy_factory import LoadBalancingStrategyConfig, LoadBalancingStrategyFactory
+from .load_balancing_strategy_factory import (
+    LoadBalancingStrategyConfig,
+    LoadBalancingStrategyFactory,
+)
 
 
 class StickyLoadBalancingStrategyConfig(LoadBalancingStrategyConfig):

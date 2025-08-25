@@ -61,7 +61,10 @@ class TestConnectorFactory:
             "url": "ws://localhost:8080/test",
             "auth": {
                 "type": "BearerTokenHeaderAuth",
-                "token_provider": {"type": "StaticTokenProvider", "token": "test-token"},
+                "token_provider": {
+                    "type": "StaticTokenProvider",
+                    "token": "test-token",
+                },
                 "param": "Authorization",
             },
         }

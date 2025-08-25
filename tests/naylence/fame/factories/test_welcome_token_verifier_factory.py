@@ -4,11 +4,15 @@ import pytest
 
 from naylence.fame.core import create_resource
 from naylence.fame.security.auth.jwks_jwt_token_verifier import JWKSJWTTokenVerifier
-from naylence.fame.security.auth.jwks_jwt_token_verifier_factory import JWKSVerifierConfig
+from naylence.fame.security.auth.jwks_jwt_token_verifier_factory import (
+    JWKSVerifierConfig,
+)
 from naylence.fame.security.auth.jwt_token_verifier import JWTTokenVerifier
 from naylence.fame.security.auth.jwt_token_verifier_factory import JWTVerifierConfig
 from naylence.fame.security.auth.noop_token_verifier import NoopTokenVerifier
-from naylence.fame.security.auth.noop_token_verifier_factory import NoopTokenVerifierConfig
+from naylence.fame.security.auth.noop_token_verifier_factory import (
+    NoopTokenVerifierConfig,
+)
 from naylence.fame.security.auth.shared_secret_token_verifier import (
     SharedSecretTokenVerifier,
 )
@@ -16,7 +20,9 @@ from naylence.fame.security.auth.shared_secret_token_verifier_factory import (
     SharedSecretVerifierConfig,
 )
 from naylence.fame.security.auth.token_verifier_factory import TokenVerifierFactory
-from naylence.fame.security.credential.credential_provider_factory import StaticCredentialProviderConfig
+from naylence.fame.security.credential.credential_provider_factory import (
+    StaticCredentialProviderConfig,
+)
 
 
 class TestTokenVerifierFactory:
@@ -78,7 +84,10 @@ class TestTokenVerifierFactory:
         """Test SharedSecret factory with dictionary configuration."""
         config = {
             "type": "SharedSecretTokenVerifier",
-            "secret": {"type": "StaticCredentialProvider", "credential_value": "dict-secret"},
+            "secret": {
+                "type": "StaticCredentialProvider",
+                "credential_value": "dict-secret",
+            },
         }
         verifier = await create_resource(TokenVerifierFactory, config)
 

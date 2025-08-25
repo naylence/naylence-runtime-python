@@ -134,8 +134,16 @@ def test_websocket_http_to_ws_conversion():
     [
         (None, "http://127.0.0.1:8080", "ws://127.0.0.1:8080"),
         ("http://localhost:8080", "http://localhost:8080", "ws://localhost:8080"),
-        ("https://secure.example.com", "https://secure.example.com", "wss://secure.example.com"),
-        ("http://api.test.local:9000", "http://api.test.local:9000", "ws://api.test.local:9000"),
+        (
+            "https://secure.example.com",
+            "https://secure.example.com",
+            "wss://secure.example.com",
+        ),
+        (
+            "http://api.test.local:9000",
+            "http://api.test.local:9000",
+            "ws://api.test.local:9000",
+        ),
     ],
 )
 def test_public_url_scenarios(public_url, expected_http, expected_ws):

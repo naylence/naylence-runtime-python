@@ -30,7 +30,9 @@ class KeyCorrelationMap:
     """
 
     def __init__(
-        self, ttl_sec: Union[int, float] = DEFAULT_KEY_CORRELATION_TTL_SEC, max_entries: int = 2048
+        self,
+        ttl_sec: Union[int, float] = DEFAULT_KEY_CORRELATION_TTL_SEC,
+        max_entries: int = 2048,
     ):
         """
         Initialize the correlation map.

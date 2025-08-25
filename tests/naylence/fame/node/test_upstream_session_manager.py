@@ -144,7 +144,10 @@ class MockAdmissionClient:
         # Create mock welcome envelope
         welcome_frame = Mock(spec=NodeWelcomeFrame)
         welcome_frame.expires_at = expires_at
-        welcome_frame.connector_directive = {"type": "WebSocketConnector", "params": {"url": "ws://test"}}
+        welcome_frame.connector_directive = {
+            "type": "WebSocketConnector",
+            "params": {"url": "ws://test"},
+        }
         welcome_frame.assigned_path = "/test/path"  # Add assigned_path for our new logic
         welcome_frame.accepted_logicals = requested_logicals
         welcome_frame.system_id = system_id  # Add system_id for certificate provisioning
@@ -404,9 +407,9 @@ class TestUpstreamSessionManager:
             await asyncio.sleep(0.5)  # Should trigger heartbeat timeout + backoff
 
             # Should have attempted reconnection
-            assert connect_count >= 2, (
-                f"Expected reconnection after heartbeat failure, but connect_count={connect_count}"
-            )
+            assert (
+                connect_count >= 2
+            ), f"Expected reconnection after heartbeat failure, but connect_count={connect_count}"
 
         finally:
             await self.cleanup_manager(manager)
@@ -471,9 +474,9 @@ class TestUpstreamSessionManager:
             await asyncio.sleep(0.5)
 
             # Should have reconnected
-            assert connect_count >= 2, (
-                f"Expected reconnection after transport close, but connect_count={connect_count}"
-            )
+            assert (
+                connect_count >= 2
+            ), f"Expected reconnection after transport close, but connect_count={connect_count}"
 
         finally:
             await self.cleanup_manager(manager)

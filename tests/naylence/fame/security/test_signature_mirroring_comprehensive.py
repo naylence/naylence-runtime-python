@@ -11,7 +11,13 @@ This test verifies that the signature mirroring logic correctly handles all scen
 
 import pytest
 
-from naylence.fame.core import DataFrame, DeliveryOriginType, FameDeliveryContext, FameEnvelope, generate_id
+from naylence.fame.core import (
+    DataFrame,
+    DeliveryOriginType,
+    FameDeliveryContext,
+    FameEnvelope,
+    generate_id,
+)
 from naylence.fame.core.protocol.delivery_context import SecurityContext
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
 from naylence.fame.security.policy.security_policy import (
@@ -31,7 +37,9 @@ async def test_signature_mirroring_signed_unencrypted_request():
     # Create security policy with mirror_request_signing enabled and plaintext responses allowed
     signing_config = SigningConfig(
         response=ResponseSigningRules(
-            mirror_request_signing=True, always_sign_responses=False, sign_error_responses=False
+            mirror_request_signing=True,
+            always_sign_responses=False,
+            sign_error_responses=False,
         )
     )
 
@@ -47,7 +55,8 @@ async def test_signature_mirroring_signed_unencrypted_request():
 
     # Create a response envelope
     envelope = FameEnvelope(
-        id=generate_id(), frame=DataFrame(payload={"response": "test data"}, codec="json")
+        id=generate_id(),
+        frame=DataFrame(payload={"response": "test data"}, codec="json"),
     )
 
     # Create context with PLAINTEXT crypto level and signed
@@ -88,7 +97,9 @@ async def test_signature_mirroring_unsigned_plaintext_request():
     # Create security policy with mirror_request_signing enabled and plaintext responses allowed
     signing_config = SigningConfig(
         response=ResponseSigningRules(
-            mirror_request_signing=True, always_sign_responses=False, sign_error_responses=False
+            mirror_request_signing=True,
+            always_sign_responses=False,
+            sign_error_responses=False,
         )
     )
 
@@ -104,7 +115,8 @@ async def test_signature_mirroring_unsigned_plaintext_request():
 
     # Create a response envelope
     envelope = FameEnvelope(
-        id=generate_id(), frame=DataFrame(payload={"response": "test data"}, codec="json")
+        id=generate_id(),
+        frame=DataFrame(payload={"response": "test data"}, codec="json"),
     )
 
     # Create context with PLAINTEXT crypto level and not signed
@@ -144,7 +156,9 @@ async def test_signature_mirroring_signed_encrypted_request():
     # Create security policy with mirror_request_signing enabled
     signing_config = SigningConfig(
         response=ResponseSigningRules(
-            mirror_request_signing=True, always_sign_responses=False, sign_error_responses=False
+            mirror_request_signing=True,
+            always_sign_responses=False,
+            sign_error_responses=False,
         )
     )
 
@@ -152,7 +166,8 @@ async def test_signature_mirroring_signed_encrypted_request():
 
     # Create a response envelope
     envelope = FameEnvelope(
-        id=generate_id(), frame=DataFrame(payload={"response": "test data"}, codec="json")
+        id=generate_id(),
+        frame=DataFrame(payload={"response": "test data"}, codec="json"),
     )
 
     # Create context with SEALED crypto level and signed
@@ -188,7 +203,9 @@ async def test_signature_mirroring_fallback_logic():
     # Create security policy with mirror_request_signing enabled
     signing_config = SigningConfig(
         response=ResponseSigningRules(
-            mirror_request_signing=True, always_sign_responses=False, sign_error_responses=False
+            mirror_request_signing=True,
+            always_sign_responses=False,
+            sign_error_responses=False,
         )
     )
 
@@ -196,7 +213,8 @@ async def test_signature_mirroring_fallback_logic():
 
     # Create a response envelope
     envelope = FameEnvelope(
-        cid=generate_id(), frame=DataFrame(payload={"response": "test data"}, codec="json")
+        cid=generate_id(),
+        frame=DataFrame(payload={"response": "test data"}, codec="json"),
     )
 
     # Create context with only crypto level (no inbound_was_signed field)
@@ -242,7 +260,8 @@ async def test_signature_mirroring_disabled_with_signed_request():
 
     # Create a response envelope
     envelope = FameEnvelope(
-        cid=generate_id(), frame=DataFrame(payload={"response": "test data"}, codec="json")
+        cid=generate_id(),
+        frame=DataFrame(payload={"response": "test data"}, codec="json"),
     )
 
     # Create context with signed request

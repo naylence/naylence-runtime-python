@@ -12,7 +12,10 @@ from naylence.fame.core import create_resource
 from naylence.fame.util.logging import getLogger
 
 from .load_balancing_strategy import LoadBalancingStrategy
-from .load_balancing_strategy_factory import LoadBalancingStrategyConfig, LoadBalancingStrategyFactory
+from .load_balancing_strategy_factory import (
+    LoadBalancingStrategyConfig,
+    LoadBalancingStrategyFactory,
+)
 
 logger = getLogger(__name__)
 

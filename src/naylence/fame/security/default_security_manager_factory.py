@@ -305,7 +305,10 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
 
     @classmethod
     async def _create_key_manager_from_config(
-        cls, config: dict, policy: Optional[SecurityPolicy], key_store: Optional[KeyStore] = None
+        cls,
+        config: dict,
+        policy: Optional[SecurityPolicy],
+        key_store: Optional[KeyStore] = None,
     ) -> Optional[KeyManager]:
         """Create key manager from configuration or auto-create if needed."""
         # Use the global key store singleton

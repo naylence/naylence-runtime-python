@@ -11,8 +11,12 @@ from naylence.fame.security.auth.auth_injection_strategy import (
     BearerTokenHeaderStrategy,
     NoAuthStrategy,
 )
-from naylence.fame.security.auth.auth_injection_strategy_factory import create_auth_strategy
-from naylence.fame.security.auth.static_token_provider_factory import StaticTokenProviderConfig
+from naylence.fame.security.auth.auth_injection_strategy_factory import (
+    create_auth_strategy,
+)
+from naylence.fame.security.auth.static_token_provider_factory import (
+    StaticTokenProviderConfig,
+)
 
 
 class TestAuthInjectionStrategy:

@@ -30,7 +30,9 @@ async def test_classify_message_crypto_level_channel_encryption():
 
     # Create a plain envelope (no envelope-level encryption)
     envelope = FameEnvelope(
-        id=generate_id(), frame=DataFrame(payload={"test": "data"}), to=FameAddress("test-service@test.com")
+        id=generate_id(),
+        frame=DataFrame(payload={"test": "data"}),
+        to=FameAddress("test-service@test.com"),
     )
 
     # Test: No context (should be PLAINTEXT)
@@ -50,7 +52,8 @@ async def test_classify_message_crypto_level_channel_encryption():
         sec=SecurityHeader(enc=EncryptionHeader(alg="chacha20-poly1305-channel", val="encrypted-data")),
     )
     context_with_channel = FameDeliveryContext(
-        origin_type=DeliveryOriginType.LOCAL, security=SecurityContext(crypto_channel_id="test-channel-123")
+        origin_type=DeliveryOriginType.LOCAL,
+        security=SecurityContext(crypto_channel_id="test-channel-123"),
     )
     crypto_level = policy.classify_message_crypto_level(channel_envelope, context_with_channel)
     assert crypto_level == CryptoLevel.CHANNEL
@@ -72,7 +75,8 @@ async def test_classify_message_crypto_level_sealed_takes_precedence():
 
     # Context with channel transport
     context_with_channel = FameDeliveryContext(
-        origin_type=DeliveryOriginType.LOCAL, security=SecurityContext(crypto_channel_id="test-channel-123")
+        origin_type=DeliveryOriginType.LOCAL,
+        security=SecurityContext(crypto_channel_id="test-channel-123"),
     )
 
     # Should classify as SEALED because envelope encryption is present
@@ -87,7 +91,9 @@ async def test_classify_message_crypto_level_precedence_order():
 
     # Base envelope without envelope encryption
     base_envelope = FameEnvelope(
-        id=generate_id(), frame=DataFrame(payload={"test": "data"}), to=FameAddress("test-service@test.com")
+        id=generate_id(),
+        frame=DataFrame(payload={"test": "data"}),
+        to=FameAddress("test-service@test.com"),
     )
 
     # PLAINTEXT: No encryption at any level
@@ -103,7 +109,8 @@ async def test_classify_message_crypto_level_precedence_order():
         sec=SecurityHeader(enc=EncryptionHeader(alg="chacha20-poly1305-channel", val="encrypted-data")),
     )
     channel_context = FameDeliveryContext(
-        origin_type=DeliveryOriginType.LOCAL, security=SecurityContext(crypto_channel_id="test-channel")
+        origin_type=DeliveryOriginType.LOCAL,
+        security=SecurityContext(crypto_channel_id="test-channel"),
     )
     crypto_level = policy.classify_message_crypto_level(channel_envelope, channel_context)
     assert crypto_level == CryptoLevel.CHANNEL
@@ -155,7 +162,9 @@ async def test_channel_context_preservation_in_responses():
 
     # Simulate a response without explicit context
     response_envelope = FameEnvelope(
-        id=generate_id(), frame=DataFrame(payload={"result": "success"}), to=FameAddress("client@test.com")
+        id=generate_id(),
+        frame=DataFrame(payload={"result": "success"}),
+        to=FameAddress("client@test.com"),
     )
 
     # Create a FameMessageResponse but don't use it in this test
@@ -168,13 +177,13 @@ async def test_channel_context_preservation_in_responses():
         from_system_id="test-node",
         security=SecurityContext(
             # Use inbound_crypto_level to represent the original request's crypto level
-            inbound_crypto_level=request_context.security.inbound_crypto_level
-            if request_context.security
-            else None,
+            inbound_crypto_level=(
+                request_context.security.inbound_crypto_level if request_context.security else None
+            ),
             # Channel information should be inherited
-            crypto_channel_id=request_context.security.crypto_channel_id
-            if request_context.security
-            else None,
+            crypto_channel_id=(
+                request_context.security.crypto_channel_id if request_context.security else None
+            ),
         ),
     )
 

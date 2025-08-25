@@ -128,7 +128,11 @@ class TestSentinelComprehensive:
         assert sentinel.security_manager == sentinel._security_manager
 
     async def test_sentinel_lifecycle_with_peers(
-        self, mock_security_manager, mock_route_store, mock_attach_client, mock_admission_client
+        self,
+        mock_security_manager,
+        mock_route_store,
+        mock_attach_client,
+        mock_admission_client,
     ):
         """Test Sentinel lifecycle with peers."""
         # Create peer
@@ -151,7 +155,8 @@ class TestSentinelComprehensive:
         mock_session_manager.system_id = "test-peer-session"
 
         with patch(
-            "naylence.fame.sentinel.sentinel.UpstreamSessionManager", return_value=mock_session_manager
+            "naylence.fame.sentinel.sentinel.UpstreamSessionManager",
+            return_value=mock_session_manager,
         ):
             await sentinel.start()
 
@@ -191,7 +196,10 @@ class TestSentinelComprehensive:
         mock_connector = MagicMock(spec=FameConnector)
         mock_connector.start = AsyncMock()
 
-        with patch("naylence.fame.sentinel.sentinel.create_resource", return_value=mock_connector):
+        with patch(
+            "naylence.fame.sentinel.sentinel.create_resource",
+            return_value=mock_connector,
+        ):
             connector = await sentinel.create_origin_connector(
                 origin_type=DeliveryOriginType.DOWNSTREAM,
                 system_id="test-system",
@@ -217,7 +225,10 @@ class TestSentinelComprehensive:
 
         mock_connector.start = capture_start
 
-        with patch("naylence.fame.sentinel.sentinel.create_resource", return_value=mock_connector):
+        with patch(
+            "naylence.fame.sentinel.sentinel.create_resource",
+            return_value=mock_connector,
+        ):
             await sentinel.create_origin_connector(
                 origin_type=DeliveryOriginType.DOWNSTREAM,
                 system_id="test-system",
@@ -257,7 +268,10 @@ class TestSentinelComprehensive:
 
         mock_connector.start = capture_start
 
-        with patch("naylence.fame.sentinel.sentinel.create_resource", return_value=mock_connector):
+        with patch(
+            "naylence.fame.sentinel.sentinel.create_resource",
+            return_value=mock_connector,
+        ):
             await sentinel.create_origin_connector(
                 origin_type=DeliveryOriginType.DOWNSTREAM,
                 system_id="test-system",
@@ -541,20 +555,25 @@ class TestSentinelComprehensive:
 
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[1] if len(args) > 1 else args[0]
+            side_effect=lambda event, *args, **kwargs: (args[1] if len(args) > 1 else args[0])
         )
 
         # Test different frame types
         test_cases = [
             (
                 NodeAttachFrame(
-                    system_id="test", instance_id="test", assigned_path="/test", capabilities=[]
+                    system_id="test",
+                    instance_id="test",
+                    assigned_path="/test",
+                    capabilities=[],
                 ),
                 "accept_node_attach",
             ),
             (
                 AddressBindFrame(
-                    address=FameAddress("test@/test"), encryption_key_id="key", corr_id="corr"
+                    address=FameAddress("test@/test"),
+                    encryption_key_id="key",
+                    corr_id="corr",
                 ),
                 "accept_address_bind",
             ),
@@ -570,7 +589,10 @@ class TestSentinelComprehensive:
                 CapabilityWithdrawFrame(capabilities=["test-cap"], address=FameAddress("test@/test")),
                 "accept_capability_withdraw",
             ),
-            (CreditUpdateFrame(flow_id="test-flow", credits=100), "accept_credit_update"),
+            (
+                CreditUpdateFrame(flow_id="test-flow", credits=100),
+                "accept_credit_update",
+            ),
             (NodeHeartbeatFrame(), "accept_node_heartbeat"),
         ]
 
@@ -636,7 +658,7 @@ class TestSentinelComprehensive:
         """Test forward_to_route when route doesn't exist."""
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[2] if len(args) > 2 else args[1]
+            side_effect=lambda event, *args, **kwargs: (args[2] if len(args) > 2 else args[1])
         )
 
         # Mock emit_delivery_nack
@@ -656,7 +678,7 @@ class TestSentinelComprehensive:
         """Test forward_to_route with flow tracking."""
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[2] if len(args) > 2 else args[1]
+            side_effect=lambda event, *args, **kwargs: (args[2] if len(args) > 2 else args[1])
         )
 
         # Set up route
@@ -682,7 +704,7 @@ class TestSentinelComprehensive:
         """Test forward_to_peer when peer route doesn't exist."""
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[2] if len(args) > 2 else args[1]
+            side_effect=lambda event, *args, **kwargs: (args[2] if len(args) > 2 else args[1])
         )
 
         # Mock emit_delivery_nack
@@ -702,7 +724,7 @@ class TestSentinelComprehensive:
         """Test forward_to_peer with flow tracking."""
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[2] if len(args) > 2 else args[1]
+            side_effect=lambda event, *args, **kwargs: (args[2] if len(args) > 2 else args[1])
         )
 
         # Set up peer route
@@ -727,7 +749,7 @@ class TestSentinelComprehensive:
         """Test forward_to_peers to all peers."""
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[1] if len(args) > 1 else args[0]
+            side_effect=lambda event, *args, **kwargs: (args[1] if len(args) > 1 else args[0])
         )
 
         # Set up peer routes
@@ -752,7 +774,7 @@ class TestSentinelComprehensive:
         """Test forward_to_peers with exclusions."""
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[1] if len(args) > 1 else args[0]
+            side_effect=lambda event, *args, **kwargs: (args[1] if len(args) > 1 else args[0])
         )
 
         # Set up peer routes
@@ -778,7 +800,7 @@ class TestSentinelComprehensive:
         """Test forward_to_peers when specified peer doesn't exist."""
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[1] if len(args) > 1 else args[0]
+            side_effect=lambda event, *args, **kwargs: (args[1] if len(args) > 1 else args[0])
         )
 
         envelope = create_fame_envelope(frame=NodeHeartbeatFrame())
@@ -792,7 +814,7 @@ class TestSentinelComprehensive:
         """Test forward_upstream with flow tracking."""
         # Mock dispatch_envelope_event to return the envelope unchanged
         sentinel._dispatch_envelope_event = AsyncMock(
-            side_effect=lambda event, *args, **kwargs: args[1] if len(args) > 1 else args[0]
+            side_effect=lambda event, *args, **kwargs: (args[1] if len(args) > 1 else args[0])
         )
 
         # Mock parent class forward_upstream
@@ -844,7 +866,8 @@ class TestSentinelComprehensive:
         mock_session_manager.system_id = "peer-session-id"
 
         with patch(
-            "naylence.fame.sentinel.sentinel.UpstreamSessionManager", return_value=mock_session_manager
+            "naylence.fame.sentinel.sentinel.UpstreamSessionManager",
+            return_value=mock_session_manager,
         ):
             await sentinel._connect_to_peer(peer)
 

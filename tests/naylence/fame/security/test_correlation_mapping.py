@@ -66,7 +66,9 @@ async def test_address_based_key_request_correlation():
 
         # Simulate requesting an encryption key by address
         await handler._maybe_request_encryption_key_by_address(
-            address=test_address, origin=DeliveryOriginType.LOCAL, from_system_id="test-client"
+            address=test_address,
+            origin=DeliveryOriginType.LOCAL,
+            from_system_id="test-client",
         )
 
         # Verify that the correlation mapping was stored
@@ -184,7 +186,9 @@ async def test_correlation_cleanup_on_timeout():
 
         # Simulate requesting an encryption key by address
         await handler._maybe_request_encryption_key_by_address(
-            address=test_address, origin=DeliveryOriginType.LOCAL, from_system_id="test-client"
+            address=test_address,
+            origin=DeliveryOriginType.LOCAL,
+            from_system_id="test-client",
         )
 
         # Verify correlation mapping was stored

@@ -10,14 +10,18 @@ from naylence.fame.security.auth.oauth2_client_credentials_token_provider import
 from naylence.fame.security.auth.oauth2_client_credentials_token_provider_factory import (
     OAuth2ClientCredentialsTokenProviderConfig,
 )
-from naylence.fame.security.auth.shared_secret_token_provider import SharedSecretTokenProvider
+from naylence.fame.security.auth.shared_secret_token_provider import (
+    SharedSecretTokenProvider,
+)
 from naylence.fame.security.auth.shared_secret_token_provider_factory import (
     SharedSecretTokenProviderConfig,
 )
 from naylence.fame.security.auth.token_provider_factory import (
     TokenProviderFactory,
 )
-from naylence.fame.security.credential.credential_provider_factory import StaticCredentialProviderConfig
+from naylence.fame.security.credential.credential_provider_factory import (
+    StaticCredentialProviderConfig,
+)
 
 
 class TestTokenProviderFactory:
@@ -69,7 +73,10 @@ class TestTokenProviderFactory:
         """Test factory with dictionary configuration."""
         config = {
             "type": "SharedSecretTokenProvider",
-            "secret": {"type": "StaticCredentialProvider", "credential_value": "dict-secret"},
+            "secret": {
+                "type": "StaticCredentialProvider",
+                "credential_value": "dict-secret",
+            },
         }
         provider = await create_resource(TokenProviderFactory, config)
 

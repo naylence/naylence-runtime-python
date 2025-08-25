@@ -185,7 +185,8 @@ class CompleteStreamingService(FameService):
 
                     # Create envelope
                     frame = DataFrame(
-                        payload=rpc_response, corr_id=str(request_id) if request_id is not None else None
+                        payload=rpc_response,
+                        corr_id=str(request_id) if request_id is not None else None,
                     )
                     response_envelope = create_fame_envelope(
                         frame=frame,
@@ -203,7 +204,8 @@ class CompleteStreamingService(FameService):
                 # Send final null response to signal end of stream
                 final_response = make_response(id=request_id or "unknown", result=None)
                 frame = DataFrame(
-                    payload=final_response, corr_id=str(request_id) if request_id is not None else None
+                    payload=final_response,
+                    corr_id=str(request_id) if request_id is not None else None,
                 )
                 final_envelope = create_fame_envelope(
                     frame=frame,
@@ -219,11 +221,13 @@ class CompleteStreamingService(FameService):
         else:
             # Error response
             error_response = make_response(
-                id=request_id or "unknown", error={"code": -32601, "message": f"Method not found: {method}"}
+                id=request_id or "unknown",
+                error={"code": -32601, "message": f"Method not found: {method}"},
             )
 
             frame = DataFrame(
-                payload=error_response, corr_id=str(request_id) if request_id is not None else None
+                payload=error_response,
+                corr_id=str(request_id) if request_id is not None else None,
             )
             response_envelope = create_fame_envelope(
                 frame=frame,
@@ -318,7 +322,10 @@ async def test_complete_end_of_stream_signaling(fabric, complete_service):
     # Use the node's invoke_stream method which handles null sentinels
     node = fabric.node
     stream = await node.invoke_stream(
-        target_addr=complete_service, method="fib_stream_complete", params={"n": 5}, timeout_ms=5000
+        target_addr=complete_service,
+        method="fib_stream_complete",
+        params={"n": 5},
+        timeout_ms=5000,
     )
 
     results = [result async for result in stream]
@@ -372,7 +379,13 @@ async def test_concurrent_streaming_and_regular_rpc(fabric, streaming_service):
 
     # Verify both worked correctly
     assert regular_results == [0, 3, 6], f"Regular RPC failed: {regular_results}"
-    assert streaming_results == [0, 1, 2, 3, 4], f"Streaming RPC failed: {streaming_results}"
+    assert streaming_results == [
+        0,
+        1,
+        2,
+        3,
+        4,
+    ], f"Streaming RPC failed: {streaming_results}"
 
 
 @pytest.mark.asyncio

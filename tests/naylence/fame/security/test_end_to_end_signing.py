@@ -1,4 +1,10 @@
-from naylence.fame.core import DataFrame, DeliveryOriginType, FameAddress, FameDeliveryContext, FameEnvelope
+from naylence.fame.core import (
+    DataFrame,
+    DeliveryOriginType,
+    FameAddress,
+    FameDeliveryContext,
+    FameEnvelope,
+)
 from naylence.fame.node.node_config import FameNodeConfig
 from naylence.fame.node.node_factory import NodeFactory
 

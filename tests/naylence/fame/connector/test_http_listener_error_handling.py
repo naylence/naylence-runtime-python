@@ -30,7 +30,9 @@ async def test_node_attach_error_handling():
     try:
         # Create mock attach frame with required fields
         attach_frame = NodeAttachFrame(
-            system_id="test-system", instance_id="test-instance", supported_inbound_connectors=[]
+            system_id="test-system",
+            instance_id="test-instance",
+            supported_inbound_connectors=[],
         )
 
         # This should catch the exception and handle it gracefully
@@ -59,7 +61,11 @@ async def test_http_listener_immediate_feedback():
     # Test that the listener can be created and configured properly
     # This is mainly a configuration test since the error handling
     # would need actual request simulation which is complex
-    NodeAttachFrame(system_id="test-system", instance_id="test-instance", supported_inbound_connectors=[])
+    NodeAttachFrame(
+        system_id="test-system",
+        instance_id="test-instance",
+        supported_inbound_connectors=[],
+    )
 
     # The listener should handle this case and provide immediate feedback
     # (Implementation details depend on actual error handling strategy)

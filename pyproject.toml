@@ -65,6 +65,9 @@ venvPath = "."
 venv = ".venv"
 standard = ["src/naylence/**/*.py"]
 
+[tool.black]
+line-length = 108
+
 [tool.ruff.lint]
 select = ["C4", "E", "F", "I", "PERF", "UP"]
 ignore = ["PERF203", "UP006", "UP007", "UP035"]

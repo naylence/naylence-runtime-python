@@ -104,7 +104,11 @@ async def test_attachment_ttl_limited_by_earliest_key_expiry():
     connector_config = MockConnectorConfig()
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     # Create key validator that returns our test keys
     key_validator = MockAttachmentKeyValidator(key_infos=key_infos)
@@ -145,9 +149,9 @@ async def test_attachment_ttl_limited_by_earliest_key_expiry():
     assert actual_expires_at is not None, "expires_at should be set"
 
     # Should be limited to early_expire (30 minutes), not the original 1 hour
-    assert abs((actual_expires_at - early_expire).total_seconds()) < 1, (
-        f"Expected expires_at to be limited to {early_expire}, got {actual_expires_at}"
-    )
+    assert (
+        abs((actual_expires_at - early_expire).total_seconds()) < 1
+    ), f"Expected expires_at to be limited to {early_expire}, got {actual_expires_at}"
 
 
 @pytest.mark.asyncio
@@ -187,7 +191,11 @@ async def test_attachment_ttl_not_limited_when_keys_expire_later():
     connector_config = MockConnectorConfig()
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     key_validator = MockAttachmentKeyValidator(key_infos=key_infos)
 
@@ -225,9 +233,9 @@ async def test_attachment_ttl_not_limited_when_keys_expire_later():
     assert actual_expires_at is not None, "expires_at should be set"
 
     # Should be close to the original calculated expiry (within 1 second tolerance)
-    assert abs((actual_expires_at - calculated_expire).total_seconds()) < 1, (
-        f"Expected expires_at to be around {calculated_expire}, got {actual_expires_at}"
-    )
+    assert (
+        abs((actual_expires_at - calculated_expire).total_seconds()) < 1
+    ), f"Expected expires_at to be around {calculated_expire}, got {actual_expires_at}"
 
 
 @pytest.mark.asyncio
@@ -266,7 +274,11 @@ async def test_attachment_ttl_with_no_max_ttl_but_keys_have_expiry():
     connector_config = MockConnectorConfig()
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     key_validator = MockAttachmentKeyValidator(key_infos=key_infos)
 
@@ -305,9 +317,9 @@ async def test_attachment_ttl_with_no_max_ttl_but_keys_have_expiry():
     assert actual_expires_at is not None, "expires_at should be set based on key expiry"
 
     # Should be set to the earliest key expiry (30 minutes)
-    assert abs((actual_expires_at - key_expire_time).total_seconds()) < 1, (
-        f"Expected expires_at to be set to earliest key expiry {key_expire_time}, got {actual_expires_at}"
-    )
+    assert (
+        abs((actual_expires_at - key_expire_time).total_seconds()) < 1
+    ), f"Expected expires_at to be set to earliest key expiry {key_expire_time}, got {actual_expires_at}"
 
 
 @pytest.mark.asyncio
@@ -341,7 +353,11 @@ async def test_attachment_ttl_with_no_max_ttl_and_no_key_expiry():
     connector_config = MockConnectorConfig()
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     key_validator = MockAttachmentKeyValidator(key_infos=key_infos)
 
@@ -417,7 +433,11 @@ async def test_attachment_ttl_with_keys_without_expiry():
     connector_config = MockConnectorConfig()
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     key_validator = MockAttachmentKeyValidator(key_infos=key_infos)
 
@@ -455,9 +475,9 @@ async def test_attachment_ttl_with_keys_without_expiry():
     assert actual_expires_at is not None, "expires_at should be set"
 
     # Should be close to the original calculated expiry
-    assert abs((actual_expires_at - calculated_expire).total_seconds()) < 1, (
-        f"Expected expires_at to be around {calculated_expire}, got {actual_expires_at}"
-    )
+    assert (
+        abs((actual_expires_at - calculated_expire).total_seconds()) < 1
+    ), f"Expected expires_at to be around {calculated_expire}, got {actual_expires_at}"
 
 
 @pytest.mark.asyncio
@@ -494,7 +514,11 @@ async def test_attachment_ttl_with_no_keys():
     connector_config = MockConnectorConfig()
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     key_validator = MockAttachmentKeyValidator(key_infos=key_infos)
 
@@ -532,9 +556,9 @@ async def test_attachment_ttl_with_no_keys():
     assert actual_expires_at is not None, "expires_at should be set"
 
     # Should be close to the original calculated expiry
-    assert abs((actual_expires_at - calculated_expire).total_seconds()) < 1, (
-        f"Expected expires_at to be around {calculated_expire}, got {actual_expires_at}"
-    )
+    assert (
+        abs((actual_expires_at - calculated_expire).total_seconds()) < 1
+    ), f"Expected expires_at to be around {calculated_expire}, got {actual_expires_at}"
 
 
 @pytest.mark.asyncio
@@ -568,7 +592,11 @@ async def test_attachment_ttl_with_no_validator():
     connector_config = MockConnectorConfig()
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     # Create handler WITHOUT key validator
     handler = NodeAttachFrameHandler(
@@ -605,9 +633,9 @@ async def test_attachment_ttl_with_no_validator():
     assert actual_expires_at is not None, "expires_at should be set"
 
     # Should be close to the original calculated expiry
-    assert abs((actual_expires_at - calculated_expire).total_seconds()) < 1, (
-        f"Expected expires_at to be around {calculated_expire}, got {actual_expires_at}"
-    )
+    assert (
+        abs((actual_expires_at - calculated_expire).total_seconds()) < 1
+    ), f"Expected expires_at to be around {calculated_expire}, got {actual_expires_at}"
 
 
 @pytest.mark.asyncio
@@ -632,7 +660,11 @@ async def test_key_validation_failure_still_rejects_attachment():
     connector_config = MockConnectorConfig()
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     # Create key validator that fails
     key_validator = MockAttachmentKeyValidator(should_fail=True)

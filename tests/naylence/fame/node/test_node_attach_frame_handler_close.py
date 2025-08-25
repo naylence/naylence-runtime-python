@@ -55,7 +55,11 @@ async def test_node_attach_frame_handler_no_longer_closes_connections():
     connector_config = MockConnectorConfig()  # Use proper config instead of None
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     # Create handler (authorization is now centralized, no authorizer needed)
     handler = NodeAttachFrameHandler(
@@ -135,7 +139,11 @@ async def test_node_attach_frame_handler_still_works_successfully():
     connector_config = MockConnectorConfig()  # Use proper config instead of None
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (mock_connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        mock_connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     # Create handler (authorization is now centralized, no authorizer needed)
     handler = NodeAttachFrameHandler(

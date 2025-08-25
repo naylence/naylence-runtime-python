@@ -3,7 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, List, Optional
 
-from naylence.fame.constants.ttl_constants import DEFAULT_DIRECT_ADMISSION_TTL_SEC, TTL_NEVER_EXPIRES
+from naylence.fame.constants.ttl_constants import (
+    DEFAULT_DIRECT_ADMISSION_TTL_SEC,
+    TTL_NEVER_EXPIRES,
+)
 from naylence.fame.core import FameEnvelopeWith, NodeWelcomeFrame, generate_id
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.util import logging

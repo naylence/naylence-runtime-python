@@ -117,9 +117,9 @@ class NodeAttachFrameHandler(TaskSpawner):
                         instance_id=frame.instance_id,
                         correlation_id=envelope.corr_id,
                         validated_keys=len(key_infos),
-                        final_attach_expires_at=attach_expires_at.isoformat()
-                        if attach_expires_at
-                        else None,
+                        final_attach_expires_at=(
+                            attach_expires_at.isoformat() if attach_expires_at else None
+                        ),
                     )
 
             except KeyValidationError as e:

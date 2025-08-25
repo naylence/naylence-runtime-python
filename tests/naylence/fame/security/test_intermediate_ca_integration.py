@@ -38,9 +38,17 @@ async def test_intermediate_ca_signing_integration():
     print("🔐 Starting Intermediate CA Signing Integration Test\n")
 
     try:
-        from naylence.fame.fastapi.ca_signing_router import CertificateSigningRequest, LocalCASigningService
-        from naylence.fame.security.cert.ca_service import CASigningService, create_test_ca
-        from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
+        from naylence.fame.fastapi.ca_signing_router import (
+            CertificateSigningRequest,
+            LocalCASigningService,
+        )
+        from naylence.fame.security.cert.ca_service import (
+            CASigningService,
+            create_test_ca,
+        )
+        from naylence.fame.security.crypto.providers.default_crypto_provider import (
+            DefaultCryptoProvider,
+        )
 
         # Step 1: Create Root CA
         print("1️⃣ Creating Root CA...")
@@ -54,7 +62,8 @@ async def test_intermediate_ca_signing_integration():
         intermediate_public_key_pem = (
             intermediate_private_key.public_key()
             .public_bytes(
-                encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
             .decode()
         )

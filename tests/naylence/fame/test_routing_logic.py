@@ -12,7 +12,9 @@ print("=" * 60)
 def test_connector_routing_logic():
     """Test the specific logic changes we made to the HTTP connector router"""
 
-    from naylence.fame.connector.http_stateless_connector_factory import HttpStatelessConnectorConfig
+    from naylence.fame.connector.http_stateless_connector_factory import (
+        HttpStatelessConnectorConfig,
+    )
     from naylence.fame.sentinel.store.route_store import RouteEntry
 
     print("✓ Testing RouteEntry with supported_inbound_connectors...")
@@ -26,7 +28,10 @@ def test_connector_routing_logic():
     child_inbound_connector = {
         "type": "HttpStatelessConnector",
         "url": child_inbound_config.url,
-        "params": {"max_queue": child_inbound_config.max_queue, "kind": child_inbound_config.kind},
+        "params": {
+            "max_queue": child_inbound_config.max_queue,
+            "kind": child_inbound_config.kind,
+        },
     }
 
     # Create route entry like NodeAttachFrameHandler would store
@@ -156,7 +161,12 @@ def test_wire_protocol_completeness():
     print(f"✓ Generated wire protocol for: {frame.system_id}")
 
     # Check completeness
-    required_top_level = ["type", "system_id", "instance_id", "supported_inbound_connectors"]
+    required_top_level = [
+        "type",
+        "system_id",
+        "instance_id",
+        "supported_inbound_connectors",
+    ]
     missing_top = [f for f in required_top_level if f not in parsed]
 
     if missing_top:
@@ -193,9 +203,9 @@ def test_wire_protocol_completeness():
 
     # Add assertions for pytest
     assert first_connector["type"] == "HttpStatelessConnector", "Connector type should match"
-    assert first_connector.get("url") == "http://agent.internal:8001/fame/v1/ingress/upstream", (
-        "URL should match"
-    )
+    assert (
+        first_connector.get("url") == "http://agent.internal:8001/fame/v1/ingress/upstream"
+    ), "URL should match"
     assert params["max_queue"] == 4096, "Max queue should match"
 
 

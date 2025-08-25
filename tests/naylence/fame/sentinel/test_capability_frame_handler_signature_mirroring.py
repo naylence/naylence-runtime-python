@@ -131,18 +131,18 @@ class TestCapabilityFrameHandlerSignatureMirroring:
         segment, response_envelope, response_context = call_args[0]
 
         # Verify the response context is LOCAL origin (key for signing)
-        assert response_context.origin_type == DeliveryOriginType.LOCAL, (
-            "Response context must be LOCAL origin for security policy to sign it"
-        )
+        assert (
+            response_context.origin_type == DeliveryOriginType.LOCAL
+        ), "Response context must be LOCAL origin for security policy to sign it"
 
         # Verify security information is preserved for mirroring
         assert response_context.security is not None, "Security context should be preserved"
-        assert response_context.security.inbound_was_signed is True, (
-            "inbound_was_signed should be preserved for signature mirroring"
-        )
-        assert response_context.security.inbound_crypto_level == "signed", (
-            "Crypto level should be preserved"
-        )
+        assert (
+            response_context.security.inbound_was_signed is True
+        ), "inbound_was_signed should be preserved for signature mirroring"
+        assert (
+            response_context.security.inbound_crypto_level == "signed"
+        ), "Crypto level should be preserved"
 
         # Verify the response envelope contains the correct frame
         assert isinstance(response_envelope.frame, CapabilityAdvertiseAckFrame)
@@ -235,9 +235,9 @@ class TestCapabilityFrameHandlerSignatureMirroring:
         segment, response_envelope, response_context = call_args[0]
 
         # FIXED BEHAVIOR: Now uses LOCAL context like advertise
-        assert response_context.origin_type == DeliveryOriginType.LOCAL, (
-            "FIXED: Withdraw ACK now uses LOCAL origin for signing policy to apply"
-        )
+        assert (
+            response_context.origin_type == DeliveryOriginType.LOCAL
+        ), "FIXED: Withdraw ACK now uses LOCAL origin for signing policy to apply"
 
         # Verify security information is preserved for mirroring
         assert response_context.security is not None
@@ -316,7 +316,9 @@ class TestCapabilityFrameHandlerSignatureMirroring:
             origin_type=DeliveryOriginType.DOWNSTREAM,
             from_system_id="test-node-456",
             security=SecurityContext(
-                inbound_was_signed=True, inbound_crypto_level="sealed", crypto_channel_id="channel-123"
+                inbound_was_signed=True,
+                inbound_crypto_level="sealed",
+                crypto_channel_id="channel-123",
             ),
         )
 
@@ -347,7 +349,11 @@ class TestCapabilityFrameHandlerSignatureMirroring:
     ):
         """Test that multiple capabilities in one frame are handled correctly."""
         frame = CapabilityAdvertiseFrame(
-            capabilities=["fame.capability.multi1", "fame.capability.multi2", "fame.capability.multi3"],
+            capabilities=[
+                "fame.capability.multi1",
+                "fame.capability.multi2",
+                "fame.capability.multi3",
+            ],
             address=FameAddress("multi@test-node-456.fame.fabric"),
         )
         envelope = create_fame_envelope(frame=frame, corr_id=generate_id())
@@ -361,7 +367,11 @@ class TestCapabilityFrameHandlerSignatureMirroring:
         assert "fame.capability.multi3" in capability_handler._cap_routes
 
         # All should point to the same address and segment
-        for cap in ["fame.capability.multi1", "fame.capability.multi2", "fame.capability.multi3"]:
+        for cap in [
+            "fame.capability.multi1",
+            "fame.capability.multi2",
+            "fame.capability.multi3",
+        ]:
             routes = capability_handler._cap_routes[cap]
             assert FameAddress("multi@test-node-456.fame.fabric") in routes
             assert routes[FameAddress("multi@test-node-456.fame.fabric")] == "test-node-456"

@@ -3,7 +3,9 @@
 from typing import Any, Optional, Sequence
 
 from naylence.fame.core import FameEnvelope
-from naylence.fame.stickiness.load_balancer_stickiness_manager import LoadBalancerStickinessManager
+from naylence.fame.stickiness.load_balancer_stickiness_manager import (
+    LoadBalancerStickinessManager,
+)
 from naylence.fame.util.logging import getLogger
 
 from .load_balancing_strategy import LoadBalancingStrategy

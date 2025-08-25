@@ -31,14 +31,18 @@ from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
 @pytest.fixture
 async def mock_node():
     """Create a node with mocked components for testing."""
-    from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
+    from naylence.fame.security.policy.default_security_policy import (
+        DefaultSecurityPolicy,
+    )
     from naylence.fame.security.security_manager_factory import SecurityManagerFactory
 
     # Create a node with minimal security setup
     node_security = await SecurityManagerFactory.create_security_manager(policy=DefaultSecurityPolicy())
 
     from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
+    from naylence.fame.tracking.default_delivery_tracker_factory import (
+        DefaultDeliveryTrackerFactory,
+    )
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
@@ -192,7 +196,10 @@ async def test_invalid_signature_violation_sends_nack(mock_node, strict_signing_
         reply_to=FameAddress("sender@test"),
     )
     # Add a mock signature
-    from naylence.fame.core.protocol.security_header import SecurityHeader, SignatureHeader
+    from naylence.fame.core.protocol.security_header import (
+        SecurityHeader,
+        SignatureHeader,
+    )
 
     envelope.sec = SecurityHeader(sig=SignatureHeader(alg="test", kid="test-key", val="invalid"))
 

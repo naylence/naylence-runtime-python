@@ -72,7 +72,9 @@ def validate_ttl_sec(
     return ttl_sec
 
 
-def validate_node_attach_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Optional[Union[int, float]]:
+def validate_node_attach_ttl_sec(
+    ttl_sec: Optional[Union[int, float]],
+) -> Optional[Union[int, float]]:
     """Validate a node attachment TTL value."""
     return validate_ttl_sec(
         ttl_sec,
@@ -83,7 +85,9 @@ def validate_node_attach_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Option
     )
 
 
-def validate_oauth2_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Optional[Union[int, float]]:
+def validate_oauth2_ttl_sec(
+    ttl_sec: Optional[Union[int, float]],
+) -> Optional[Union[int, float]]:
     """Validate an OAuth2 authorization TTL value."""
     return validate_ttl_sec(
         ttl_sec,
@@ -94,7 +98,9 @@ def validate_oauth2_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Optional[Un
     )
 
 
-def validate_jwt_token_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Optional[Union[int, float]]:
+def validate_jwt_token_ttl_sec(
+    ttl_sec: Optional[Union[int, float]],
+) -> Optional[Union[int, float]]:
     """Validate a JWT token TTL value."""
     return validate_ttl_sec(
         ttl_sec,
@@ -105,7 +111,9 @@ def validate_jwt_token_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Optional
     )
 
 
-def validate_cache_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Optional[Union[int, float]]:
+def validate_cache_ttl_sec(
+    ttl_sec: Optional[Union[int, float]],
+) -> Optional[Union[int, float]]:
     """Validate a cache TTL value."""
     return validate_ttl_sec(
         ttl_sec,
@@ -116,7 +124,9 @@ def validate_cache_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Optional[Uni
     )
 
 
-def validate_key_correlation_ttl_sec(ttl_sec: Optional[Union[int, float]]) -> Optional[Union[int, float]]:
+def validate_key_correlation_ttl_sec(
+    ttl_sec: Optional[Union[int, float]],
+) -> Optional[Union[int, float]]:
     """Validate a key correlation TTL value."""
     return validate_ttl_sec(
         ttl_sec,

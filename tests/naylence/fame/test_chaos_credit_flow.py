@@ -11,7 +11,9 @@ from naylence.fame.node.node_meta import NodeMeta
 from naylence.fame.service.in_memory_sink_service import InMemorySinkService
 from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
 from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
+from naylence.fame.tracking.default_delivery_tracker_factory import (
+    DefaultDeliveryTrackerFactory,
+)
 from tests.naylence.fame.helpers.chaos_harness import default_delay, inject_chaos
 
 # ─────────────────────────────  tier parameters  ───────────────────────────── #

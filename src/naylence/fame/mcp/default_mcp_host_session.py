@@ -85,7 +85,7 @@ class DefaultMCPHostSession(MCPHostSession):
 
     async def _internal_message_handler(
         self,
-        message: (RequestResponder[ServerRequest, ClientResult] | ServerNotification | Exception),
+        message: RequestResponder[ServerRequest, ClientResult] | ServerNotification | Exception,
     ) -> None:
         if isinstance(message, ServerNotification):
             match message.root:

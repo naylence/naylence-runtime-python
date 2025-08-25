@@ -13,7 +13,10 @@ from naylence.fame.tracking.delivery_tracker import (
     DeliveryTrackerEventHandler,
     RetryEventHandler,
 )
-from naylence.fame.tracking.delivery_tracker_factory import DeliveryTrackerConfig, DeliveryTrackerFactory
+from naylence.fame.tracking.delivery_tracker_factory import (
+    DeliveryTrackerConfig,
+    DeliveryTrackerFactory,
+)
 
 
 class DefaultDeliveryTrackerConfig(DeliveryTrackerConfig):
@@ -37,8 +40,12 @@ class DefaultDeliveryTrackerFactory(DeliveryTrackerFactory):
         retry_handler: Optional[RetryEventHandler] = None,
         **kwargs,
     ) -> DeliveryTracker:
-        from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-        from naylence.fame.tracking.default_delivery_tracker import DefaultDeliveryTracker
+        from naylence.fame.storage.in_memory_storage_provider import (
+            InMemoryStorageProvider,
+        )
+        from naylence.fame.tracking.default_delivery_tracker import (
+            DefaultDeliveryTracker,
+        )
         from naylence.fame.tracking.delivery_tracker import TrackedEnvelope
 
         # Handle config dict conversion

@@ -29,11 +29,17 @@ class MockNode:
         result = []
 
         # Simulate discovering HTTP connector
-        http_connector = {"connector_type": "http", "config": {"port": 8080, "host": "localhost"}}
+        http_connector = {
+            "connector_type": "http",
+            "config": {"port": 8080, "host": "localhost"},
+        }
         result.append(http_connector)
 
         # Simulate discovering WebSocket connector
-        ws_connector = {"connector_type": "websocket", "config": {"port": 8081, "host": "localhost"}}
+        ws_connector = {
+            "connector_type": "websocket",
+            "config": {"port": 8081, "host": "localhost"},
+        }
         result.append(ws_connector)
 
         return result

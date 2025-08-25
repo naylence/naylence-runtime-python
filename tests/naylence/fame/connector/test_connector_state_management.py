@@ -117,7 +117,11 @@ def test_state_transition_capabilities():
         print(f"✓ {state} can stop")
 
     # Test can_close property
-    can_close_states = [ConnectorState.INITIALIZED, ConnectorState.STARTED, ConnectorState.STOPPED]
+    can_close_states = [
+        ConnectorState.INITIALIZED,
+        ConnectorState.STARTED,
+        ConnectorState.STOPPED,
+    ]
     for state in can_close_states:
         assert state.can_close, f"{state} should be able to close"
         print(f"✓ {state} can close")
@@ -165,7 +169,11 @@ def test_backward_compatibility():
     assert connector.state == connector.connector_state
 
     # Test through state changes
-    for state in [ConnectorState.STARTED, ConnectorState.STOPPED, ConnectorState.CLOSED]:
+    for state in [
+        ConnectorState.STARTED,
+        ConnectorState.STOPPED,
+        ConnectorState.CLOSED,
+    ]:
         connector.set_state(state)
         assert connector.state == connector.connector_state
         print(f"✓ Both properties return {state}")

@@ -130,9 +130,9 @@ async def test_simple_key_replacement():
     # Verify expected keys are present
     expected_new_keys = {"B2fNN2MPxFYI6IJ", "8xsGjFicd5zC5Xy"}
     actual_key_ids = {k["kid"] for k in all_keys}
-    assert expected_new_keys.issubset(actual_key_ids), (
-        f"Expected keys {expected_new_keys} should be in store"
-    )
+    assert expected_new_keys.issubset(
+        actual_key_ids
+    ), f"Expected keys {expected_new_keys} should be in store"
 
     # Verify old key is not present
     assert "UZZyOVSQaEAgr0E" not in actual_key_ids, "Old encryption key should not be in store"

@@ -31,7 +31,9 @@ class HybridPathRoutingPolicyFactory(RoutingPolicyFactory):
         **kwargs: Any,
     ) -> RoutingPolicy:
         assert config
-        from naylence.fame.sentinel.hybrid_path_routing_policy import HybridPathRoutingPolicy
+        from naylence.fame.sentinel.hybrid_path_routing_policy import (
+            HybridPathRoutingPolicy,
+        )
 
         if isinstance(config, dict):
             lb_config = config.get("load_balancing_strategy")

@@ -58,10 +58,14 @@ class TestAddressUnbindAckIntegration:
         # Mock address routing tables
         route_manager._downstream_addresses_routes = {
             "api@/v1/users": AddressRouteInfo(
-                segment="child-node-1", physical_path="/child1", encryption_key_id="encrypt-1"
+                segment="child-node-1",
+                physical_path="/child1",
+                encryption_key_id="encrypt-1",
             ),
             "api@/v1/orders": AddressRouteInfo(
-                segment="child-node-2", physical_path="/child2", encryption_key_id="encrypt-2"
+                segment="child-node-2",
+                physical_path="/child2",
+                encryption_key_id="encrypt-2",
             ),
         }
 
@@ -95,12 +99,17 @@ class TestAddressUnbindAckIntegration:
 
     @pytest.mark.asyncio
     async def test_complete_address_unbind_flow_with_signature_mirroring(
-        self, integration_handler, comprehensive_routing_node, comprehensive_route_manager
+        self,
+        integration_handler,
+        comprehensive_routing_node,
+        comprehensive_route_manager,
     ):
         """Test the complete address unbind flow with signature mirroring enabled."""
         # Create a realistic security context for signature mirroring
         security_context = SecurityContext(
-            inbound_was_signed=True, inbound_crypto_level="signed", crypto_channel_id="test-channel"
+            inbound_was_signed=True,
+            inbound_crypto_level="signed",
+            crypto_channel_id="test-channel",
         )
 
         # Create delivery context for a downstream child node
@@ -190,7 +199,10 @@ class TestAddressUnbindAckIntegration:
     async def test_pool_address_unbind_integration(self, integration_handler, comprehensive_routing_node):
         """Test integration of pool address unbinding with ACK functionality."""
         # Setup pool data
-        integration_handler._pools[("math", "*.compute.fabric")] = {"child-node-1", "child-node-2"}
+        integration_handler._pools[("math", "*.compute.fabric")] = {
+            "child-node-1",
+            "child-node-2",
+        }
 
         # Create context for downstream request
         context = FameDeliveryContext(
@@ -220,7 +232,10 @@ class TestAddressUnbindAckIntegration:
 
     @pytest.mark.asyncio
     async def test_peer_request_no_ack_integration(
-        self, integration_handler, comprehensive_routing_node, comprehensive_route_manager
+        self,
+        integration_handler,
+        comprehensive_routing_node,
+        comprehensive_route_manager,
     ):
         """Test that peer requests don't trigger ACK responses in integration context."""
         # Add a peer address to the routing tables so upstream propagation can happen

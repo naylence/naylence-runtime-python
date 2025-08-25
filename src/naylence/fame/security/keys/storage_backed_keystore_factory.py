@@ -9,7 +9,10 @@ from typing import Any, Optional
 from naylence.fame.security.keys.key_store import (
     KeyStore,
 )
-from naylence.fame.security.keys.key_store_factory import KeyStoreConfig, KeyStoreFactory
+from naylence.fame.security.keys.key_store_factory import (
+    KeyStoreConfig,
+    KeyStoreFactory,
+)
 from naylence.fame.storage.storage_provider import StorageProvider
 
 

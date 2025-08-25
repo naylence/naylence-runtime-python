@@ -30,7 +30,9 @@ class CompositeRoutingPolicyFactory(RoutingPolicyFactory):
         load_balancing_strategy: Optional[LoadBalancingStrategy] = None,
         **kwargs: Any,
     ) -> RoutingPolicy:
-        from naylence.fame.sentinel.composite_routing_policy import CompositeRoutingPolicy
+        from naylence.fame.sentinel.composite_routing_policy import (
+            CompositeRoutingPolicy,
+        )
 
         if config is None:
             config = CompositeRoutingPolicyConfig(policies=[])

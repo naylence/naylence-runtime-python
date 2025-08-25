@@ -71,7 +71,10 @@ class MockRoutingNode:
         )
 
     async def route_message(
-        self, envelope: FameEnvelope, context: Optional[FameDeliveryContext], state: RouterState
+        self,
+        envelope: FameEnvelope,
+        context: Optional[FameDeliveryContext],
+        state: RouterState,
     ) -> RoutingAction:
         """Route a message and track the decision."""
         action = await self.policy.decide(envelope, state, context)

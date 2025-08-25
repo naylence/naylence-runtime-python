@@ -5,7 +5,10 @@ import pytest
 from pydantic import AnyUrl
 
 from naylence.fame.core import FameEnvelope
-from naylence.fame.mcp.default_mcp_host_service import DefaultMCPHostService, _MCPSessionEntry
+from naylence.fame.mcp.default_mcp_host_service import (
+    DefaultMCPHostService,
+    _MCPSessionEntry,
+)
 from naylence.fame.mcp.mcp_host_service import APIKeyAuth
 
 # Override DefaultMCPService.__init__ to disable background eviction task in tests

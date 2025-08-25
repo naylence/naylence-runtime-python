@@ -8,7 +8,13 @@ from typing import Optional
 
 import pytest
 
-from naylence.fame.core import DataFrame, DeliveryOriginType, FameDeliveryContext, FameEnvelope, generate_id
+from naylence.fame.core import (
+    DataFrame,
+    DeliveryOriginType,
+    FameDeliveryContext,
+    FameEnvelope,
+    generate_id,
+)
 from naylence.fame.node.node import FameNode
 from naylence.fame.node.node_meta import NodeMeta
 from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
@@ -36,7 +42,9 @@ async def test_context_preservation():
 
     # Create a node and start it
     from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
+    from naylence.fame.tracking.default_delivery_tracker_factory import (
+        DefaultDeliveryTrackerFactory,
+    )
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
@@ -109,7 +117,9 @@ async def test_backward_compatibility():
 
     # Create a node and start it
     from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import DefaultDeliveryTrackerFactory
+    from naylence.fame.tracking.default_delivery_tracker_factory import (
+        DefaultDeliveryTrackerFactory,
+    )
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)

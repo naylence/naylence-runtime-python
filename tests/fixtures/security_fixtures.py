@@ -40,7 +40,12 @@ class TestCryptoProvider:
             self._jwks = {
                 "keys": [
                     self.node_jwk(),
-                    {"kid": self.encryption_key_id, "kty": "OKP", "crv": "X25519", "use": "enc"},
+                    {
+                        "kid": self.encryption_key_id,
+                        "kty": "OKP",
+                        "crv": "X25519",
+                        "use": "enc",
+                    },
                 ]
             }
         return self._jwks
@@ -163,7 +168,12 @@ class TestNodeLike:
 class TestSecurityPolicy:
     """Test security policy with configurable behavior."""
 
-    def __init__(self, require_signatures=False, require_encryption=False, strict_validation=False):
+    def __init__(
+        self,
+        require_signatures=False,
+        require_encryption=False,
+        strict_validation=False,
+    ):
         self.require_signatures = require_signatures
         self.require_encryption = require_encryption
         self.strict_validation = strict_validation
@@ -171,7 +181,9 @@ class TestSecurityPolicy:
 
     def requirements(self):
         if not self._requirements:
-            from naylence.fame.security.policy.security_policy import SecurityRequirements
+            from naylence.fame.security.policy.security_policy import (
+                SecurityRequirements,
+            )
 
             self._requirements = SecurityRequirements(
                 require_signing_key_exchange=self.require_signatures,
@@ -213,8 +225,16 @@ class TestSecurityPolicy:
 def get_security_fixture_data():
     """Get security fixture data for testing."""
     return {
-        "valid_security_data": {"key": "test_key", "encryption_method": "AES", "security_level": "high"},
-        "invalid_security_data": {"key": "", "encryption_method": "None", "security_level": "low"},
+        "valid_security_data": {
+            "key": "test_key",
+            "encryption_method": "AES",
+            "security_level": "high",
+        },
+        "invalid_security_data": {
+            "key": "",
+            "encryption_method": "None",
+            "security_level": "low",
+        },
         "test_jwk_signing": {
             "kid": "test-signing-key",
             "kty": "OKP",
@@ -222,7 +242,12 @@ def get_security_fixture_data():
             "use": "sig",
             "alg": "EdDSA",
         },
-        "test_jwk_encryption": {"kid": "test-encryption-key", "kty": "OKP", "crv": "X25519", "use": "enc"},
+        "test_jwk_encryption": {
+            "kid": "test-encryption-key",
+            "kty": "OKP",
+            "crv": "X25519",
+            "use": "enc",
+        },
     }
 
 

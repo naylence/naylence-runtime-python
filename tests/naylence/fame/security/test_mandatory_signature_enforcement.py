@@ -101,14 +101,14 @@ async def test_unsigned_critical_frames_are_rejected():
     policy = DefaultSecurityPolicy(
         signing=SigningConfig(
             inbound=InboundSigningRules(signature_policy=SignaturePolicy.OPTIONAL),
-            outbound=OutboundSigningRules(
-                default_signing=True  # Enable signing for our test
-            ),
+            outbound=OutboundSigningRules(default_signing=True),  # Enable signing for our test
         )
     )
 
     # Create signer for comparison
-    from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
+    from naylence.fame.security.crypto.providers.default_crypto_provider import (
+        DefaultCryptoProvider,
+    )
 
     crypto_provider = DefaultCryptoProvider()
     # Add our test key to the key store so the crypto provider can find it
@@ -199,22 +199,22 @@ async def test_critical_frame_enforcement_overrides_policy():
     envelope = FameEnvelope(frame=critical_frame)
 
     # Even with DISABLED policy, critical frames should require signatures
-    assert disabled_policy.is_signature_required(envelope, context), (
-        "Critical frames should require signatures even with DISABLED policy"
-    )
+    assert disabled_policy.is_signature_required(
+        envelope, context
+    ), "Critical frames should require signatures even with DISABLED policy"
 
     # Even with FORBIDDEN policy, critical frames should require signatures
-    assert forbidden_policy.is_signature_required(envelope, context), (
-        "Critical frames should require signatures even with FORBIDDEN policy"
-    )
+    assert forbidden_policy.is_signature_required(
+        envelope, context
+    ), "Critical frames should require signatures even with FORBIDDEN policy"
 
     # Non-critical frame should follow policy
     data_envelope = FameEnvelope(frame=DataFrame(payload="test"))
 
     # Should not require signature with DISABLED policy
-    assert not disabled_policy.is_signature_required(data_envelope, context), (
-        "Non-critical frames should follow DISABLED policy"
-    )
+    assert not disabled_policy.is_signature_required(
+        data_envelope, context
+    ), "Non-critical frames should follow DISABLED policy"
 
     print("✅ Critical frame enforcement correctly overrides policy settings!")
 

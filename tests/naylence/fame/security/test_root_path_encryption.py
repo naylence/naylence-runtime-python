@@ -60,9 +60,9 @@ async def test_root_path_get_encryption_options():
 
     assert options is not None, "Expected encryption options for root path address"
     assert "request_address" in options, "Expected request_address in options"
-    assert str(options["request_address"]) == "math@/", (
-        f"Expected 'math@/', got '{options['request_address']}'"
-    )
+    assert (
+        str(options["request_address"]) == "math@/"
+    ), f"Expected 'math@/', got '{options['request_address']}'"
     print(f"✅ Root path envelope gets address-based encryption options: {options['request_address']}")
 
 

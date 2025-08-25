@@ -73,7 +73,11 @@ class MockNode:
                         "connector_type": "http",
                         "host": getattr(listener.http_server, "host", "localhost"),
                         "port": getattr(listener.http_server, "port", 8080),
-                        "url": getattr(listener.http_server, "actual_base_url", "http://localhost:8080"),
+                        "url": getattr(
+                            listener.http_server,
+                            "actual_base_url",
+                            "http://localhost:8080",
+                        ),
                         "config": {"type": "http"},
                     }
                 )

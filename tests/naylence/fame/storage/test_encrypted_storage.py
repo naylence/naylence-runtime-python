@@ -9,7 +9,9 @@ import pytest
 from pydantic import BaseModel
 
 from naylence.fame.security.credential.credential_provider import CredentialProvider
-from naylence.fame.storage.encrypted_storage_provider_base import EncryptedStorageProviderBase
+from naylence.fame.storage.encrypted_storage_provider_base import (
+    EncryptedStorageProviderBase,
+)
 from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 from naylence.fame.storage.key_value_store import KeyValueStore
 
@@ -117,7 +119,12 @@ async def test_encrypted_storage_different_types():
     # Test with various data values
     test_cases = [
         TestData(id="empty", name="", secret="", count=0),
-        TestData(id="special", name="Special Chars: !@#$%^&*()", secret="Unicode: café ñoño", count=-1),
+        TestData(
+            id="special",
+            name="Special Chars: !@#$%^&*()",
+            secret="Unicode: café ñoño",
+            count=-1,
+        ),
         TestData(id="large", name="Large Data", secret="x" * 1000, count=999999),
     ]
 

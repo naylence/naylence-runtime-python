@@ -99,15 +99,15 @@ class TestCapabilityWithdrawSignatureMirroring:
         segment, ack_envelope, ack_context = call_args[0]
 
         # FIXED BEHAVIOR: Now uses LOCAL origin (enabling signing)
-        assert ack_context.origin_type == DeliveryOriginType.LOCAL, (
-            "FIXED BEHAVIOR: withdraw ACK now uses LOCAL origin - can be signed!"
-        )
+        assert (
+            ack_context.origin_type == DeliveryOriginType.LOCAL
+        ), "FIXED BEHAVIOR: withdraw ACK now uses LOCAL origin - can be signed!"
 
         # Security info is preserved for mirroring
         assert ack_context.security is not None
-        assert ack_context.security.inbound_was_signed is True, (
-            "inbound_was_signed should be preserved for signature mirroring"
-        )
+        assert (
+            ack_context.security.inbound_was_signed is True
+        ), "inbound_was_signed should be preserved for signature mirroring"
         assert ack_context.security.inbound_crypto_level == "signed", "Crypto level should be preserved"
 
         # Verify correct ACK frame
@@ -133,8 +133,8 @@ class TestCapabilityWithdrawSignatureMirroring:
         # This is what both advertise and withdraw now do
         implemented_ack_context = FameDeliveryContext(
             origin_type=DeliveryOriginType.LOCAL,  # KEY FIX: LOCAL for signing
-            security=original_context.security if original_context else None,  # Preserve security
-            stickiness_required=original_context.stickiness_required if original_context else None,
+            security=(original_context.security if original_context else None),  # Preserve security
+            stickiness_required=(original_context.stickiness_required if original_context else None),
             sticky_sid=original_context.sticky_sid if original_context else None,
         )
 

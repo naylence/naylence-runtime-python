@@ -7,7 +7,11 @@ import asyncio
 from typing import Any, Optional
 
 from naylence.fame.core.util.extension_manager import ExtensionManager
-from naylence.fame.factory import ResourceConfig, ResourceFactory, create_default_resource
+from naylence.fame.factory import (
+    ResourceConfig,
+    ResourceFactory,
+    create_default_resource,
+)
 
 
 class TestResource:
@@ -126,7 +130,10 @@ async def main():
 
     tests = [
         ("create_default_resource Priority Selection", test_create_default_resource),
-        ("create_default_resource With Config", test_create_default_resource_with_config),
+        (
+            "create_default_resource With Config",
+            test_create_default_resource_with_config,
+        ),
     ]
 
     passed = 0

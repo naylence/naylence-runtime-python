@@ -55,7 +55,10 @@ class TestBindingManagerIntegration:
             get_sid=lambda: "test-session-456",
             get_physical_path=lambda: "/test/node",
             forward_upstream=forward_upstream,
-            get_accepted_logicals=lambda: {"fame.fabric", "prod.domain"},  # Host-based logicals
+            get_accepted_logicals=lambda: {
+                "fame.fabric",
+                "prod.domain",
+            },  # Host-based logicals
             get_encryption_key_id=lambda: "test-key-789",
             binding_store=binding_store,
             envelope_factory=envelope_factory,
@@ -374,7 +377,10 @@ async def test_binding_manager_end_to_end():
         get_sid=lambda: "test-session-456",
         get_physical_path=lambda: "/test/node",
         forward_upstream=mock_forward_upstream,
-        get_accepted_logicals=lambda: {"fame.fabric", "prod.domain"},  # Host-based logicals
+        get_accepted_logicals=lambda: {
+            "fame.fabric",
+            "prod.domain",
+        },  # Host-based logicals
         get_encryption_key_id=lambda: "test-key-789",
         binding_store=binding_store,
         envelope_factory=envelope_factory,

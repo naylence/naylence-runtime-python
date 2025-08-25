@@ -58,7 +58,11 @@ async def test_node_attach_frame_handler_with_real_connector():
     connector_config = ConnectorConfig(type="test")  # Use real ConnectorConfig instead of MagicMock
 
     mock_route_manager._pending_route_metadata[attached_system_id] = connector_config
-    mock_route_manager._pending_routes[attached_system_id] = (connector, mock_attached, mock_buffer)
+    mock_route_manager._pending_routes[attached_system_id] = (
+        connector,
+        mock_attached,
+        mock_buffer,
+    )
 
     # Create handler (no authorizer needed since authorization is centralized)
     handler = NodeAttachFrameHandler(

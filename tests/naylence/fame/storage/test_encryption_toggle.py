@@ -9,7 +9,9 @@ import pytest
 from pydantic import BaseModel
 
 from naylence.fame.security.credential.credential_provider import CredentialProvider
-from naylence.fame.storage.encrypted_storage_provider_base import EncryptedStorageProviderBase
+from naylence.fame.storage.encrypted_storage_provider_base import (
+    EncryptedStorageProviderBase,
+)
 from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 from naylence.fame.storage.key_value_store import KeyValueStore
 
@@ -105,7 +107,12 @@ async def test_unencrypted_mode():
     kv_store = await provider.get_kv_store(TestData, namespace="test")
 
     # Test data
-    test_item = TestData(id="test-2", name="Unencrypted Item", secret="This is plain text data", count=100)
+    test_item = TestData(
+        id="test-2",
+        name="Unencrypted Item",
+        secret="This is plain text data",
+        count=100,
+    )
 
     # Store and retrieve the data
     await kv_store.set("item2", test_item)
@@ -212,10 +219,10 @@ async def test_multiple_namespaces():
     retrieved1 = await store1.get("key")
     retrieved2 = await store2.get("key")
 
-    assert retrieved1 is not None and retrieved1.secret == "Secret One", (
-        "Namespace 1 should have correct data"
-    )
-    assert retrieved2 is not None and retrieved2.secret == "Secret Two", (
-        "Namespace 2 should have correct data"
-    )
+    assert (
+        retrieved1 is not None and retrieved1.secret == "Secret One"
+    ), "Namespace 1 should have correct data"
+    assert (
+        retrieved2 is not None and retrieved2.secret == "Secret Two"
+    ), "Namespace 2 should have correct data"
     assert retrieved1.id != retrieved2.id, "Different namespaces should have different data"

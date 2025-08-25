@@ -9,9 +9,15 @@ import time
 
 from naylence.fame.core.protocol.envelope import FameEnvelope
 from naylence.fame.core.protocol.frames import DataFrame
-from naylence.fame.security.crypto.providers.default_crypto_provider import DefaultCryptoProvider
-from naylence.fame.security.crypto.providers.eddsa_envelope_signer import EdDSAEnvelopeSigner
-from naylence.fame.security.crypto.providers.eddsa_envelope_verifier import EdDSAEnvelopeVerifier
+from naylence.fame.security.crypto.providers.default_crypto_provider import (
+    DefaultCryptoProvider,
+)
+from naylence.fame.security.crypto.providers.eddsa_envelope_signer import (
+    EdDSAEnvelopeSigner,
+)
+from naylence.fame.security.crypto.providers.eddsa_envelope_verifier import (
+    EdDSAEnvelopeVerifier,
+)
 from naylence.fame.security.keys.key_provider import get_key_provider
 from naylence.fame.security.keys.key_store import get_key_store
 from naylence.fame.util.util import secure_digest
@@ -51,7 +57,10 @@ def create_large_payload(size_kb: int) -> dict:
 
 
 def time_verification(
-    verifier: EdDSAEnvelopeVerifier, envelope: FameEnvelope, check_payload: bool, iterations: int = 100
+    verifier: EdDSAEnvelopeVerifier,
+    envelope: FameEnvelope,
+    check_payload: bool,
+    iterations: int = 100,
 ) -> float:
     """Time verification operations."""
     start_time = time.perf_counter()
