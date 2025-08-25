@@ -1,0 +1,246 @@
+[project]
+name = "naylence-fame-runtime"
+version = "0.1.60"
+description = "Naylence Fame Runtime"
+authors = [
+    {name = "naylencedev@gmail.com"}
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.12"
+
+[tool.poetry]
+packages = [
+  { include = "naylence", from = "src"},
+]
+
+[tool.poetry.dependencies]
+naylence-fame-core = { path = "../naylence-fame-core", develop = true }
+pyyaml = "^6.0.2"
+websockets = "^15.0.1"
+aiohttp = "^3.11.18"
+httpx = "^0.28.1"
+structlog = "^25.3.0"
+
+# Optional crypto dependencies
+cryptography = { version = "^45.0.2", optional = true }
+pyjwt = { version = "^2.10.1", optional = true }
+
+[tool.poetry.extras]
+crypto = ["cryptography", "pyjwt"]
+jwt = ["pyjwt"]
+x25519 = ["cryptography"]
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+pyright = "^1.1.401"
+ruff = "^0.11.10"
+pytest = "^8.3.5"
+pytest-asyncio = "^0.26.0"
+hypothesis = "^6.131.30"
+coverage = "^7.9.2"
+pytest-cov = "^6.2.1"
+
+[tool.poetry.group.api.dependencies]
+fastapi = "^0.115.12"
+
+[tool.poetry.group.mcp.dependencies]
+mcp = "^1.9.1"
+
+[tool.pyright]
+include = ["src/naylence"]
+venvPath = "."
+venv = ".venv"
+standard = ["src/naylence/**/*.py"]
+
+[tool.ruff.lint]
+select = ["C4", "E", "F", "I", "PERF", "UP"]
+ignore = ["PERF203", "UP006", "UP007", "UP035"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/naylence/fame/service/__init__.py" = ["F401"]
+
+[tool.ruff]
+line-length = 108
+target-version = "py310"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ".:tests"
+pythonpath = "."
+filterwarnings = [
+    "ignore::DeprecationWarning:websockets.exceptions",
+    "ignore::pytest.PytestConfigWarning"
+]
+addopts = [
+    "--cov=src/naylence",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml:coverage.xml",
+    "--cov-report=term-missing",
+    "--cov-branch",
+    "--cov-fail-under=60"
+]
+
+[tool.coverage.run]
+source = ["src/naylence"]
+branch = true
+parallel = true
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/.*",
+    "*/venv/*",
+    "*/.venv/*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError", 
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "\\.\\.\\.",
+    "pass",
+    "TYPE_CHECKING",
+]
+show_missing = true
+precision = 2
+skip_covered = false
+skip_empty = true
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project.entry-points."naylence.FameFabricFactory"]
+InProcessFameFabric = "naylence.fame.fabric.in_process_fame_fabric_factory:InProcessFameFabricFactory"
+
+[project.entry-points."naylence.NodeLikeFactory"]
+Node = "naylence.fame.node.node_factory:NodeFactory"
+Sentinel = "naylence.fame.sentinel.sentinel_factory:SentinelFactory"
+
+[project.entry-points."naylence.FameServiceFactory"]
+InMemorySinkService = "naylence.fame.service.in_memory_sink_service:InMemorySinkServiceFactory"
+DefaultMCPHostService = "naylence.fame.mcp.default_mcp_host_service_factory:DefaultMCPHostServiceFactory"
+
+[project.entry-points."naylence.ConnectorFactory"]
+WebSocketConnector = "naylence.fame.connector.websocket_connector_factory:WebSocketConnectorFactory"
+HttpStatelessConnector = "naylence.fame.connector.http_stateless_connector_factory:HttpStatelessConnectorFactory"
+
+[project.entry-points."naylence.TransportListenerFactory"]
+HttpListener = "naylence.fame.connector.http_listener_factory:HttpListenerFactory"
+WebSocketListener = "naylence.fame.connector.websocket_listener_factory:WebSocketListenerFactory"
+
+[project.entry-points."naylence.HttpServerFactory"]
+DefaultHttpServer = "naylence.fame.connector.default_http_server_factory:DefaultHttpServerFactory"
+
+[project.entry-points."naylence.TransportProvisionerFactory"]
+WebSocketTransportProvisioner = "naylence.fame.transport.websocket_transport_provisioner:WebSocketTransportProvisionerFactory"
+
+[project.entry-points."naylence.AdmissionClientFactory"]
+AdmissionServiceClient = "naylence.fame.node.admission.admission_service_client_factory:AdmissionServiceClientFactory"
+DirectAdmissionClient = "naylence.fame.node.admission.direct_admission_client_factory:DirectAdmissionClientFactory"
+AdmissionProfile = "naylence.fame.node.admission.admission_profile_factory:AdmissionProfileFactory"
+
+[project.entry-points."naylence.NodePlacementStrategyFactory"]
+WebSocketPlacementStrategy = "naylence.fame.placement.websocket_node_placement_strategy_factory:WebSocketPlacementStrategyFactory"
+
+[project.entry-points."naylence.LoadBalancingStrategyFactory"]
+RandomLoadBalancingStrategy = "naylence.fame.sentinel.load_balancing.random_load_balancing_strategy_factory:RandomLoadBalancingStrategyFactory"
+RoundRobinLoadBalancingStrategy = "naylence.fame.sentinel.load_balancing.round_robin_load_balancing_strategy_factory:RoundRobinLoadBalancingStrategyFactory"
+HRWLoadBalancingStrategy = "naylence.fame.sentinel.load_balancing.hrw_load_balancing_strategy_factory:HRWLoadBalancingStrategyFactory"
+StickyLoadBalancingStrategy = "naylence.fame.sentinel.load_balancing.sticky_load_balancing_strategy_factory:StickyLoadBalancingStrategyFactory"
+CompositeLoadBalancingStrategy = "naylence.fame.sentinel.load_balancing.composite_load_balancing_strategy_factory:CompositeLoadBalancingStrategyFactory"
+LoadBalancingProfile = "naylence.fame.sentinel.load_balancing.load_balancing_profile_factory:LoadBalancingProfileFactory"
+
+[project.entry-points."naylence.WelcomeServiceFactory"]
+DefaultWelcomeService = "naylence.fame.welcome.default_welcome_service_factory:DefaultWelcomeServiceFactory"
+
+[project.entry-points."naylence.TokenIssuerFactory"]
+NoopTokenIssuer = "naylence.fame.security.auth.noop_token_issuer_factory:NoopTokenIssuerFactory"
+JWTTokenIssuer = "naylence.fame.security.auth.jwt_token_issuer_factory:JWTTokenIssuerFactory"
+
+[project.entry-points."naylence.TokenVerifierFactory"]
+NoopTokenVerifier = "naylence.fame.security.auth.noop_token_verifier_factory:NoopTokenVerifierFactory"
+JWTTokenVerifier = "naylence.fame.security.auth.jwt_token_verifier_factory:JWTTokenVerifierFactory"
+JWKSJWTTokenVerifier = "naylence.fame.security.auth.jwks_jwt_token_verifier_factory:JWKSTokenVerifierFactory"
+SharedSecretTokenVerifier = "naylence.fame.security.auth.shared_secret_token_verifier_factory:SharedSecretTokenVerifierFactory"
+
+[project.entry-points."naylence.RoutingPolicyFactory"]
+HybridPathRoutingPolicy = "naylence.fame.sentinel.hybrid_path_routing_policy_factory:HybridPathRoutingPolicyFactory"
+CapabilityAwareRoutingPolicy = "naylence.fame.sentinel.capability_aware_routing_policy_factory:CapabilityAwareRoutingPolicyFactory"
+CompositeRoutingPolicy = "naylence.fame.sentinel.composite_routing_policy_factory:CompositeRoutingPolicyFactory"
+
+[project.entry-points."naylence.EnvelopeVerifierFactory"]
+EdDSAEnvelopeVerifier = "naylence.fame.security.signing.eddsa_envelope_verifier_factory:EdDSAEnvelopeVerifierFactory"
+
+[project.entry-points."naylence.EnvelopeSignerFactory"]
+EdDSAEnvelopeSigner = "naylence.fame.security.signing.eddsa_envelope_signer_factory:EdDSAEnvelopeSignerFactory"
+
+[project.entry-points."naylence.KeyManagerFactory"]
+DefaultKeyManager = "naylence.fame.security.keys.default_key_manager_factory:DefaultKeyManagerFactory"
+
+[project.entry-points."naylence.KeyStoreFactory"]
+InMemoryKeyStore = "naylence.fame.security.keys.in_memory_key_store_factory:InMemoryKeyStoreFactory"
+StorageBackedKeyStore = "naylence.fame.security.keys.storage_backed_keystore_factory:StorageBackedKeyStoreFactory"
+
+[project.entry-points."naylence.SecurityPolicyFactory"]
+DefaultSecurityPolicy = "naylence.fame.security.policy.default_security_policy_factory:DefaultSecurityPolicyFactory"
+NoSecurityPolicy = "naylence.fame.security.policy.no_security_policy_factory:NoSecurityPolicyFactory"
+
+[project.entry-points."naylence.CredentialProviderFactory"]
+NoneCredentialProvider = "naylence.fame.security.credential.credential_provider_factory:NoneCredentialProviderFactory"
+StaticCredentialProvider = "naylence.fame.security.credential.credential_provider_factory:StaticCredentialProviderFactory"
+EnvCredentialProvider = "naylence.fame.security.credential.credential_provider_factory:EnvCredentialProviderFactory"
+PromptCredentialProvider = "naylence.fame.security.credential.credential_provider_factory:PromptCredentialProviderFactory"
+
+[project.entry-points."naylence.TokenProviderFactory"]
+NoneTokenProvider = "naylence.fame.security.auth.none_token_provider_factory:NoneTokenProviderFactory"
+SharedSecretTokenProvider = "naylence.fame.security.auth.shared_secret_token_provider_factory:SharedSecretTokenProviderFactory"
+OAuth2ClientCredentialsTokenProvider = "naylence.fame.security.auth.oauth2_client_credentials_token_provider_factory:OAuth2ClientCredentialsTokenProviderFactory"
+StaticTokenProvider = "naylence.fame.security.auth.static_token_provider_factory:StaticTokenProviderFactory"
+
+[project.entry-points."naylence.AuthInjectionStrategyFactory"]
+NoAuthStrategy = "naylence.fame.security.auth.auth_injection_strategy_factory:NoAuthStrategyFactory"
+BearerTokenHeaderStrategy = "naylence.fame.security.auth.auth_injection_strategy_factory:BearerTokenHeaderStrategyFactory"
+WebSocketSubprotocolStrategy = "naylence.fame.security.auth.auth_injection_strategy_factory:WebSocketSubprotocolStrategyFactory"
+QueryParamStrategy = "naylence.fame.security.auth.auth_injection_strategy_factory:QueryParamStrategyFactory"
+
+[project.entry-points."naylence.AuthorizerFactory"]
+DefaultAuthorizer = "naylence.fame.security.auth.default_authorizer_factory:DefaultAuthorizerFactory"
+NoopAuthorizer = "naylence.fame.security.auth.noop_authorizer_factory:NoopAuthorizerFactory"
+SharedSecretAuthorizer = "naylence.fame.security.auth.shared_secret_authorizer_factory:SharedSecretAuthorizerFactory"
+OAuth2Authorizer = "naylence.fame.security.auth.oauth2_authorizer_factory:OAuth2AuthorizerFactory"
+
+[project.entry-points."naylence.SecurityManagerFactory"]
+DefaultSecurityManager = "naylence.fame.security.default_security_manager_factory:DefaultSecurityManagerFactory"
+SecurityProfile = "naylence.fame.security.node_security_profile_factory:SecurityProfileFactory"
+NoSecurityManager = "naylence.fame.security.no_security_manager_factory:NoSecurityManagerFactory"
+
+[project.entry-points."naylence.StorageProviderFactory"]
+InMemoryStorageProvider = "naylence.fame.storage.in_memory_storage_provider_factory:InMemoryStorageProviderFactory"
+SQLiteStorageProvider = "naylence.fame.storage.sqlite_storage_provider_factory:SQLiteStorageProviderFactory"
+StorageProfile = "naylence.fame.storage.storage_profile_factory:StorageProfileFactory"
+
+[project.entry-points."naylence.LoadBalancerStickinessManagerFactory"]
+SimpleLoadBalancerStickinessManager = "naylence.fame.stickiness.simple_load_balancer_stickiness_manager_factory:SimpleLoadBalancerStickinessManagerFactory"
+
+[project.entry-points."naylence.DeliveryTrackerFactory"]
+DefaultDeliveryTracker = "naylence.fame.tracking.default_delivery_tracker_factory:DefaultDeliveryTrackerFactory"

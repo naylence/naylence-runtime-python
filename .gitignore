@@ -1,0 +1,13 @@
+.env
+.venv
+.vscode
+dist
+__pycache__
+.ruff_*
+.pytest*
+.DS_Store
+.hypothesis
+naylence-fame-core
+
+docs/
+examples/

@@ -1,0 +1,141 @@
+from __future__ import annotations
+
+from typing import Any, Callable, Dict, List, Optional
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+
+from pydantic import Field
+
+from naylence.fame.connector.connector_config import ConnectorConfig
+from naylence.fame.connector.connector_factory import ConnectorFactory
+from naylence.fame.connector.websocket_connector import WebSocketConnector
+from naylence.fame.core import AuthorizationContext, FameConnector
+from naylence.fame.errors.errors import FameConnectError
+from naylence.fame.security.auth.auth_config import ConnectorAuth
+from naylence.fame.security.auth.auth_injection_strategy_factory import (
+    create_auth_strategy,
+)
+from naylence.fame.util.logging import getLogger
+
+logger = getLogger(__name__)
+
+
+class WebSocketConnectorConfig(ConnectorConfig):
+    """Local configuration for WebSocket connector."""
+
+    type: str = "WebSocketConnector"
+    # params: Optional[Mapping[str, Any]] = Field(default=None)
+    url: Optional[str] = Field(
+        default=None,
+        description="WebSocket URL to connect to (required if params is not set",
+    )
+    auth: Optional[ConnectorAuth] = Field(default=None)
+
+
+class WebSocketConnectorFactory(ConnectorFactory):
+    """
+    Builds a FameConnector from a ConnectorDirective (type='websocket').
+    Handles auth token injection via:
+        - subprotocol (default; browser-friendly)
+        - query param
+        - headers
+    """
+
+    def __init__(self, client_factory: Optional[Callable[..., Any]] = None):
+        self._client_factory = client_factory or self._default_websocket_client
+
+    async def create(
+        self,
+        config: Optional[WebSocketConnectorConfig | dict[str, Any]] = None,
+        websocket: Optional[Any] = None,
+        system_id: Optional[str] = None,
+        **kwargs: Dict[str, Any],
+    ) -> FameConnector:
+        if not config:
+            raise ValueError("Config not set")
+
+        # Accept either real config or legacy dict for backward compatibility
+        if isinstance(config, dict):
+            # Convert dict to config
+            config = WebSocketConnectorConfig.model_validate(config)
+
+        # Create auth strategy once if needed
+        auth_strategy = None
+        if config.auth:
+            auth_strategy = await create_auth_strategy(config.auth)
+
+        authorization_context: Optional[AuthorizationContext] = None
+
+        if not websocket:
+            url = config.url
+            if not url:
+                raise ValueError("WebSocket URL must be provided in config")
+
+            subprotocols = None
+            headers = None
+
+            # Apply auth strategy to modify connection parameters if needed
+            if auth_strategy:
+                # Handle connection-time auth strategies
+                if hasattr(auth_strategy, "get_subprotocols") and callable(
+                    getattr(auth_strategy, "get_subprotocols")
+                ):
+                    # get_subprotocols is async for WebSocketSubprotocolStrategy
+                    result = await auth_strategy.get_subprotocols()  # type: ignore
+                    if isinstance(result, list):
+                        subprotocols = result
+                elif hasattr(auth_strategy, "modify_url"):
+                    # modify_url is async for QueryParamStrategy
+                    result = await auth_strategy.modify_url(url)  # type: ignore
+                    if isinstance(result, str):
+                        url = result
+
+            # Construct the final URL, appending system_id if provided
+            final_url = url
+            if system_id:
+                final_url = url + f"/{system_id}"
+
+            websocket = await self._client_factory(final_url, subprotocols, headers)
+            authorization_context = AuthorizationContext(authenticated=True, authorized=True)
+        else:
+            pass  # Assume websocket is already a valid WebSocket client
+
+        # Create connector and apply post-connection auth strategy if needed
+        connector = WebSocketConnector(websocket, authorization_context=authorization_context)
+
+        if auth_strategy:
+            await auth_strategy.apply(connector)
+
+        return connector
+
+    def _append_query_param(self, url: str, key: str, value: str) -> str:
+        parts = urlparse(url)
+        query = dict(parse_qsl(parts.query))
+        query[key] = value
+        new_query = urlencode(query)
+        return urlunparse(parts._replace(query=new_query))
+
+    async def _default_websocket_client(
+        self,
+        url: str,
+        subprotocols: Optional[List[str]],
+        headers: Optional[Dict[str, str]],
+        heartbeat: int = 20,  # TODO: milliseconds?
+    ):
+        """
+        Creates a raw WebSocket client using `websockets.connect`.
+        Override this for custom WS adapters.
+        """
+        try:
+            import websockets
+
+            logger.debug("websocket_connector_connecting", url=url)
+            return await websockets.connect(
+                url,
+                subprotocols=subprotocols,  # type: ignore
+                # extra_headers=headers,
+                open_timeout=5,
+                ping_interval=heartbeat,
+                max_size=256 * 1024,
+            )
+        except OSError as ose:
+            raise FameConnectError(f"cannot connect to {url}: {ose}") from ose
