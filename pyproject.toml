@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.1.62"
+version = "0.1.63"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -41,6 +41,7 @@ cryptography = "^45.0.6"
 pyjwt = "^2.10.1"
 naylence-core = "^0.1.13"
 fastapi = "^0.116.1"
+uvicorn = "^0.35.0"
 
 
 [tool.poetry.group.dev.dependencies]
