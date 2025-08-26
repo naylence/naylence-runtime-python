@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.1.61"
+version = "0.1.62"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -40,6 +40,7 @@ structlog = "^25.3.0"
 cryptography = "^45.0.6"
 pyjwt = "^2.10.1"
 naylence-core = "^0.1.13"
+fastapi = "^0.116.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -52,9 +53,6 @@ hypothesis = "^6.131.30"
 coverage = "^7.9.2"
 pytest-cov = "^6.2.1"
 twine = "^6.1.0"
-
-[tool.poetry.group.api.dependencies]
-fastapi = "^0.115.12"
 
 [tool.poetry.group.mcp.dependencies]
 mcp = "^1.9.1"

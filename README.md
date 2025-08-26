@@ -1,6 +1,6 @@
-# Naylence Fame Runtime
+# Naylence Runtime
 
-The **Fame Runtime** is the default runtime environment for the Naylence platform’s federated messaging fabric. It provides:
+The **Naylence Runtime** is the default runtime environment for the Naylence platform’s federated messaging fabric. It provides:
 
 - Secure, attach-token-based admission and handshake
 - Pluggable transport connector system
