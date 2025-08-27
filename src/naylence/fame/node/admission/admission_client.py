@@ -21,6 +21,9 @@ class AdmissionClient(Protocol):
     Does *not* carry arbitrary Fame frames or manage connectors—just admission.
     """
 
+    def has_upstream(self) -> bool:
+        return True
+
     async def hello(
         self,
         system_id: str,

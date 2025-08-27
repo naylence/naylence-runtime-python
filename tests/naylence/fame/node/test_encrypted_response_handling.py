@@ -164,9 +164,9 @@ async def test_encrypted_request_encrypted_response():
         )
 
         # Verify inheritance - the key test!
-        assert (
-            response_context.origin_type == DeliveryOriginType.LOCAL
-        ), f"Expected LOCAL origin for response, got {response_context.origin_type}"
+        assert response_context.origin_type == DeliveryOriginType.LOCAL, (
+            f"Expected LOCAL origin for response, got {response_context.origin_type}"
+        )
         print("✅ Response origin is LOCAL as expected")
 
         # The critical assertion: when we receive a SEALED request, the response should also be SEALED

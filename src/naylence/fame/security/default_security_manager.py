@@ -635,12 +635,12 @@ class DefaultSecurityManager(SecurityManager):
                 payload_str = (
                     _canonical_json(envelope.frame.payload) if envelope.frame.payload is not None else ""
                 )
-                logger.trace(
-                    "computed_dataframe_payload_str",
-                    payload=payload_str,
-                    raw_payload=envelope.frame.payload,
-                    raw_payload_type=type(envelope.frame.payload),
-                )
+                # logger.trace(
+                #     "computed_dataframe_payload_str",
+                #     payload=payload_str,
+                #     raw_payload=envelope.frame.payload,
+                #     raw_payload_type=type(envelope.frame.payload),
+                # )
                 actual_payload_digest = secure_digest(payload_str)
 
                 if envelope.frame.pd != actual_payload_digest:
@@ -1216,9 +1216,9 @@ class DefaultSecurityManager(SecurityManager):
         )
 
         assert not isinstance(original_env.frame, CreditUpdateFrame)
-        assert not isinstance(
-            original_env.frame, NodeHeartbeatFrame
-        ), "Cannot send NACK for system heartbeat frames"
+        assert not isinstance(original_env.frame, NodeHeartbeatFrame), (
+            "Cannot send NACK for system heartbeat frames"
+        )
         dest = original_env.reply_to
         if not dest:
             from naylence.fame.util.logging import getLogger

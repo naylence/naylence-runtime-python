@@ -98,9 +98,9 @@ async def test_websocket_websocket_fix():
         )
 
         # Verify that websocket was passed through
-        assert (
-            "websocket" in captured_kwargs
-        ), f"websocket was not passed to create_resource. Captured kwargs: {captured_kwargs}"
+        assert "websocket" in captured_kwargs, (
+            f"websocket was not passed to create_resource. Captured kwargs: {captured_kwargs}"
+        )
         assert captured_kwargs["websocket"] is mock_websocket, "websocket value was not preserved"
 
         print("✅ Transport primitive successfully passed through Sentinel.create_origin_connector")

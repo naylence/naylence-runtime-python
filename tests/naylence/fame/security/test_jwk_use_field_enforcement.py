@@ -168,9 +168,9 @@ async def test_signing_key_use_enforcement():
         print(f"✅ Valid signing key passed use field validation (failed later: {type(e).__name__})")
 
     # Test with encryption key used for signing (should be rejected)
-    assert (
-        envelope.sec is not None and envelope.sec.sig is not None
-    ), "Envelope should have security header with signature"
+    assert envelope.sec is not None and envelope.sec.sig is not None, (
+        "Envelope should have security header with signature"
+    )
     envelope.sec.sig.kid = "test-encryption-valid"
     try:
         await verifier.verify_envelope(envelope, check_payload=False)

@@ -75,9 +75,9 @@ class TestWildcardFunctionalityDemo:
 
         for test_addr, should_match in test_cases:
             matches = matches_pool_address(test_addr, pool_pattern)
-            assert (
-                matches == should_match
-            ), f"Address {test_addr} should {'match' if should_match else 'not match'} pool {pool_pattern}"
+            assert matches == should_match, (
+                f"Address {test_addr} should {'match' if should_match else 'not match'} pool {pool_pattern}"
+            )
 
     def test_host_path_matching(self):
         """Test host+path matching behavior."""
@@ -92,9 +92,7 @@ class TestWildcardFunctionalityDemo:
 
         for test_addr, should_match in test_cases:
             matches = matches_pool_address(test_addr, host_path_pool)
-            assert (
-                matches == should_match
-            ), f"Address {test_addr} should {
+            assert matches == should_match, f"Address {test_addr} should {
                 'match' if should_match else 'not match'
             } pool {host_path_pool}"
 

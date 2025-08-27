@@ -43,9 +43,7 @@ class EdDSAEnvelopeSigner(EnvelopeSigner):
 
     # Public API ------------------------------------------------------------- #
 
-    def sign_envelope(
-        self, envelope: FameEnvelope, *, physical_path: str
-    ) -> FameEnvelope:  # noqa: D401,E501
+    def sign_envelope(self, envelope: FameEnvelope, *, physical_path: str) -> FameEnvelope:  # noqa: D401,E501
         if not envelope.sid:
             raise ValueError(f"Envelope missing sid: {envelope}")
 

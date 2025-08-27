@@ -203,9 +203,9 @@ def test_wire_protocol_completeness():
 
     # Add assertions for pytest
     assert first_connector["type"] == "HttpStatelessConnector", "Connector type should match"
-    assert (
-        first_connector.get("url") == "http://agent.internal:8001/fame/v1/ingress/upstream"
-    ), "URL should match"
+    assert first_connector.get("url") == "http://agent.internal:8001/fame/v1/ingress/upstream", (
+        "URL should match"
+    )
     assert params["max_queue"] == 4096, "Max queue should match"
 
 

@@ -184,9 +184,9 @@ class TestPoolRoutingEndToEnd:
             chosen_nodes.add(chosen)
 
         # Should have distributed across multiple nodes (round-robin)
-        assert (
-            len(chosen_nodes) > 1
-        ), f"Load balancing should distribute across nodes, only got {chosen_nodes}"
+        assert len(chosen_nodes) > 1, (
+            f"Load balancing should distribute across nodes, only got {chosen_nodes}"
+        )
 
     def test_complex_host_patterns(self):
         """Test pool routing with complex host patterns."""

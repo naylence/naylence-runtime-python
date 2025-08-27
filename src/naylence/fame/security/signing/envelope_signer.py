@@ -18,9 +18,7 @@ class EnvelopeSigner(ABC):
     """Produce a cryptographic signature and embed it into a FameEnvelope."""
 
     @abstractmethod
-    def sign_envelope(
-        self, envelope: FameEnvelope, *, physical_path: str
-    ) -> FameEnvelope:  # noqa: D401,E501
+    def sign_envelope(self, envelope: FameEnvelope, *, physical_path: str) -> FameEnvelope:  # noqa: D401,E501
         """Return *the same* envelope instance with `sec.sig` populated."""
         raise NotImplementedError
 

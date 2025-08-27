@@ -117,9 +117,9 @@ async def test_context_preservation_through_sink():
         print(f"     Origin: {context.origin_type}")
         print(f"     System ID: {context.from_system_id}")
 
-        assert (
-            context.origin_type == DeliveryOriginType.LOCAL
-        ), f"Expected LOCAL origin, got {context.origin_type}"
+        assert context.origin_type == DeliveryOriginType.LOCAL, (
+            f"Expected LOCAL origin, got {context.origin_type}"
+        )
         print("  ✅ Origin type is LOCAL as expected")
 
     finally:
@@ -204,26 +204,26 @@ async def test_context_preservation_multiple_subscribers():
         print(f"\n📋 Subscriber 1 results: {len(subscriber1_received)} messages")
         print(f"📋 Subscriber 2 results: {len(subscriber2_received)} messages")
 
-        assert (
-            len(subscriber1_received) == 1
-        ), f"Subscriber 1: Expected 1 message, got {len(subscriber1_received)}"
-        assert (
-            len(subscriber2_received) == 1
-        ), f"Subscriber 2: Expected 1 message, got {len(subscriber2_received)}"
+        assert len(subscriber1_received) == 1, (
+            f"Subscriber 1: Expected 1 message, got {len(subscriber1_received)}"
+        )
+        assert len(subscriber2_received) == 1, (
+            f"Subscriber 2: Expected 1 message, got {len(subscriber2_received)}"
+        )
 
         envelope1, context1 = subscriber1_received[0]
         envelope2, context2 = subscriber2_received[0]
 
         assert context1 is not None, "Subscriber 1: Context should be preserved"
-        assert (
-            context1.origin_type == DeliveryOriginType.LOCAL
-        ), "Subscriber 1: Context should have LOCAL origin"
+        assert context1.origin_type == DeliveryOriginType.LOCAL, (
+            "Subscriber 1: Context should have LOCAL origin"
+        )
         print("  ✅ Subscriber 1: Context preserved")
 
         assert context2 is not None, "Subscriber 2: Context should be preserved"
-        assert (
-            context2.origin_type == DeliveryOriginType.LOCAL
-        ), "Subscriber 2: Context should have LOCAL origin"
+        assert context2.origin_type == DeliveryOriginType.LOCAL, (
+            "Subscriber 2: Context should have LOCAL origin"
+        )
         print("  ✅ Subscriber 2: Context preserved")
 
     finally:

@@ -99,15 +99,15 @@ class TestCapabilityWithdrawSignatureMirroring:
         segment, ack_envelope, ack_context = call_args[0]
 
         # FIXED BEHAVIOR: Now uses LOCAL origin (enabling signing)
-        assert (
-            ack_context.origin_type == DeliveryOriginType.LOCAL
-        ), "FIXED BEHAVIOR: withdraw ACK now uses LOCAL origin - can be signed!"
+        assert ack_context.origin_type == DeliveryOriginType.LOCAL, (
+            "FIXED BEHAVIOR: withdraw ACK now uses LOCAL origin - can be signed!"
+        )
 
         # Security info is preserved for mirroring
         assert ack_context.security is not None
-        assert (
-            ack_context.security.inbound_was_signed is True
-        ), "inbound_was_signed should be preserved for signature mirroring"
+        assert ack_context.security.inbound_was_signed is True, (
+            "inbound_was_signed should be preserved for signature mirroring"
+        )
         assert ack_context.security.inbound_crypto_level == "signed", "Crypto level should be preserved"
 
         # Verify correct ACK frame

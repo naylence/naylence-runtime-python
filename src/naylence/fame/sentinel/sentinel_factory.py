@@ -3,9 +3,10 @@ from typing import Any, Callable, Optional
 from pydantic import Field
 
 from naylence.fame.config.peer_config import PeerConfig
+from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
 from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
 from naylence.fame.constants.ttl_constants import TTL_NEVER_EXPIRES
-from naylence.fame.core import ExtensionManager, create_resource
+from naylence.fame.factory import ExtensionManager, create_default_resource, create_resource
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
 from naylence.fame.node.factory_commons import make_common_opts
 from naylence.fame.node.node_config import FameNodeConfig
@@ -116,6 +117,14 @@ class SentinelFactory(NodeLikeFactory):
 
         # Prepare event listeners list combining common ones with Sentinel-specific ones
         event_listeners = opts.pop("event_listeners", [])  # Remove from opts to avoid duplicate
+
+        transport_listeners = opts.pop("transport_listeners", [])
+
+        if len(transport_listeners) == 0:
+            transport_listener = await create_default_resource(TransportListenerFactory)
+            if transport_listener is not None:
+                transport_listeners.append(transport_listener)
+                event_listeners.append(transport_listener)
 
         storage_provider: StorageProvider = opts["storage_provider"]
         route_store = await storage_provider.get_kv_store(RouteEntry, namespace="route_store")

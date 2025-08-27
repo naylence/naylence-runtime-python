@@ -29,6 +29,8 @@ ENV_VAR_ADMISSION_TTL = "FAME_ADMISSSION_TTL"
 PROFILE_NAME_SERVICE = "service"
 PROFILE_NAME_DIRECT = "direct"
 PROFILE_NAME_OPEN = "open"
+PROFILE_NAME_NOOP = "noop"
+PROFILE_NAME_NONE = "none"
 
 # Use centralized constant instead of hardcoded value
 DEFAULT_ADMISSION_TTL = DEFAULT_ADMISSION_TTL_SEC
@@ -85,6 +87,11 @@ OPEN_PROFILE = {
 }
 
 
+NOOP_PROFILE = {
+    "type": "NoopAdmissionClient"
+}
+
+
 class AdmissionProfileConfig(AdmissionConfig):
     type: str = "AdmissionProfile"
 
@@ -104,7 +111,13 @@ class AdmissionProfileFactory(AdmissionClientFactory):
 
         profile = config.profile
 
-        if profile == PROFILE_NAME_DIRECT:
+        if profile in [PROFILE_NAME_NOOP, PROFILE_NAME_NONE]:
+            from naylence.fame.node.admission.noop_admission_client_factory import (
+                NoopNodeAdmissionConfig,
+            )
+
+            security_config = NoopNodeAdmissionConfig(**NOOP_PROFILE)
+        elif  profile == PROFILE_NAME_DIRECT:
             from naylence.fame.node.admission.direct_admission_client_factory import (
                 DirectNodeAdmissionConfig,
             )

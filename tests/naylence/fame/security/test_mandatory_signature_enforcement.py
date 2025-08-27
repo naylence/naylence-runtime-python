@@ -199,22 +199,22 @@ async def test_critical_frame_enforcement_overrides_policy():
     envelope = FameEnvelope(frame=critical_frame)
 
     # Even with DISABLED policy, critical frames should require signatures
-    assert disabled_policy.is_signature_required(
-        envelope, context
-    ), "Critical frames should require signatures even with DISABLED policy"
+    assert disabled_policy.is_signature_required(envelope, context), (
+        "Critical frames should require signatures even with DISABLED policy"
+    )
 
     # Even with FORBIDDEN policy, critical frames should require signatures
-    assert forbidden_policy.is_signature_required(
-        envelope, context
-    ), "Critical frames should require signatures even with FORBIDDEN policy"
+    assert forbidden_policy.is_signature_required(envelope, context), (
+        "Critical frames should require signatures even with FORBIDDEN policy"
+    )
 
     # Non-critical frame should follow policy
     data_envelope = FameEnvelope(frame=DataFrame(payload="test"))
 
     # Should not require signature with DISABLED policy
-    assert not disabled_policy.is_signature_required(
-        data_envelope, context
-    ), "Non-critical frames should follow DISABLED policy"
+    assert not disabled_policy.is_signature_required(data_envelope, context), (
+        "Non-critical frames should follow DISABLED policy"
+    )
 
     print("✅ Critical frame enforcement correctly overrides policy settings!")
 

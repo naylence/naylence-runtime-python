@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
 from naylence.fame.constants.ttl_constants import TTL_NEVER_EXPIRES
 from naylence.fame.core import create_default_resource, create_resource, generate_id
+from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
 from naylence.fame.node.admission.default_node_attach_client import (
     DefaultNodeAttachClient,
@@ -60,7 +62,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
 
     node_meta_store = await storage_provider.get_kv_store(NodeMeta, namespace="node_meta")
 
-    admission_client = await create_resource(AdmissionClientFactory, cfg.admission)
+    admission_client: AdmissionClient = await create_resource(AdmissionClientFactory, cfg.admission)
 
     node_meta = await node_meta_store.get("self")
     logger.debug(
@@ -110,12 +112,15 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
             event_listeners.append(admission_client)
 
     # Create transport listeners if configured
+    transport_listeners: list[TransportListener] = []
     if cfg.listeners:
         for listener_config in cfg.listeners:
             transport_listener = await create_resource(TransportListenerFactory, listener_config)
+            transport_listeners.append(transport_listener)
             event_listeners.append(transport_listener)
 
-    has_parent = cfg.has_parent or cfg.direct_parent_url is not None or admission_client is not None
+    has_parent = cfg.has_parent or cfg.direct_parent_url is not None \
+        or (admission_client is not None and admission_client.has_upstream())
 
     # Heuristic: only enable replica-side stickiness when node acts as a child (has_parent)
     # and it requests wildcard logicals (e.g., "*.fame.com"), which signals LB participation.
@@ -209,6 +214,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
         "key_store": key_store,
         "node_meta_store": node_meta_store,
         "security_manager": security_manager,
+        "transport_listeners": transport_listeners,
     }
 
 

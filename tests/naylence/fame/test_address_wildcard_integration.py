@@ -136,9 +136,7 @@ class TestWildcardAddressIntegration:
 
         for target_addr, should_match in test_cases:
             result = matches_pool_address(target_addr, pool_pattern)
-            assert (
-                result == should_match
-            ), f"Address {target_addr} should {
+            assert result == should_match, f"Address {target_addr} should {
                 'match' if should_match else 'not match'
             } pool {pool_pattern}"
 

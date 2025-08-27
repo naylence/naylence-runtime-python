@@ -119,15 +119,15 @@ class TestSignatureMirroringIntegration:
         segment, ack_envelope, ack_context = call_args[0]
 
         # CRITICAL ASSERTION: The ACK context must be LOCAL origin
-        assert (
-            ack_context.origin_type == DeliveryOriginType.LOCAL
-        ), "BUG FIX VERIFICATION: ACK context must be LOCAL origin for signing policy to apply"
+        assert ack_context.origin_type == DeliveryOriginType.LOCAL, (
+            "BUG FIX VERIFICATION: ACK context must be LOCAL origin for signing policy to apply"
+        )
 
         # CRITICAL ASSERTION: Security information must be preserved for mirroring
         assert ack_context.security is not None, "Security context must be preserved"
-        assert (
-            ack_context.security.inbound_was_signed is True
-        ), "inbound_was_signed must be preserved for signature mirroring to work"
+        assert ack_context.security.inbound_was_signed is True, (
+            "inbound_was_signed must be preserved for signature mirroring to work"
+        )
 
         # Verify the ACK frame is correct
         assert isinstance(ack_envelope.frame, CapabilityAdvertiseAckFrame)
@@ -136,9 +136,9 @@ class TestSignatureMirroringIntegration:
 
         # CRITICAL VERIFICATION: With LOCAL origin + preserved security,
         # the security policy would now sign this ACK (simulated by our mock)
-        assert hasattr(
-            ack_envelope, "_would_be_signed"
-        ), "Mock should have processed the envelope through signing simulation"
+        assert hasattr(ack_envelope, "_would_be_signed"), (
+            "Mock should have processed the envelope through signing simulation"
+        )
         # Note: We can't check _would_be_signed directly as our mock doesn't set it,
         # but the important part is that we have LOCAL origin + preserved security
 

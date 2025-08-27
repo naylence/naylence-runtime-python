@@ -131,18 +131,18 @@ class TestCapabilityFrameHandlerSignatureMirroring:
         segment, response_envelope, response_context = call_args[0]
 
         # Verify the response context is LOCAL origin (key for signing)
-        assert (
-            response_context.origin_type == DeliveryOriginType.LOCAL
-        ), "Response context must be LOCAL origin for security policy to sign it"
+        assert response_context.origin_type == DeliveryOriginType.LOCAL, (
+            "Response context must be LOCAL origin for security policy to sign it"
+        )
 
         # Verify security information is preserved for mirroring
         assert response_context.security is not None, "Security context should be preserved"
-        assert (
-            response_context.security.inbound_was_signed is True
-        ), "inbound_was_signed should be preserved for signature mirroring"
-        assert (
-            response_context.security.inbound_crypto_level == "signed"
-        ), "Crypto level should be preserved"
+        assert response_context.security.inbound_was_signed is True, (
+            "inbound_was_signed should be preserved for signature mirroring"
+        )
+        assert response_context.security.inbound_crypto_level == "signed", (
+            "Crypto level should be preserved"
+        )
 
         # Verify the response envelope contains the correct frame
         assert isinstance(response_envelope.frame, CapabilityAdvertiseAckFrame)
@@ -235,9 +235,9 @@ class TestCapabilityFrameHandlerSignatureMirroring:
         segment, response_envelope, response_context = call_args[0]
 
         # FIXED BEHAVIOR: Now uses LOCAL context like advertise
-        assert (
-            response_context.origin_type == DeliveryOriginType.LOCAL
-        ), "FIXED: Withdraw ACK now uses LOCAL origin for signing policy to apply"
+        assert response_context.origin_type == DeliveryOriginType.LOCAL, (
+            "FIXED: Withdraw ACK now uses LOCAL origin for signing policy to apply"
+        )
 
         # Verify security information is preserved for mirroring
         assert response_context.security is not None

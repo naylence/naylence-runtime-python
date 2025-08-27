@@ -217,9 +217,9 @@ class KeyFrameHandler:
         logger.trace("handling_key_request_by_address", address=address, corr_id=corr_id)
         assert self._key_manager, "KeyManager must be set for KeyRequest handling"
 
-        assert (
-            delivery_context and delivery_context.origin_type
-        ), "Delivery context must have origin type for key request handling"
+        assert delivery_context and delivery_context.origin_type, (
+            "Delivery context must have origin type for key request handling"
+        )
 
         # Step 1: Check if there's a downstream or peer route for this address
         route_info = self._get_address_route_info(address)

@@ -682,7 +682,6 @@ class FameNode(TaskSpawner, NodeLike):
             "CapabilityWithdrawAck",
         ]:
             return await self._delivery_tracker.on_envelope_delivered(envelope, context)
-            # return await self._binding_manager.handle_ack(processed_envelope, context=context)
 
         # KeyAnnounce frames are now handled by the security manager in on_deliver
         # No need to handle them here anymore

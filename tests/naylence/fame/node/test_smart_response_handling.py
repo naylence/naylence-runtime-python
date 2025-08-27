@@ -116,9 +116,9 @@ async def test_smart_response_context_creation():
         print(f"\n📋 Results: {len(captured_deliveries)} deliveries captured")
 
         # We should have 2 deliveries: original request + auto-generated response
-        assert (
-            len(captured_deliveries) >= 1
-        ), f"Expected at least 1 delivery, got {len(captured_deliveries)}"
+        assert len(captured_deliveries) >= 1, (
+            f"Expected at least 1 delivery, got {len(captured_deliveries)}"
+        )
 
         # Find the response delivery (the one that's not our original request)
         response_delivery = None
@@ -138,12 +138,12 @@ async def test_smart_response_context_creation():
 
         # Verify metadata was auto-set in context (not envelope)
         assert response_context.meta is not None, "Response context should have metadata"
-        assert (
-            response_context.meta.get("message-type") == "response"
-        ), "Should have response message-type in context"
-        assert (
-            response_context.meta.get("response-to-id") == request_envelope.id
-        ), "Should link back to original request in context"
+        assert response_context.meta.get("message-type") == "response", (
+            "Should have response message-type in context"
+        )
+        assert response_context.meta.get("response-to-id") == request_envelope.id, (
+            "Should link back to original request in context"
+        )
 
         print("✅ Smart response handling working correctly!")
         print(f"   Auto-created context: origin={response_context.origin_type}")
@@ -251,21 +251,21 @@ async def test_smart_response_preserves_existing_context():
 
         # Verify context metadata was set (should override message-type to "response")
         assert response_context.meta is not None, "Response context should have metadata"
-        assert (
-            response_context.meta.get("message-type") == "response"
-        ), "Should override to response message-type in context"
-        assert (
-            response_context.meta.get("response-to-id") == request_envelope.id
-        ), "Should link back to original request in context"
+        assert response_context.meta.get("message-type") == "response", (
+            "Should override to response message-type in context"
+        )
+        assert response_context.meta.get("response-to-id") == request_envelope.id, (
+            "Should link back to original request in context"
+        )
 
         # Verify envelope metadata is preserved as-is (system no longer modifies envelope metadata)
         assert response_envelope.meta is not None, "Response envelope should have original metadata"
-        assert (
-            response_envelope.meta.get("message-type") == "custom-response"
-        ), "Should preserve original envelope message-type"
-        assert (
-            response_envelope.meta.get("custom-field") == "preserved"
-        ), "Should preserve other envelope metadata fields"
+        assert response_envelope.meta.get("message-type") == "custom-response", (
+            "Should preserve original envelope message-type"
+        )
+        assert response_envelope.meta.get("custom-field") == "preserved", (
+            "Should preserve other envelope metadata fields"
+        )
 
         print("✅ Existing context and metadata preserved correctly!")
         print(

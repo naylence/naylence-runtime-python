@@ -102,20 +102,20 @@ async def test_address_bind_ack_signature_mirroring():
     print(f"📤 ACK context: {sent_context}")
 
     # Verify the context passed to forward_to_route has correct properties for signature mirroring
-    assert (
-        sent_context is not context
-    ), "Should create a new LOCAL context, not reuse the original DOWNSTREAM context"
+    assert sent_context is not context, (
+        "Should create a new LOCAL context, not reuse the original DOWNSTREAM context"
+    )
     assert sent_context.origin_type == DeliveryOriginType.LOCAL, "ACK should use LOCAL origin type"
     assert sent_context.from_system_id == "sentinel", "ACK should come from the sentinel"
-    assert (
-        sent_context.security.inbound_was_signed
-    ), "Context should preserve that original request was signed"
-    assert (
-        sent_context.security.inbound_crypto_level == CryptoLevel.PLAINTEXT
-    ), "Context should preserve crypto level"
-    assert (
-        sent_context.meta.get("message-type") == "response"
-    ), "Context should be marked as response for signature mirroring"
+    assert sent_context.security.inbound_was_signed, (
+        "Context should preserve that original request was signed"
+    )
+    assert sent_context.security.inbound_crypto_level == CryptoLevel.PLAINTEXT, (
+        "Context should preserve crypto level"
+    )
+    assert sent_context.meta.get("message-type") == "response", (
+        "Context should be marked as response for signature mirroring"
+    )
 
     print("✅ AddressBindAck context correctly configured for signature mirroring")
 
@@ -198,13 +198,13 @@ async def test_address_bind_ack_no_signature_mirroring_for_unsigned_request():
 
     # Check the context passed to forward_to_route
     sent_context = call_args[0][2]
-    assert (
-        sent_context is not context
-    ), "Should create a new LOCAL context, not reuse the original DOWNSTREAM context"
+    assert sent_context is not context, (
+        "Should create a new LOCAL context, not reuse the original DOWNSTREAM context"
+    )
     assert sent_context.origin_type == DeliveryOriginType.LOCAL, "ACK should use LOCAL origin type"
-    assert (
-        sent_context.security.inbound_was_signed is False
-    ), "Context should preserve that original request was unsigned"
+    assert sent_context.security.inbound_was_signed is False, (
+        "Context should preserve that original request was unsigned"
+    )
     assert sent_context.meta.get("message-type") == "response", "Context should be marked as response"
 
     print("✅ AddressBindAck context correctly indicates no signature mirroring needed")

@@ -219,10 +219,10 @@ async def test_multiple_namespaces():
     retrieved1 = await store1.get("key")
     retrieved2 = await store2.get("key")
 
-    assert (
-        retrieved1 is not None and retrieved1.secret == "Secret One"
-    ), "Namespace 1 should have correct data"
-    assert (
-        retrieved2 is not None and retrieved2.secret == "Secret Two"
-    ), "Namespace 2 should have correct data"
+    assert retrieved1 is not None and retrieved1.secret == "Secret One", (
+        "Namespace 1 should have correct data"
+    )
+    assert retrieved2 is not None and retrieved2.secret == "Secret Two", (
+        "Namespace 2 should have correct data"
+    )
     assert retrieved1.id != retrieved2.id, "Different namespaces should have different data"

@@ -240,9 +240,9 @@ async def test_key_manager_factory_creates_consistent_instances():
     )
 
     # 4. Verify the key is available via direct manager
-    assert await key_manager_direct.has_key(
-        "test-key-id"
-    ), "Key added via factory manager should be available via direct manager"
+    assert await key_manager_direct.has_key("test-key-id"), (
+        "Key added via factory manager should be available via direct manager"
+    )
 
     # 5. Verify EnvelopeVerifier can access the key
     verifier = EdDSAEnvelopeVerifier(key_provider=get_key_provider())

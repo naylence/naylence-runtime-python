@@ -97,7 +97,9 @@ def test_authorization_fallback():
         + (
             "listener authorizer"
             if authorizer == listener_auth
-            else "node authorizer" if authorizer == node_auth else "no authorizer"
+            else "node authorizer"
+            if authorizer == node_auth
+            else "no authorizer"
         )
     )
 
@@ -116,7 +118,9 @@ def test_authorization_fallback():
         + (
             "listener authorizer"
             if authorizer == listener_auth
-            else "node authorizer" if authorizer == node_auth else "no authorizer"
+            else "node authorizer"
+            if authorizer == node_auth
+            else "no authorizer"
         )
     )
 
@@ -151,7 +155,9 @@ def test_authorization_fallback():
         + (
             "HTTP listener authorizer"
             if authorizer == http_listener_auth
-            else "node authorizer" if authorizer == node_auth else "no authorizer"
+            else "node authorizer"
+            if authorizer == node_auth
+            else "no authorizer"
         )
     )
 
@@ -169,7 +175,9 @@ def test_authorization_fallback():
         + (
             "HTTP listener authorizer"
             if authorizer == http_listener_auth
-            else "node authorizer" if authorizer == node_auth else "no authorizer"
+            else "node authorizer"
+            if authorizer == node_auth
+            else "no authorizer"
         )
     )
 

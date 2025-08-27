@@ -191,6 +191,7 @@ def summarize_env(env: FameEnvelope, prefix: Optional[str] = "child_") -> EventD
         f"{prefix}to": str(env.to) if env.to else None,
         f"{prefix}trace_id": env.trace_id,
         f"{prefix}frame": getattr(env.frame, "type", type(env.frame).__name__),
+        f"{prefix}corr_id": env.corr_id,
     }
 
 

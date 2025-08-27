@@ -130,7 +130,8 @@ class MockConnector:
 
         print(
             f"MockConnector.send called with frame type: {
-                envelope.frame.__class__.__name__}, respond_to_heartbeats={self.respond_to_heartbeats}"
+                envelope.frame.__class__.__name__
+            }, respond_to_heartbeats={self.respond_to_heartbeats}"
         )
 
         # If this is a heartbeat and we should respond, send back an ack
@@ -459,9 +460,9 @@ class TestUpstreamSessionManager:
             await asyncio.sleep(1.2)  # Should trigger heartbeat timeout + backoff + new connection
 
             # Should have attempted reconnection
-            assert (
-                connect_count >= 2
-            ), f"Expected reconnection after heartbeat failure, but connect_count={connect_count}"
+            assert connect_count >= 2, (
+                f"Expected reconnection after heartbeat failure, but connect_count={connect_count}"
+            )
 
         finally:
             await self.cleanup_manager(manager)
@@ -529,9 +530,9 @@ class TestUpstreamSessionManager:
             await asyncio.sleep(1.0)
 
             # Should have reconnected
-            assert (
-                connect_count >= 2
-            ), f"Expected reconnection after transport close, but connect_count={connect_count}"
+            assert connect_count >= 2, (
+                f"Expected reconnection after transport close, but connect_count={connect_count}"
+            )
 
         finally:
             await self.cleanup_manager(manager)

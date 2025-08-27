@@ -187,9 +187,9 @@ async def test_multi_level_intermediate_ca_chain():
                 current_cert += line + "\n"
 
         expected_chain_length = 4  # End Entity + Level 2 + Level 1 + Root
-        assert (
-            len(chain_certs) == expected_chain_length
-        ), f"Expected {expected_chain_length} certificates in chain, got {len(chain_certs)}"
+        assert len(chain_certs) == expected_chain_length, (
+            f"Expected {expected_chain_length} certificates in chain, got {len(chain_certs)}"
+        )
 
         # Validate the complete chain: End Entity → Level 2 → Level 1 → Root
         end_entity_cert = chain_certs[0]
@@ -199,12 +199,12 @@ async def test_multi_level_intermediate_ca_chain():
 
         # Validate chain relationships
         assert end_entity_cert.issuer == signing_ca_cert.subject, "End entity cert not issued by signing CA"
-        assert (
-            signing_ca_cert.issuer == intermediate1_cert.subject
-        ), "Signing CA not issued by intermediate CA level 1"
-        assert (
-            intermediate1_cert.issuer == root_ca_cert.subject
-        ), "Intermediate CA level 1 not issued by root CA"
+        assert signing_ca_cert.issuer == intermediate1_cert.subject, (
+            "Signing CA not issued by intermediate CA level 1"
+        )
+        assert intermediate1_cert.issuer == root_ca_cert.subject, (
+            "Intermediate CA level 1 not issued by root CA"
+        )
 
         print("   ✅ Complete certificate chain validation passed")
         print("   🔗 Complete Chain: End Entity → Signing CA → Org CA → Root CA")

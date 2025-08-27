@@ -236,15 +236,15 @@ class Sentinel(FameNode, RoutingNodeLike):
         async def gated_handler(env: FameEnvelope, context: Optional[FameDeliveryContext] = None):
             security_context = None
             if context:
-                assert (
-                    not context.from_connector or connector == context.from_connector
-                ), "Context connector mismatch"
-                assert (
-                    not context.from_system_id or system_id == context.from_system_id
-                ), "Context system_id mismatch"
-                assert (
-                    not context.origin_type or origin_type == context.origin_type
-                ), "Context origin_type mismatch"
+                assert not context.from_connector or connector == context.from_connector, (
+                    "Context connector mismatch"
+                )
+                assert not context.from_system_id or system_id == context.from_system_id, (
+                    "Context system_id mismatch"
+                )
+                assert not context.origin_type or origin_type == context.origin_type, (
+                    "Context origin_type mismatch"
+                )
 
                 security_context = context.security
 
@@ -393,6 +393,15 @@ class Sentinel(FameNode, RoutingNodeLike):
             return
 
         frame_type = processed_envelope.frame.type
+
+        if frame_type in [
+            "AddressBindAck",
+            "AddressUnbindAck",
+            "CapabilityAdvertiseAck",
+            "CapabilityWithdrawAck",
+        ]:
+            return await self._delivery_tracker.on_envelope_delivered(envelope, context)
+
         if not context or context.origin_type != DeliveryOriginType.LOCAL:
             if frame_type == "NodeAttach":
                 await self._node_attach_frame_handler.accept_node_attach(processed_envelope, context)

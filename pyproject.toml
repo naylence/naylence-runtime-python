@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.1.63"
+version = "0.1.64"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -177,6 +177,7 @@ WebSocketTransportProvisioner = "naylence.fame.transport.websocket_transport_pro
 [project.entry-points."naylence.AdmissionClientFactory"]
 AdmissionServiceClient = "naylence.fame.node.admission.admission_service_client_factory:AdmissionServiceClientFactory"
 DirectAdmissionClient = "naylence.fame.node.admission.direct_admission_client_factory:DirectAdmissionClientFactory"
+NoopAdmissionClient = "naylence.fame.node.admission.noop_admission_client_factory:NoopAdmissionClientFactory"
 AdmissionProfile = "naylence.fame.node.admission.admission_profile_factory:AdmissionProfileFactory"
 
 [project.entry-points."naylence.NodePlacementStrategyFactory"]

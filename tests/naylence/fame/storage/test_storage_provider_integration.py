@@ -39,9 +39,9 @@ async def test_storage_provider_integration():
     node = await factory.create(node_config)
 
     assert node.storage_provider is not None, "Node should have storage provider"
-    assert (
-        node.storage_provider.__class__.__name__ == "InMemoryStorageProvider"
-    ), "Should be InMemoryStorageProvider"
+    assert node.storage_provider.__class__.__name__ == "InMemoryStorageProvider", (
+        "Should be InMemoryStorageProvider"
+    )
 
     # Test that we can get a key-value store
     kv_store = await node.storage_provider.get_kv_store(TestModel, namespace="test")
@@ -69,12 +69,12 @@ async def test_node_without_storage_provider():
     node = await factory.create(node_config)
 
     # The factory always creates a default InMemoryStorageProvider
-    assert (
-        node.storage_provider is not None
-    ), "Node should have default storage provider when none configured"
-    assert (
-        node.storage_provider.__class__.__name__ == "InMemoryStorageProvider"
-    ), "Should default to InMemoryStorageProvider"
+    assert node.storage_provider is not None, (
+        "Node should have default storage provider when none configured"
+    )
+    assert node.storage_provider.__class__.__name__ == "InMemoryStorageProvider", (
+        "Should default to InMemoryStorageProvider"
+    )
 
     # Cleanup
     await node.stop()

@@ -178,9 +178,9 @@ async def test_crypto_level_inheritance():
         )
 
         # Verify inheritance
-        assert (
-            response_context.origin_type == DeliveryOriginType.LOCAL
-        ), f"Expected LOCAL origin for response, got {response_context.origin_type}"
+        assert response_context.origin_type == DeliveryOriginType.LOCAL, (
+            f"Expected LOCAL origin for response, got {response_context.origin_type}"
+        )
         print("✅ Response origin is LOCAL as expected")
 
         # For local responses, the inbound_crypto_level should reflect the actual security level

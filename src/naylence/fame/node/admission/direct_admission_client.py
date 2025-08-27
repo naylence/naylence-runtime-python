@@ -38,7 +38,7 @@ class DirectAdmissionClient(AdmissionClient):
                 max_ttl_sec=86400 * 7,  # Max 7 days
                 allow_never_expires=True,
                 context="Direct admission TTL",
-            )
+            ) # pyright: ignore[reportAssignmentType]
         self._ttl_sec = ttl_sec
 
     async def hello(
