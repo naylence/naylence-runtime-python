@@ -9,13 +9,12 @@ or any other KeyValueStore implementation.
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from typing import Any, AsyncIterator, Dict, Optional
 
 from naylence.fame.core import (
     DeliveryAckFrame,
-    DeliveryOriginType,
-    FameAddress,
     FameDeliveryContext,
     FameEnvelope,
     FameResponseType,
@@ -32,11 +31,21 @@ from naylence.fame.tracking.delivery_tracker import (
     TrackedEnvelope,
 )
 from naylence.fame.util import logging
+from naylence.fame.util.formatter import AnsiColor, color, format_timestamp
+from naylence.fame.util.util import pretty_model
 
 logger = logging.getLogger(__name__)
 
 
 _STREAM_END = object()
+
+ENV_VAR_SHOW_ENVELOPES = "FAME_SHOW_ENVELOPES"
+
+show_envelopes = bool(os.getenv(ENV_VAR_SHOW_ENVELOPES) == "true")
+
+
+def _timestamp() -> str:
+    return color(format_timestamp(), AnsiColor.GRAY)
 
 
 class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
@@ -77,70 +86,77 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         self._lock = asyncio.Lock()
         logger.debug("created_default_delivery_tracker")
 
-    async def on_forward_upstream(
+    async def on_forward_upstream_complete(
         self,
         node: NodeLike,
         envelope: FameEnvelope,
+        result: Optional[Any] = None,
+        error: Optional[Exception] = None,
         context: FameDeliveryContext | None = None,
-    ) -> FameEnvelope | None:
-        return await self._on_forward_envelope(envelope, context=context)
+    ) -> None:
+        if show_envelopes:
+            print(
+                f"\n{_timestamp()} - {color('Forwarded envelope to upstream', AnsiColor.BLUE)} 🚀\n{
+                    pretty_model(envelope)
+                }"
+            )
 
-    async def on_forward_to_route(
+    async def on_forward_to_route_complete(
         self,
         node: NodeLike,
         next_segment: str,
         envelope: FameEnvelope,
+        result: Optional[Any] = None,
+        error: Optional[Exception] = None,
         context: FameDeliveryContext | None = None,
-    ) -> FameEnvelope | None:
-        return await self._on_forward_envelope(envelope, context=context)
+    ) -> None:
+        if show_envelopes:
+            print(
+                f"\n{_timestamp()} - {
+                    color('Forwarded envelope to route "' + next_segment + '"', AnsiColor.BLUE)
+                } 🚀\n{pretty_model(envelope)}"
+            )
 
-    async def on_forward_to_peer(
+    async def on_forward_to_peer_complete(
         self,
         node: NodeLike,
         peer_segment: str,
         envelope: FameEnvelope,
+        result: Optional[Any] = None,
+        error: Optional[Exception] = None,
         context: FameDeliveryContext | None = None,
-    ) -> FameEnvelope | None:
-        return await self._on_forward_envelope(envelope, context=context)
+    ) -> None:
+        if show_envelopes:
+            print(
+                f"\n{_timestamp()} - '{
+                    color('Forwarded envelope to peer "' + peer_segment + '"', AnsiColor.BLUE)
+                }' 🚀\n{pretty_model(envelope)}"
+            )
 
-    async def on_forward_to_peers(
-        self,
-        node: NodeLike,
-        envelope: FameEnvelope,
-        peers: Any,
-        exclude_peers: Any,
-        context: FameDeliveryContext | None = None,
-    ) -> FameEnvelope | None:
-        return await self._on_forward_envelope(envelope, context=context)
+    # async def on_heartbeat_received(self, envelope: FameEnvelope) -> None:
+    #     if show_envelopes:
+    #         print(
+    #             f"\n{_timestamp()} - {color('Received envelope', AnsiColor.BLUE)} 📨\n{
+    #                 pretty_model(envelope)
+    #             }"
+    #         )
 
-    async def _on_forward_envelope(
-        self, envelope: FameEnvelope, context: FameDeliveryContext | None = None
-    ) -> FameEnvelope | None:
-        # if not context or context.origin_type != DeliveryOriginType.LOCAL:
-        #     logger.debug("default_tracker_on_envelope_no_local_origin", envp_id=envelope.id)
-        #     return envelope
+    async def on_heartbeat_sent(self, envelope: FameEnvelope) -> None:
+        if show_envelopes:
+            print(
+                f"\n{_timestamp()} - {color('Sent envelope', AnsiColor.BLUE)} 🚀\n{pretty_model(envelope)}"
+            )
 
-        # if not context.expected_response_type:
-        #     return envelope
-
-        # if isinstance(envelope.frame, DataFrame):
-        #     await self.track(
-        #         envelope,
-        #         timeout_ms=5000,
-        #         expected_response_type=context.expected_response_type,
-        #     )
-        return envelope
-
-    async def on_deliver_local(
-        self,
-        node: NodeLike,
-        address: FameAddress,
-        envelope: FameEnvelope,
-        context: FameDeliveryContext | None = None,
-    ) -> FameEnvelope | None:
-        if context and context.origin_type == DeliveryOriginType.LOCAL:
-            return await self._on_forward_envelope(envelope, context=context)
-        return envelope
+    # async def on_deliver_local(
+    #     self,
+    #     node: NodeLike,
+    #     address: FameAddress,
+    #     envelope: FameEnvelope,
+    #     context: FameDeliveryContext | None = None,
+    # ) -> FameEnvelope | None:
+    #     if context and context.origin_type == DeliveryOriginType.LOCAL:
+    #         return await self._on_forward_envelope(envelope, context=context)
+    #     return envelope
 
     async def on_envelope_delivered(
         self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None

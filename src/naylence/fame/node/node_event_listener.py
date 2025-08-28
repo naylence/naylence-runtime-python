@@ -77,6 +77,16 @@ class NodeEventListener(Protocol):
         # Default implementation does nothing
         pass
 
+    async def on_heartbeat_sent(self, envelope: FameEnvelope) -> None:
+        """
+        Called when a heartbeat is sent to upstream.
+
+        Args:
+            envelope: The heartbeat envelope to process
+        """
+        # Default implementation does nothing
+        pass
+
     async def on_node_initialized(self, node: NodeLike) -> None:
         """
         Called when a node has been fully initialized but before it starts.
@@ -288,6 +298,100 @@ class NodeEventListener(Protocol):
         # Default implementation passes envelope through unchanged
         return envelope
 
+    async def on_forward_upstream_complete(
+        self,
+        node: NodeLike,
+        envelope: FameEnvelope,
+        result: Optional[Any] = None,
+        error: Optional[Exception] = None,
+        context: Optional[FameDeliveryContext] = None,
+    ) -> None:
+        """
+        Called after a node completes forwarding an envelope upstream.
+
+        This event allows components to handle post-forwarding processing
+        including cleanup, logging, metrics collection, and error handling.
+        Components can:
+        - Log forwarding completion and status
+        - Collect metrics and monitoring data
+        - Handle errors and perform cleanup
+        - Update state based on forwarding results
+        - Perform audit logging
+
+        Args:
+            node: The node that forwarded the envelope
+            envelope: The envelope that was forwarded
+            result: The result of the forwarding operation (if successful)
+            error: The exception that occurred (if failed)
+            context: The delivery context
+        """
+        # Default implementation does nothing
+        pass
+
+    async def on_forward_to_route_complete(
+        self,
+        node: NodeLike,
+        next_segment: str,
+        envelope: FameEnvelope,
+        result: Optional[Any] = None,
+        error: Optional[Exception] = None,
+        context: Optional[FameDeliveryContext] = None,
+    ) -> None:
+        """
+        Called after a sentinel completes forwarding an envelope to a downstream route.
+
+        This event allows components to handle post-forwarding processing
+        for routing-specific operations including cleanup, logging, and error handling.
+        Components can:
+        - Log routing completion and status
+        - Collect routing metrics and monitoring data
+        - Handle routing errors and perform cleanup
+        - Update routing state based on results
+        - Perform routing audit logging
+
+        Args:
+            node: The sentinel node that forwarded the envelope
+            next_segment: The target route segment
+            envelope: The envelope that was forwarded
+            result: The result of the forwarding operation (if successful)
+            error: The exception that occurred (if failed)
+            context: The delivery context
+        """
+        # Default implementation does nothing
+        pass
+
+    async def on_forward_to_peer_complete(
+        self,
+        node: NodeLike,
+        peer_segment: str,
+        envelope: FameEnvelope,
+        result: Optional[Any] = None,
+        error: Optional[Exception] = None,
+        context: Optional[FameDeliveryContext] = None,
+    ) -> None:
+        """
+        Called after a sentinel completes forwarding an envelope to a peer.
+
+        This event allows components to handle post-forwarding processing
+        for peer communication including cleanup, logging, and error handling.
+        Components can:
+        - Log peer communication completion and status
+        - Collect peer metrics and monitoring data
+        - Handle peer communication errors and perform cleanup
+        - Update peer state based on results
+        - Perform peer audit logging
+
+        Args:
+            node: The sentinel node that forwarded the envelope
+            peer_segment: The target peer segment
+            envelope: The envelope that was forwarded
+            result: The result of the forwarding operation (if successful)
+            error: The exception that occurred (if failed)
+            context: The delivery context
+        """
+        # Default implementation does nothing
+        pass
+
     async def on_forward_to_peers(
         self,
         node: NodeLike,
@@ -321,6 +425,40 @@ class NodeEventListener(Protocol):
         """
         # Default implementation passes envelope through unchanged
         return envelope
+
+    async def on_forward_to_peers_complete(
+        self,
+        node: NodeLike,
+        envelope: FameEnvelope,
+        peers: Any,
+        exclude_peers: Any,
+        result: Optional[Any] = None,
+        error: Optional[Exception] = None,
+        context: Optional[FameDeliveryContext] = None,
+    ) -> None:
+        """
+        Called after a sentinel completes forwarding an envelope to multiple peers.
+
+        This event allows components to handle post-forwarding processing
+        for multi-peer communication including cleanup, logging, and error handling.
+        Components can:
+        - Log broadcast completion and status
+        - Collect broadcast metrics and monitoring data
+        - Handle broadcast errors and perform cleanup
+        - Update peer state based on results
+        - Perform broadcast audit logging
+
+        Args:
+            node: The sentinel node that forwarded the envelope
+            envelope: The envelope that was forwarded
+            peers: The list of target peers (or None for all)
+            exclude_peers: The list of peers to exclude (or None)
+            result: The result of the forwarding operation (if successful)
+            error: The exception that occurred (if failed)
+            context: The delivery context
+        """
+        # Default implementation does nothing
+        pass
 
     async def on_child_attach(
         self,

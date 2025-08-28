@@ -30,6 +30,7 @@ from naylence.fame.core import (
 )
 from naylence.fame.errors.errors import FameMessageTooLarge, FameTransportClose
 from naylence.fame.util.envelope_context import envelope_context
+from naylence.fame.util.formatter import AnsiColor, color, format_timestamp
 from naylence.fame.util.logging import getLogger
 from naylence.fame.util.metrics_emitter import MetricsEmitter
 from naylence.fame.util.task_spawner import TaskSpawner
@@ -37,8 +38,17 @@ from naylence.fame.util.util import pretty_model
 
 logger = getLogger(__name__)
 
-FLOW_CONTROL_ENABLED = os.getenv("FAME_FLOW_CONTROL", "1") != "0"
+ENV_VAR_SHOW_ENVELOPES = "FAME_SHOW_ENVELOPES"
+ENV_VAR_FAME_FLOW_CONTROL = "FAME_FLOW_CONTROL"
+
+show_envelopes = bool(os.getenv(ENV_VAR_SHOW_ENVELOPES) == "true")
+
+FLOW_CONTROL_ENABLED = os.getenv(ENV_VAR_FAME_FLOW_CONTROL, "1") != "0"
 _STOP_SENTINEL: Any = object()
+
+
+def _timestamp() -> str:
+    return color(format_timestamp(), AnsiColor.GRAY)
 
 
 class _NoopFlowController:
@@ -345,7 +355,13 @@ class BaseAsyncConnector(FameConnector, TaskSpawner, ABC):
                     raise TypeError(f"Expected FameEnvelope or bytes, got {type(message)}")
 
                 with envelope_context(env):
-                    logger.trace(f"received_envelope {pretty_model(env)}\n")
+                    logger.trace(f"connector_received_envelope {pretty_model(env)}\n")
+                    if show_envelopes:
+                        print(
+                            f"\n{_timestamp()} - {color('Received envelope 📨', AnsiColor.BLUE)}\n{
+                                pretty_model(env)
+                            }"
+                        )
                     if isinstance(env.frame, CreditUpdateFrame):
                         self._flow_ctrl.add_credits(env.frame.flow_id, env.frame.credits)
                         continue

@@ -622,6 +622,10 @@ class FameNode(TaskSpawner, NodeLike):
         channel_message = create_channel_message(processed_envelope, context)
         await binding.channel.send(channel_message)
 
+        await self._dispatch_envelope_event(
+            "on_deliver_local_complete", self, address, envelope, context=context
+        )
+
     async def forward_upstream(
         self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
     ) -> None:
@@ -650,6 +654,8 @@ class FameNode(TaskSpawner, NodeLike):
             return
         assert self._upstream_session_manager
         await self._upstream_session_manager.send(processed_envelope)
+
+        await self._dispatch_envelope_event("on_forward_upstream_complete", self, envelope, context=context)
 
     async def deliver(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
         # Dispatch to all event listeners for security processing

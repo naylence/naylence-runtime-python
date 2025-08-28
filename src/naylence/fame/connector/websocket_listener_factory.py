@@ -43,9 +43,7 @@ class WebSocketListenerFactory(TransportListenerFactory):
         # At this point config is definitely WebSocketListenerConfig
         assert isinstance(config, WebSocketListenerConfig)
 
-        websocket_port = config.port or int(
-            os.getenv(VAR_WEBSOCKET_LISTENER_PORT) or 0
-        )
+        websocket_port = config.port or int(os.getenv(VAR_WEBSOCKET_LISTENER_PORT) or 0)
 
         # Get or create the shared HTTP server for this host:port
         # WebSocket listener reuses the HTTP server just like HTTP listener

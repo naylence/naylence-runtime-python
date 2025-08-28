@@ -414,6 +414,7 @@ class UpstreamSessionManager(TaskSpawner):
                 hb_env_id=hb_env.id,
             )
             await c.send(hb_env)
+            await self._node._dispatch_event("on_heartbeat_sent", hb_env)
 
             # Check for missed heartbeat acknowledgements
             if self._last_hb_ack_time is not None and loop.time() - self._last_hb_ack_time > grace:
@@ -575,9 +576,9 @@ class UpstreamSessionManager(TaskSpawner):
                     hb_routing_epoch=env.frame.routing_epoch,
                 )
 
-                if env.sec and env.sec.sig:
-                    # Delegate heartbeat verification to event listeners
-                    await self._node._dispatch_event("on_heartbeat_received", env)
+                # if env.sec and env.sec.sig:
+                # Delegate heartbeat verification to event listeners
+                await self._node._dispatch_event("on_heartbeat_received", env)
 
                 self._last_hb_ack_time = asyncio.get_running_loop().time()
                 epoch = env.frame.routing_epoch

@@ -87,9 +87,7 @@ OPEN_PROFILE = {
 }
 
 
-NOOP_PROFILE = {
-    "type": "NoopAdmissionClient"
-}
+NOOP_PROFILE = {"type": "NoopAdmissionClient"}
 
 
 class AdmissionProfileConfig(AdmissionConfig):
@@ -117,7 +115,7 @@ class AdmissionProfileFactory(AdmissionClientFactory):
             )
 
             security_config = NoopNodeAdmissionConfig(**NOOP_PROFILE)
-        elif  profile == PROFILE_NAME_DIRECT:
+        elif profile == PROFILE_NAME_DIRECT:
             from naylence.fame.node.admission.direct_admission_client_factory import (
                 DirectNodeAdmissionConfig,
             )

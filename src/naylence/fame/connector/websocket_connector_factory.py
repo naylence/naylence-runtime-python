@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import ssl
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -114,6 +116,28 @@ class WebSocketConnectorFactory(ConnectorFactory):
         new_query = urlencode(query)
         return urlunparse(parts._replace(query=new_query))
 
+    def _create_ssl_context(self, url: str) -> Optional[ssl.SSLContext]:
+        """
+        Creates SSL context for WSS connections if SSL_CERT_FILE is set.
+        Returns None for non-WSS URLs or if SSL_CERT_FILE is not set.
+        """
+        parsed_url = urlparse(url)
+        if parsed_url.scheme != "wss":
+            return None
+
+        ssl_cert_file = os.environ.get("SSL_CERT_FILE")
+        if not ssl_cert_file:
+            return None
+
+        try:
+            context = ssl.create_default_context()
+            context.load_verify_locations(ssl_cert_file)
+            logger.debug("ssl_context_created", cert_file=ssl_cert_file, url=url)
+            return context
+        except Exception as e:
+            logger.warning("ssl_context_creation_failed", cert_file=ssl_cert_file, error=str(e))
+            return None
+
     async def _default_websocket_client(
         self,
         url: str,
@@ -124,11 +148,16 @@ class WebSocketConnectorFactory(ConnectorFactory):
         """
         Creates a raw WebSocket client using `websockets.connect`.
         Override this for custom WS adapters.
+        Supports custom SSL CA certificates via SSL_CERT_FILE environment variable for WSS connections.
         """
         try:
             import websockets
 
             logger.debug("websocket_connector_connecting", url=url)
+
+            # Create SSL context for WSS connections if SSL_CERT_FILE is set
+            ssl_context = self._create_ssl_context(url)
+
             return await websockets.connect(
                 url,
                 subprotocols=subprotocols,  # type: ignore
@@ -136,6 +165,7 @@ class WebSocketConnectorFactory(ConnectorFactory):
                 open_timeout=5,
                 ping_interval=heartbeat,
                 max_size=256 * 1024,
+                ssl=ssl_context,
             )
         except OSError as ose:
             raise FameConnectError(f"cannot connect to {url}: {ose}") from ose

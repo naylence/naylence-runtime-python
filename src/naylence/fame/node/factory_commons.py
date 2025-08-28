@@ -119,8 +119,11 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
             transport_listeners.append(transport_listener)
             event_listeners.append(transport_listener)
 
-    has_parent = cfg.has_parent or cfg.direct_parent_url is not None \
+    has_parent = (
+        cfg.has_parent
+        or cfg.direct_parent_url is not None
         or (admission_client is not None and admission_client.has_upstream())
+    )
 
     # Heuristic: only enable replica-side stickiness when node acts as a child (has_parent)
     # and it requests wildcard logicals (e.g., "*.fame.com"), which signals LB participation.

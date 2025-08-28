@@ -460,6 +460,10 @@ class Sentinel(FameNode, RoutingNodeLike):
             return
         await conn.send(processed_envelope)
 
+        await self._dispatch_envelope_event(
+            "on_forward_to_route_complete", self, next_segment, envelope, context=context
+        )
+
         fid = processed_envelope.flow_id
         if fid and fid not in self._route_manager._flow_routes:
             self._route_manager._flow_routes[fid] = conn
@@ -498,6 +502,10 @@ class Sentinel(FameNode, RoutingNodeLike):
             return
 
         await conn.send(processed_envelope)
+
+        await self._dispatch_envelope_event(
+            "on_forward_to_peer_complete", self, peer_segment, envelope, context=context
+        )
 
         fid = processed_envelope.flow_id
         if fid and fid not in self._route_manager._flow_routes:
@@ -538,7 +546,18 @@ class Sentinel(FameNode, RoutingNodeLike):
             conn = self._route_manager._peer_routes.get(peer_id)
             if not conn:
                 raise RuntimeError(f"No route for peer segment '{peer_id}'")
+
+            processed_envelope = await self._dispatch_envelope_event(
+                "on_forward_to_peer", self, envelope, peers, exclude_peers, context=context
+            )
+            if processed_envelope is None:
+                continue
+
             await conn.send(processed_envelope)
+
+            await self._dispatch_envelope_event(
+                "on_forward_to_peer_complete", self, envelope, peers, exclude_peers, context=context
+            )
 
             fid = processed_envelope.flow_id
             if fid and fid not in self._route_manager._flow_routes:
@@ -558,22 +577,23 @@ class Sentinel(FameNode, RoutingNodeLike):
             )
             return
 
-        # Dispatch to all event listeners for security processing
-        processed_envelope = await self._dispatch_envelope_event(
-            "on_forward_upstream", self, envelope, context=context
-        )
+        # Super method will call the event listeners
+        # # Dispatch to all event listeners for security processing
+        # processed_envelope = await self._dispatch_envelope_event(
+        #     "on_forward_upstream", self, envelope, context=context
+        # )
 
-        # If any listener returns None, halt forwarding (envelope queued for keys)
-        if processed_envelope is None:
-            return
+        # # If any listener returns None, halt forwarding (envelope queued for keys)
+        # if processed_envelope is None:
+        #     return
 
-        await super().forward_upstream(processed_envelope, context)
+        await super().forward_upstream(envelope, context)
         if not self._upstream_connector:
             return
-        fid = processed_envelope.flow_id
+        fid = envelope.flow_id
         if fid and fid not in self._route_manager._flow_routes:
             self._route_manager._flow_routes[fid] = self._upstream_connector  # remember parent
-        self._maybe_forget_flow(processed_envelope)
+        self._maybe_forget_flow(envelope)
 
     async def _connect_to_peer(self, peer: Peer):
         if not self.attach_client:

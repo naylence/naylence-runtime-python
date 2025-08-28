@@ -240,7 +240,7 @@ class WebSocketListener(TransportListener, NodeEventListener):
                 logger.error("websocket_self_attachment_attempt", system_id=system_id)
                 await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
                 return
-            
+
             await websocket.accept(subprotocol="bearer" if parts and parts[0] == "bearer" else None)
             logger.debug("websocket_attach_accepted", system_id=system_id)
 

@@ -1,6 +1,4 @@
 """
-OAuth2 token server router for local testing.
-
 This module provides a FastAPI router that implements OAuth2 client credentials grant flow
 as a simple token server during local development and testing.
 """
@@ -17,6 +15,12 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 DEFAULT_PREFIX = "/oauth"
 
+ENV_VAR_CLIENT_ID = "FAME_JWT_CLIENT_ID"
+ENV_VAR_CLIENT_SECRET = "FAME_JWT_CLIENT_SECRET"
+ENV_VAR_ALLOWED_SCOPES = "FAME_JWT_ALLOWED_SCOPES"
+ENV_VAR_JWT_TRUSTED_ISSUER = "FAME_JWT_TRUSTED_ISSUER"
+ENV_VAR_JWT_AUDIENCE = "FAME_JWT_AUDIENCE"
+
 
 class TokenResponse(BaseModel):
     """OAuth2 token response model."""
@@ -30,8 +34,6 @@ class TokenResponse(BaseModel):
 def create_oauth2_token_router(
     *,
     prefix: str = DEFAULT_PREFIX,
-    client_id_env_var: str = "FAME_CLIENT_ID",
-    client_secret_env_var: str = "FAME_CLIENT_SECRET",
     issuer: Optional[str] = None,
     audience: Optional[str] = None,
     token_ttl_sec: int = 3600,
@@ -56,33 +58,38 @@ def create_oauth2_token_router(
         APIRouter configured with OAuth2 endpoints
 
     Environment Variables:
-        FAME_CLIENT_ID: OAuth2 client identifier
-        FAME_CLIENT_SECRET: OAuth2 client secret
+        FAME_JWT_CLIENT_ID: OAuth2 client identifier
+        FAME_JWT_CLIENT_SECRET: OAuth2 client secret
 
     Endpoints:
         POST /oauth/token - OAuth2 token endpoint
-        GET /oauth/.well-known/jwks.json - JWKS endpoint (if available)
     """
     router = APIRouter(prefix=prefix)
 
     # Default values
-    default_issuer = issuer or os.getenv("FAME_JWT_TRUSTED_ISSUER") or "https://auth.fame.local"
-    default_audience = audience or "fame-api"
-    default_scopes = allowed_scopes or ["node.connect"]
+    default_issuer = os.getenv("FAME_JWT_TRUSTED_ISSUER") or issuer or "https://auth.fame.fabric"
+    default_audience = os.getenv("FAME_JWT_AUDIENCE") or audience or "fame-api"
+
+    env_allowed_scopes = os.getenv(ENV_VAR_ALLOWED_SCOPES)
+    if env_allowed_scopes:
+        allowed_scopes = [
+            scope.strip() for scope in env_allowed_scopes.replace(",", " ").split() if scope.strip()
+        ]
+    allowed_scopes = allowed_scopes or ["node.connect"]
 
     # HTTP Basic Auth for client credentials in Authorization header
     security = HTTPBasic(auto_error=False)
 
     def get_configured_client_credentials() -> tuple[str, str]:
         """Get client credentials from environment variables."""
-        client_id = os.environ.get(client_id_env_var)
-        client_secret = os.environ.get(client_secret_env_var)
+        client_id = os.environ.get(ENV_VAR_CLIENT_ID)
+        client_secret = os.environ.get(ENV_VAR_CLIENT_SECRET)
 
         if not client_id or not client_secret:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Server configuration error: {client_id_env_var} "
-                "and {client_secret_env_var} must be set",
+                detail=f"Server configuration error: {ENV_VAR_CLIENT_ID} "
+                f"and {ENV_VAR_CLIENT_SECRET} must be set",
             )
 
         return client_id, client_secret
@@ -125,14 +132,14 @@ def create_oauth2_token_router(
     def validate_scope(requested_scope: Optional[str]) -> list[str]:
         """Validate and return granted scopes."""
         if not requested_scope:
-            return default_scopes
+            return allowed_scopes
 
         requested_scopes = requested_scope.split()
         granted_scopes = []
 
-        granted_scopes = [scope for scope in requested_scopes if scope in default_scopes]
+        granted_scopes = [scope for scope in requested_scopes if scope in allowed_scopes]
 
-        return granted_scopes if granted_scopes else default_scopes
+        return granted_scopes if granted_scopes else allowed_scopes
 
     @router.post("/token", response_model=TokenResponse)
     async def token_endpoint(

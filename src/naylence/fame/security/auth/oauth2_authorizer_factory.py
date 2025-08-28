@@ -58,13 +58,13 @@ class OAuth2AuthorizerConfig(AuthorizerConfig):
     @classmethod
     def validate_default_ttl_sec(cls, v: int) -> int:
         """Validate default OAuth2 TTL is within acceptable bounds."""
-        return validate_oauth2_ttl_sec(v) or v
+        return int(validate_oauth2_ttl_sec(v) or v)
 
     @field_validator("max_ttl_sec")
     @classmethod
     def validate_max_ttl_sec(cls, v: int) -> int:
         """Validate maximum OAuth2 TTL is within acceptable bounds."""
-        return validate_oauth2_ttl_sec(v) or v
+        return int(validate_oauth2_ttl_sec(v) or v)
 
     token_verifier_config: Optional[TokenVerifierConfig] = Field(
         default=None,

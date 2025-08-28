@@ -149,7 +149,7 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
                 expected_audience=expected_audience,
             )
         except Exception as e:
-            logger.warning("token_verification_failed", error=str(e))
+            logger.warning("token_verification_failed", exc_info=e)
             return None
 
         # Validate scopes if required

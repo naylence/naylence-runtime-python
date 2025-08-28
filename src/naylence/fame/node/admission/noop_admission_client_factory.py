@@ -20,4 +20,5 @@ class NoopAdmissionClientFactory(AdmissionClientFactory):
         **kwargs: Any,
     ) -> AdmissionClient:
         from naylence.fame.node.admission.noop_admission_client import NoopAdmissionClient
+
         return NoopAdmissionClient()
