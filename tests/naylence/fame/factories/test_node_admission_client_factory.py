@@ -4,11 +4,11 @@ import pytest
 
 from naylence.fame.core import create_resource
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
-from naylence.fame.node.admission.admission_service_client import (
-    AdmissionServiceClient,
+from naylence.fame.node.admission.welcome_service_client import (
+    WelcomeServiceClient,
 )
-from naylence.fame.node.admission.admission_service_client_factory import (
-    AdmissionServiceClientConfig,
+from naylence.fame.node.admission.welcome_service_client_factory import (
+    WelcomeServiceClientConfig,
 )
 from naylence.fame.node.admission.direct_admission_client import (
     DirectAdmissionClient,
@@ -26,15 +26,15 @@ class TestAdmissionClientFactory:
     """Test AdmissionClientFactory and its implementations."""
 
     @pytest.mark.asyncio
-    async def test_admission_service_client_factory(self):
-        """Test AdmissionServiceClient factory creates correct instance."""
-        config = AdmissionServiceClientConfig(
+    async def test_welcome_service_client_factory(self):
+        """Test WelcomeServiceClient factory creates correct instance."""
+        config = WelcomeServiceClientConfig(
             url="https://example.com/admit", supported_transports=["websocket", "http"]
         )
         client = await create_resource(AdmissionClientFactory, config)
 
-        assert isinstance(client, AdmissionServiceClient)
-        assert client.__class__.__name__ == "AdmissionServiceClient"
+        assert isinstance(client, WelcomeServiceClient)
+        assert client.__class__.__name__ == "WelcomeServiceClient"
 
     @pytest.mark.asyncio
     async def test_direct_admission_client_factory(self):
@@ -56,13 +56,13 @@ class TestAdmissionClientFactory:
     async def test_admission_client_factory_from_dict(self):
         """Test factory with dictionary configuration."""
         config = {
-            "type": "AdmissionServiceClient",
+            "type": "WelcomeServiceClient",
             "url": "https://example.com/admit",
             "supported_transports": ["websocket"],
         }
         client = await create_resource(AdmissionClientFactory, config)
 
-        assert isinstance(client, AdmissionServiceClient)
+        assert isinstance(client, WelcomeServiceClient)
 
     @pytest.mark.asyncio
     async def test_direct_admission_client_factory_from_dict(self):

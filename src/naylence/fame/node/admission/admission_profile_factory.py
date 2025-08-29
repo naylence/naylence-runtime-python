@@ -26,7 +26,7 @@ ENV_VAR_DIRECT_ADMISSION_URL = "FAME_DIRECT_ADMISSION_URL"
 ENV_VAR_ADMISSION_SERVICE_URL = "FAME_ADMISSION_SERVICE_URL"
 ENV_VAR_ADMISSION_TTL = "FAME_ADMISSSION_TTL"
 
-PROFILE_NAME_SERVICE = "service"
+PROFILE_NAME_WELCOME = "welcome"
 PROFILE_NAME_DIRECT = "direct"
 PROFILE_NAME_OPEN = "open"
 PROFILE_NAME_NOOP = "noop"
@@ -35,8 +35,8 @@ PROFILE_NAME_NONE = "none"
 # Use centralized constant instead of hardcoded value
 DEFAULT_ADMISSION_TTL = DEFAULT_ADMISSION_TTL_SEC
 
-ADMISSION_SERVICE_PROFILE = {
-    "type": "AdmissionServiceClient",
+WELCOME_SERVICE_PROFILE = {
+    "type": "WelcomeServiceClient",
     "url": Expressions.env(ENV_VAR_ADMISSION_SERVICE_URL),
     "supported_transports": ["websocket"],
     "auth": {
@@ -127,12 +127,12 @@ class AdmissionProfileFactory(AdmissionClientFactory):
             )
 
             security_config = DirectNodeAdmissionConfig(**OPEN_PROFILE)
-        elif profile == PROFILE_NAME_SERVICE:
-            from naylence.fame.node.admission.admission_service_client_factory import (
-                AdmissionServiceClientConfig,
+        elif profile == PROFILE_NAME_WELCOME:
+            from naylence.fame.node.admission.welcome_service_client_factory import (
+                WelcomeServiceClientConfig,
             )
 
-            security_config = AdmissionServiceClientConfig(**ADMISSION_SERVICE_PROFILE)
+            security_config = WelcomeServiceClientConfig(**WELCOME_SERVICE_PROFILE)
         else:
             raise ValueError(f"Unknown admission profile: {profile}")
 

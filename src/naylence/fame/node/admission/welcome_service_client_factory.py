@@ -15,33 +15,33 @@ from naylence.fame.security.auth.auth_injection_strategy_factory import (
 )
 
 
-class AdmissionServiceClientConfig(AdmissionConfig):
-    type: str = "AdmissionServiceClient"
+class WelcomeServiceClientConfig(AdmissionConfig):
+    type: str = "WelcomeServiceClient"
     url: HttpUrl
     supported_transports: List[str] = Field(..., description="Allowed transports")
     auth: ConnectorAuth = Field(default_factory=NoAuth, description="Authentication configuration")
 
 
-class AdmissionServiceClientFactory(AdmissionClientFactory):
+class WelcomeServiceClientFactory(AdmissionClientFactory):
     async def create(
         self,
-        config: Optional[AdmissionServiceClientConfig | dict[str, Any]] = None,
+        config: Optional[WelcomeServiceClientConfig | dict[str, Any]] = None,
         **kwargs: Any,
     ) -> AdmissionClient:
         if not config:
-            raise RuntimeError("Missing AdmissionServiceClientConfig config for admission service client")
+            raise RuntimeError("Missing WelcomeServiceClientConfig config for admission service client")
         if isinstance(config, dict):
-            config = AdmissionServiceClientConfig.model_validate(config)
+            config = WelcomeServiceClientConfig.model_validate(config)
 
-        from naylence.fame.node.admission.admission_service_client import (
-            AdmissionServiceClient,
+        from naylence.fame.node.admission.welcome_service_client import (
+            WelcomeServiceClient,
         )
 
         # Create auth strategy
         auth_strategy = await create_auth_strategy(config.auth)
 
         # Create client
-        client = AdmissionServiceClient(
+        client = WelcomeServiceClient(
             url=str(config.url),
             supported_transports=config.supported_transports,
             auth_strategy=auth_strategy,

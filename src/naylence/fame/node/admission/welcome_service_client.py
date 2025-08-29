@@ -15,7 +15,7 @@ from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.security.auth.auth_injection_strategy import AuthInjectionStrategy
 
 
-class AdmissionServiceClient(AdmissionClient):
+class WelcomeServiceClient(AdmissionClient):
     """
     HTTP-based implementation of FameAdmissionClient.
     Uses aiohttp to POST a NodeHelloFrame and parse a NodeWelcomeFrame.
@@ -74,7 +74,7 @@ class AdmissionServiceClient(AdmissionClient):
                 text = await resp.text()
                 if resp.status != 200:
                     raise RuntimeError(
-                        f"[AdmissionServiceClient] failed to connect to {(self._url,)}. "
+                        f"[WelcomeServiceClient] failed to connect to {(self._url,)}. "
                         f"HTTP {resp.status}: {text}"
                     )
                 data = json.loads(text)
@@ -85,7 +85,7 @@ class AdmissionServiceClient(AdmissionClient):
             # Validate frame type
             if not isinstance(envelope.frame, NodeWelcomeFrame):
                 raise RuntimeError(
-                    f"[AdmissionServiceClient] Unexpected frame type '{envelope.frame.type}'"
+                    f"[WelcomeServiceClient] Unexpected frame type '{envelope.frame.type}'"
                 )
             return envelope  # type: ignore
         finally:
