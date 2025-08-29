@@ -6,6 +6,7 @@ from typing import Any, List, Optional
 from naylence.fame.core import (
     DeliveryOriginType,
     FameConnector,
+    FameDeliveryContext,
     FameEnvelope,
     FameEnvelopeHandler,
     NodeAttachAckFrame,
@@ -14,6 +15,7 @@ from naylence.fame.core import (
     generate_id,
 )
 from naylence.fame.node.admission.node_attach_client import AttachInfo, NodeAttachClient
+from naylence.fame.node.node_like import NodeLike
 from naylence.fame.security.keys.attachment_key_validator import (
     AttachmentKeyValidator,
     KeyValidationError,
@@ -44,6 +46,7 @@ class DefaultNodeAttachClient(NodeAttachClient):
 
     async def attach(
         self,
+        node: NodeLike,
         origin_type: DeliveryOriginType,
         connector: FameConnector,
         welcome_frame: NodeWelcomeFrame,
@@ -86,7 +89,23 @@ class DefaultNodeAttachClient(NodeAttachClient):
                     attach_req.stickiness = offer
         except Exception as e:
             logger.debug("stickiness_offer_skipped", error=str(e))
-        await connector.send(FameEnvelope(frame=attach_req, corr_id=corr_id))
+
+        env = FameEnvelope(frame=attach_req, corr_id=corr_id)
+
+        local_context = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL)
+
+        processed_env = await node._dispatch_envelope_event(
+            "on_forward_upstream", self, env, context=local_context
+        )
+
+        if processed_env is not None:
+            await connector.send(processed_env)
+        else:
+            raise RuntimeError("Envelope was blocked by on_forward_upstream event")
+
+        await node._dispatch_envelope_event(
+            "on_forward_upstream_complete", self, processed_env, context=local_context
+        )
 
         # 3) wait for ACK
         ack_env = await self._await_ack(connector)
@@ -152,7 +171,7 @@ class DefaultNodeAttachClient(NodeAttachClient):
         assert assigned_path
 
         target_physical_path = (
-            node_attach_ack_frame.target_physical_path or welcome_frame.parent_physical_path
+            node_attach_ack_frame.target_physical_path or welcome_frame.target_physical_path
         )
 
         assert target_physical_path

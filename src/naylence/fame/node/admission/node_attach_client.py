@@ -9,6 +9,7 @@ from naylence.fame.core import (
     FameEnvelopeHandler,
     NodeWelcomeFrame,
 )
+from naylence.fame.node.node_like import NodeLike
 
 
 class AttachInfo(TypedDict, total=False):
@@ -35,6 +36,7 @@ class NodeAttachClient(Protocol):
 
     async def attach(
         self,
+        node: NodeLike,
         origin_type: DeliveryOriginType,
         connector: FameConnector,
         welcome_frame: NodeWelcomeFrame,

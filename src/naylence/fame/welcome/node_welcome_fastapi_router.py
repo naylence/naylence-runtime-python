@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from fastapi import Request
 from pydantic import ValidationError
 
 from naylence.fame.core import FameEnvelopeWith, NodeHelloFrame, create_fame_envelope
@@ -17,13 +18,29 @@ PROTO_MAJOR = 1
 DEFAULT_PREFIX = f"/fame/v{PROTO_MAJOR}/welcome"
 
 
-def create_welcome_router(*, welcome_service: WelcomeService, prefix: str = DEFAULT_PREFIX) -> APIRouter:
+def create_node_welcome_fastapi_router(
+    *,
+    welcome_service: WelcomeService,
+    prefix: str = DEFAULT_PREFIX,
+    expected_audience: str = "fame.fabric",
+) -> APIRouter:
     from fastapi import APIRouter, HTTPException
 
     router = APIRouter(prefix=prefix)
 
     @router.post("/hello")
-    async def handle_hello(hello_env: FameEnvelopeWith[NodeHelloFrame]):
+    async def handle_hello(request: Request, hello_env: FameEnvelopeWith[NodeHelloFrame]):
+        auth_header = request.headers.get("authorization", "")
+
+        # ① Perform authorization check
+        if welcome_service.authorizer:
+            auth_result = await welcome_service.authorizer.authenticate(expected_audience, auth_header)
+            if auth_result is None:
+                logger.warning(
+                    "client_authentication_failed",
+                    authorizer_type=type(welcome_service.authorizer).__name__,
+                )
+                raise HTTPException(401, "Authentication failed")
         try:
             welcome = await welcome_service.handle_hello(hello_env.frame)
             env = create_fame_envelope(frame=welcome)

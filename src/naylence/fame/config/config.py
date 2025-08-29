@@ -10,10 +10,11 @@ from pydantic import Field, ValidationError
 
 from naylence.fame.core import FameConfig
 from naylence.fame.util import logging
-from naylence.fame.welcome.welcome_service_config import WelcomeServiceConfig
 
 # configure logger
 logger = logging.getLogger(__name__)
+
+ENV_VAR_FAME_CONFIG = "FAME_CONFIG"
 
 # search order: current dir then /etc/fame
 _CONFIG_SEARCH_PATHS = [
@@ -28,7 +29,7 @@ _CONFIG_SEARCH_PATHS = [
 
 class ExtendedFameConfig(FameConfig):
     node: Optional[Any] = Field(None, description="Node config")
-    welcome: Optional[WelcomeServiceConfig] = Field(None, description="Welcome service config")
+    welcome: Optional[Any] = Field(None, description="Welcome service config")
 
 
 def load_fame_config() -> FameConfig:
@@ -39,7 +40,7 @@ def load_fame_config() -> FameConfig:
       3) Defaults from FameConfig model
     """
     # 1) env var
-    raw = os.getenv("FAME_CONFIG")
+    raw = os.getenv(ENV_VAR_FAME_CONFIG)
     if raw:
         try:
             cfg_dict = json.loads(raw)

@@ -7,10 +7,12 @@ from naylence.fame.fastapi.jwks_api_router import create_jwks_router
 from naylence.fame.fastapi.oauth2_token_router import create_oauth2_token_router
 from naylence.fame.util.logging import enable_logging
 
-enable_logging(log_level=os.getenv("LOG_LEVEL", "trace"))
+ENV_VAR_LOG_LEVEL = "FAME_LOG_LEVEL"
+
+enable_logging(log_level=os.getenv(ENV_VAR_LOG_LEVEL, "trace"))
 
 
-def create_ca_signer_app() -> FastAPI:
+def create_app() -> FastAPI:
     app = FastAPI()
     app.include_router(create_oauth2_token_router())
     app.include_router(create_jwks_router())
@@ -18,7 +20,7 @@ def create_ca_signer_app() -> FastAPI:
 
 
 if __name__ == "__main__":
-    app = create_ca_signer_app()
+    app = create_app()
     host = os.getenv("APP_HOST", "0.0.0.0")
     port = int(os.getenv("APP_PORT", 8099))
     uvicorn.run(app, host=host, port=port, log_level="info")

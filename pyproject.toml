@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.1.68"
+version = "0.1.69"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -39,7 +39,7 @@ httpx = "^0.28.1"
 structlog = "^25.3.0"
 cryptography = "^45.0.6"
 pyjwt = "^2.10.1"
-naylence-core = "^0.1.13"
+naylence-core = "^0.1.14"
 fastapi = "^0.116.1"
 uvicorn = "^0.35.0"
 python-multipart = "^0.0.20"
@@ -182,7 +182,7 @@ NoopAdmissionClient = "naylence.fame.node.admission.noop_admission_client_factor
 AdmissionProfile = "naylence.fame.node.admission.admission_profile_factory:AdmissionProfileFactory"
 
 [project.entry-points."naylence.NodePlacementStrategyFactory"]
-WebSocketPlacementStrategy = "naylence.fame.placement.websocket_node_placement_strategy_factory:WebSocketPlacementStrategyFactory"
+StaticNodePlacementStrategy = "naylence.fame.placement.static_node_placement_strategy_factory:StaticNodePlacementStrategyFactory"
 
 [project.entry-points."naylence.LoadBalancingStrategyFactory"]
 RandomLoadBalancingStrategy = "naylence.fame.sentinel.load_balancing.random_load_balancing_strategy_factory:RandomLoadBalancingStrategyFactory"

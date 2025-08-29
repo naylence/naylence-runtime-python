@@ -614,7 +614,7 @@ class Sentinel(FameNode, RoutingNodeLike):
             # connector_factory=self.connector_factory,
             requested_logicals=[],
             inbound_handler=self.handle_inbound_from_peer,
-            on_attach=self._on_attach_to_peer,
+            on_attach=self._on_node_attach_to_peer,
             on_epoch_change=self._on_epoch_change,
         )
         await peer_session_manager.start()
@@ -625,9 +625,9 @@ class Sentinel(FameNode, RoutingNodeLike):
             FameConnector, peer_session_manager
         )
 
-    async def _on_attach_to_peer(self, info: AttachInfo, connector: FameConnector):
+    async def _on_node_attach_to_peer(self, info: AttachInfo, connector: FameConnector):
         # Dispatch peer attachment event to all listeners
-        await self._dispatch_event("on_attach_to_peer", self, info, connector)
+        await self._dispatch_event("on_node_attach_to_peer", self, info, connector)
 
     async def handle_inbound_from_peer(
         self, envelope: FameEnvelope, context: Optional[FameDeliveryContext]

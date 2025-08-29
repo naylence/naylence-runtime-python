@@ -207,7 +207,7 @@ class HttpListener(TransportListener, NodeEventListener):
                 if authorizer:
                     try:
                         # First phase: authentication (token validation)
-                        auth_result = await authorizer.authenticate(self._node, auth_header)
+                        auth_result = await authorizer.authenticate(self._node.physical_path, auth_header)
 
                         if auth_result is None:
                             logger.warning(
@@ -311,7 +311,7 @@ class HttpListener(TransportListener, NodeEventListener):
                 if authorizer:
                     try:
                         # First phase: authentication (token validation)
-                        auth_result = await authorizer.authenticate(self._node, auth_header)
+                        auth_result = await authorizer.authenticate(self._node.physical_path, auth_header)
 
                         if auth_result is None:
                             logger.warning(

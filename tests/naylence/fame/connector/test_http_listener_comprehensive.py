@@ -51,6 +51,7 @@ class TestHttpListenerComprehensive:
         """Create a mock node that implements RoutingNodeLike."""
         node = Mock(spec=RoutingNodeLike)
         node.id = "test-node"
+        node.physical_path = "test-node-physical-path"
         node.public_url = "https://external.example.com:8080"
         node.security_manager = None
         node.upstream_connector = None
@@ -449,7 +450,7 @@ class TestHttpListenerComprehensive:
         )
 
         assert response.status_code == 202
-        mock_authorizer.authenticate.assert_called_once_with(mock_node, "Bearer token123")
+        mock_authorizer.authenticate.assert_called_once_with(mock_node.physical_path, "Bearer token123")
 
         # Verify the connector received a FameChannelMessage with authorization context
         mock_connector.push_to_receive.assert_called_once()
@@ -1298,7 +1299,7 @@ class TestHttpListenerComprehensive:
             )
 
             assert response.status_code == 202
-            mock_authorizer.authenticate.assert_called_once_with(mock_node, "Bearer token123")
+            mock_authorizer.authenticate.assert_called_once_with(mock_node.physical_path, "Bearer token123")
 
     @pytest.mark.asyncio
     async def test_upstream_endpoint_auth_with_security_manager(self, http_listener, mock_node):
@@ -1341,4 +1342,4 @@ class TestHttpListenerComprehensive:
         )
 
         assert response.status_code == 202
-        mock_authorizer.authenticate.assert_called_once_with(mock_node, "Bearer token123")
+        mock_authorizer.authenticate.assert_called_once_with(mock_node.physical_path, "Bearer token123")

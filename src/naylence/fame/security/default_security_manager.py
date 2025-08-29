@@ -373,7 +373,7 @@ class DefaultSecurityManager(SecurityManager):
 
         logger.debug("node_security_initialization_complete", node_id=node.id)
 
-    async def on_attach_to_peer(
+    async def on_node_attach_to_peer(
         self, node: NodeLike, attach_info: AttachInfo, connector: FameConnector
     ) -> None:
         """
@@ -381,7 +381,7 @@ class DefaultSecurityManager(SecurityManager):
 
         This method processes peer keys and manages key exchange requirements
         during peer attachment. It handles the logic that was previously in
-        Sentinel._on_attach_to_peer.
+        Sentinel._on_node_attach_to_peer.
 
         Args:
             node: The sentinel node that attached to the peer
@@ -413,10 +413,10 @@ class DefaultSecurityManager(SecurityManager):
 
         # Dispatch peer attach event to other security components that implement NodeEventListener
         if self._certificate_manager and isinstance(self._certificate_manager, NodeEventListener):
-            await self._certificate_manager.on_attach_to_peer(node, attach_info, connector)
+            await self._certificate_manager.on_node_attach_to_peer(node, attach_info, connector)
 
         if self._encryption and isinstance(self._encryption, NodeEventListener):
-            await self._encryption.on_attach_to_peer(node, attach_info, connector)
+            await self._encryption.on_node_attach_to_peer(node, attach_info, connector)
 
     async def on_deliver_local(
         self,

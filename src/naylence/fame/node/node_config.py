@@ -4,7 +4,7 @@ from pydantic import Field
 
 from naylence.fame.connector.transport_listener_config import TransportListenerConfig
 from naylence.fame.node.admission.admission_client_factory import AdmissionConfig
-from naylence.fame.node.node_like import NodeLikeConfig
+from naylence.fame.node.node_like_factory import NodeLikeConfig
 from naylence.fame.security.keys.attachment_key_validator_factory import (
     AttachmentKeyValidatorConfig,
 )

@@ -1,7 +1,8 @@
 from .node import FameEnvironmentContext, FameNode, get_node
 from .node_context import FameAuthorizedDeliveryContext, FameNodeAuthorizationContext
 from .node_factory import NodeFactory
-from .node_like import NodeLike, NodeLikeConfig, NodeLikeFactory
+from .node_like import NodeLike
+from .node_like_factory import NodeLikeConfig, NodeLikeFactory
 from .routing_node_like import RoutingNodeLike
 
 __all__ = [

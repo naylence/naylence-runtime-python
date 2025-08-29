@@ -18,7 +18,10 @@ DEFAULT_PREFIX = "/oauth"
 ENV_VAR_CLIENT_ID = "FAME_JWT_CLIENT_ID"
 ENV_VAR_CLIENT_SECRET = "FAME_JWT_CLIENT_SECRET"
 ENV_VAR_ALLOWED_SCOPES = "FAME_JWT_ALLOWED_SCOPES"
-ENV_VAR_JWT_TRUSTED_ISSUER = "FAME_JWT_TRUSTED_ISSUER"
+
+# NOTE: this variable is not the same as FAME_JWT_TRUSTED_ISSUER
+ENV_VAR_JWT_ISSUER = "FAME_JWT_ISSUER"
+
 ENV_VAR_JWT_AUDIENCE = "FAME_JWT_AUDIENCE"
 
 
@@ -67,8 +70,8 @@ def create_oauth2_token_router(
     router = APIRouter(prefix=prefix)
 
     # Default values
-    default_issuer = os.getenv("FAME_JWT_TRUSTED_ISSUER") or issuer or "https://auth.fame.fabric"
-    default_audience = os.getenv("FAME_JWT_AUDIENCE") or audience or "fame-api"
+    default_issuer = os.getenv(ENV_VAR_JWT_ISSUER) or issuer or "https://auth.fame.fabric"
+    default_audience = os.getenv(ENV_VAR_JWT_AUDIENCE) or audience or "fame-api"
 
     env_allowed_scopes = os.getenv(ENV_VAR_ALLOWED_SCOPES)
     if env_allowed_scopes:

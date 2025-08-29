@@ -31,9 +31,10 @@ class AuthorizerFactory(ResourceFactory[Authorizer, C]):
             cfg_dict = cfg.__dict__
         else:
             cfg_dict = cfg
-        return await create_default_resource(
+        authorizer = await create_default_resource(
             AuthorizerFactory, cfg_dict, token_verifier=token_verifier, **kwargs
         )
+        return authorizer
 
 
 class NoopAuthorizerConfig(AuthorizerConfig):

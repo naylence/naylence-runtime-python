@@ -18,7 +18,8 @@ from naylence.fame.core import (
     FameServiceProxy,
     generate_id,
 )
-from naylence.fame.node.node_like import NodeLike, NodeLikeFactory
+from naylence.fame.node.node_like import NodeLike
+from naylence.fame.node.node_like_factory import NodeLikeFactory
 from naylence.fame.service.service_manager import ServiceManager
 from naylence.fame.service.sink_service import SinkService
 from naylence.fame.util.util import decode_fame_data_payload

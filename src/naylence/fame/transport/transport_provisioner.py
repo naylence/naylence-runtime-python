@@ -13,7 +13,8 @@ from typing import (
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from naylence.fame.core import NodeHelloFrame, ResourceConfig, ResourceFactory
+from naylence.fame.core import NodeHelloFrame
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_default_resource, create_resource
 
 if TYPE_CHECKING:
     from naylence.fame.placement.node_placement_strategy import PlacementDecision
@@ -57,4 +58,17 @@ class TransportProvisionerConfig(ResourceConfig):
 C = TypeVar("C", bound=TransportProvisionerConfig)
 
 
-class TransportProvisionerFactory(ResourceFactory[TransportProvisioner, C]): ...
+class TransportProvisionerFactory(ResourceFactory[TransportProvisioner, C]):
+    @classmethod
+    async def create_transport_provisioner(
+        cls, config: Optional[C] = None, **kwargs
+    ) -> TransportProvisioner:
+        if config:
+            transport_provisioner = await create_resource(TransportProvisionerFactory, config, **kwargs)
+            return transport_provisioner
+
+        transport_provisioner = await create_default_resource(TransportProvisionerFactory, **kwargs)
+
+        assert transport_provisioner, "Failed to create default TransportProvisioner"
+
+        return transport_provisioner

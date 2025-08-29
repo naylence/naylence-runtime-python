@@ -33,7 +33,7 @@ class DefaultAuthorizer(Authorizer, TokenVerifierProvider):
 
     async def authenticate(
         self,
-        node: NodeLike,
+        audience: Optional[str],
         credentials: str | bytes,
     ) -> Optional[AuthorizationContext]:
         """Authenticate using JWT token with custom Fame claims."""
@@ -55,7 +55,7 @@ class DefaultAuthorizer(Authorizer, TokenVerifierProvider):
         try:
             raw_claims = await self._token_verifier.verify(
                 str(token),
-                expected_audience=node.physical_path,
+                expected_audience=audience,
             )
 
             # Create authorization context with Fame-specific claims

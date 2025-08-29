@@ -11,7 +11,8 @@ from naylence.fame.node.admission.admission_client_factory import AdmissionClien
 from naylence.fame.node.factory_commons import make_common_opts
 from naylence.fame.node.node_config import FameNodeConfig
 from naylence.fame.node.node_event_listener import NodeEventListener
-from naylence.fame.node.node_like import NodeLike, NodeLikeFactory
+from naylence.fame.node.node_like import NodeLike
+from naylence.fame.node.node_like_factory import NodeLikeFactory
 from naylence.fame.security.auth.auth_config import WebSocketSubprotocolAuth
 from naylence.fame.security.auth.authorizer_factory import AuthorizerConfig
 from naylence.fame.security.auth.none_token_provider_factory import (

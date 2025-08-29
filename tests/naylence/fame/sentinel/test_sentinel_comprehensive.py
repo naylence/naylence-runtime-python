@@ -878,19 +878,19 @@ class TestSentinelComprehensive:
             assert "peer-session-id" in sentinel._peer_session_managers
             assert "peer-session-id" in sentinel._route_manager._peer_routes
 
-    async def test_on_attach_to_peer(self, sentinel):
-        """Test _on_attach_to_peer method."""
+    async def test_on_node_attach_to_peer(self, sentinel):
+        """Test _on_node_attach_to_peer method."""
         # Mock _dispatch_event
         sentinel._dispatch_event = AsyncMock()
 
         mock_info = MagicMock(spec=AttachInfo)
         mock_connector = MagicMock(spec=FameConnector)
 
-        await sentinel._on_attach_to_peer(mock_info, mock_connector)
+        await sentinel._on_node_attach_to_peer(mock_info, mock_connector)
 
         # Verify event was dispatched
         sentinel._dispatch_event.assert_called_once_with(
-            "on_attach_to_peer", sentinel, mock_info, mock_connector
+            "on_node_attach_to_peer", sentinel, mock_info, mock_connector
         )
 
     async def test_handle_inbound_from_peer(self, sentinel):

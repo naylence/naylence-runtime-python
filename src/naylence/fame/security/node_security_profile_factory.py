@@ -84,9 +84,9 @@ STRICT_OVERLAY_PROFILE = {
     "authorizer": {
         "type": "DefaultAuthorizer",
         "verifier": {
-            "type": "JWTTokenVerifier",
-            "kid": "dev",
-            "issuer": "dev.naylence.ai",
+            "type": "JWKSJWTTokenVerifier",
+            "jwks_url": Expressions.env(ENV_VAR_JWKS_URL),
+            "issuer": Expressions.env(ENV_VAR_JWT_TRUSTED_ISSUER),
         },
     },
 }

@@ -235,6 +235,7 @@ class UpstreamSessionManager(TaskSpawner):
         supported_inbound_connectors = self._node.gather_supported_inbound_connectors()
 
         attach_info = await self._attach_client.attach(
+            self._node,
             origin_type=self._outbound_origin_type,
             connector=connector,
             welcome_frame=welcome.frame,

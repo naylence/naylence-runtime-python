@@ -13,19 +13,20 @@ from .node_placement_strategy import (
 
 class WebSocketPlacementStrategy(FameNodePlacementStrategy):
     """
-    Assigns all incoming nodes to a WebSocket-enabled router
-    under the static path /root/ws/{uuid-segment}.
+    Deprecated: use StaticNodePlacementStrategy instead.
+
+    Legacy strategy that assigns nodes under a fixed parent. Historically tied to
+    WebSocket but effectively transport-agnostic. Kept for backward compatibility
+    while configs migrate.
     """
 
     def __init__(
         self,
         *,
-        parent_ws_url: str,
         parent_system_id_fn: Callable[[], str],
         parent_path_fn: Callable[[], str],
     ):
         self._system_id_fn = parent_system_id_fn
-        self._url = parent_ws_url
         self._parent_path_fn = parent_path_fn
 
     async def place(self, hello_frame: NodeHelloFrame) -> PlacementDecision:
@@ -36,7 +37,7 @@ class WebSocketPlacementStrategy(FameNodePlacementStrategy):
         return PlacementDecision(
             accept=True,
             target_system_id=target_system_id,
-            parent_physical_path=parent_physical_path,
+            target_physical_path=parent_physical_path,
             assigned_path=assigned_path,
             metadata={
                 "accepted_logicals": hello_frame.logicals,

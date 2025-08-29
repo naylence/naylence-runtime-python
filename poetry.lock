@@ -1262,14 +1262,14 @@ files = [
 
 [[package]]
 name = "naylence-core"
-version = "0.1.13"
+version = "0.1.14"
 description = "Naylence Core"
 optional = false
 python-versions = ">=3.12"
 groups = ["main"]
 files = [
-    {file = "naylence_core-0.1.13-py3-none-any.whl", hash = "sha256:aec99fb7332a52a41be1ef90458bcda3ead4e07bc646e6052a856f4aec07df09"},
-    {file = "naylence_core-0.1.13.tar.gz", hash = "sha256:aa281f4f6e2588287f39508db2a97382de30f312ffadf596d93e65695c665ad2"},
+    {file = "naylence_core-0.1.14-py3-none-any.whl", hash = "sha256:a45be9a1b2a53a7a16aa0e7b1d58b910543bab728fc865b0daa79c2227b3574c"},
+    {file = "naylence_core-0.1.14.tar.gz", hash = "sha256:480d0b4d7208ba85c654c4ca603e57c4f230da609b51b87afe74729b5975a4a1"},
 ]
 
 [package.dependencies]
@@ -2619,4 +2619,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "885a1aa7154413e8b9997f93bf6255fd359226ebd6cfbb8bc579da62e9af5a37"
+content-hash = "d5203674f7ec7c2024688f9e5d8eec89f91aa0fec21d51ba7f5bb3be8eee2043"

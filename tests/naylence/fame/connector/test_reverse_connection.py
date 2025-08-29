@@ -4,7 +4,7 @@ Test script to validate the reverse connection functionality.
 """
 
 import asyncio
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 from naylence.fame.core import DeliveryOriginType, NodeWelcomeFrame
 from naylence.fame.node.admission.default_node_attach_client import (
@@ -69,6 +69,11 @@ async def test_attach_client_with_reverse_connections():
 
     mock_handler = Mock()
 
+    # Create a mock node
+    mock_node = Mock()
+    mock_node.sid = "test-session-id"
+    mock_node._dispatch_envelope_event = AsyncMock()
+
     # Create inbound connectors to test
     inbound_connectors = [
         {
@@ -96,6 +101,7 @@ async def test_attach_client_with_reverse_connections():
     try:
         # Call attach with supported_inbound_connectors
         await attach_client.attach(
+            node=mock_node,
             origin_type=DeliveryOriginType.DOWNSTREAM,
             connector=mock_connector,
             welcome_frame=mock_welcome_frame,

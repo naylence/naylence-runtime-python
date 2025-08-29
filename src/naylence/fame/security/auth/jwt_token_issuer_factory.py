@@ -31,7 +31,7 @@ class JWTTokenIssuerConfig(TokenIssuerConfig):
         "Can be plain text, env://VAR, secret://name, or provider config",
     )
     algorithm: str = Field("EdDSA", description="Token signing algorithm (EdDSA, RS256, HS256, etc.)")
-    kid: str = Field(..., description="Key ID to embed in the JWT header")
+    kid: Optional[str] = Field(default=None, description="Key ID to embed in the JWT header")
     issuer: str = Field(..., description="JWT issuer claim")
     ttl_sec: int = Field(DEFAULT_JWT_TOKEN_TTL_SEC, description="Token TTL in seconds")
     audience: Optional[str] = Field(
@@ -42,7 +42,7 @@ class JWTTokenIssuerConfig(TokenIssuerConfig):
     @classmethod
     def validate_ttl_sec(cls, v: int) -> int:
         """Validate JWT token TTL is within acceptable bounds."""
-        return validate_jwt_token_ttl_sec(v) or v
+        return int(validate_jwt_token_ttl_sec(v) or v)
 
 
 class JWTTokenIssuerFactory(TokenIssuerFactory):
@@ -64,6 +64,7 @@ class JWTTokenIssuerFactory(TokenIssuerFactory):
 
         # Determine signing key based on algorithm type
         signing_key = None
+        kid = None
         if algorithm.startswith("HS"):  # HMAC algorithms (HS256, HS384, HS512)
             if config.hmac_secret:
                 # Use credential provider to resolve HMAC secret
@@ -87,7 +88,9 @@ class JWTTokenIssuerFactory(TokenIssuerFactory):
             if not signing_key:
                 raise RuntimeError(f"Asymmetric algorithm {algorithm} requires 'private_key_pem'")
 
-        kid = config.kid
+            kid = crypto_provider.signature_key_id
+
+        kid = config.kid or kid
         issuer = config.issuer
         ttl_sec = config.ttl_sec
 

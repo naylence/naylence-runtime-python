@@ -4,6 +4,9 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from naylence.fame.security.auth.token_issuer import TokenIssuer
+from naylence.fame.util.logging import getLogger
+
+logger = getLogger(__name__)
 
 
 def require_jwt():
@@ -43,6 +46,14 @@ class JWTTokenIssuer(TokenIssuer):
         self._algorithm = algorithm
         self._ttl_sec = ttl_sec
         self._audience = audience
+
+        logger.debug(
+            "created_jwt_token_issuer",
+            issuer=issuer,
+            kid=kid,
+            audience=audience,
+            algorithm=algorithm,
+        )
 
     @property
     def issuer(self):

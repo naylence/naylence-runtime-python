@@ -167,7 +167,7 @@ def create_websocket_attach_router(
                     # First phase: authentication (token validation)
                     # Pass the token as an Authorization header for consistency with HTTP
                     auth_header = f"Bearer {token}" if token else ""
-                    auth_result = await effective_authorizer.authenticate(node, auth_header)
+                    auth_result = await effective_authorizer.authenticate(node.physical_path, auth_header)
 
                     if auth_result is None:
                         logger.warning(

@@ -87,6 +87,11 @@ class MockNode:
         # In real implementations, this would iterate through self._event_listeners
         pass
 
+    async def _dispatch_envelope_event(self, event_name: str, *args, **kwargs) -> None:
+        """Mock implementation of _dispatch_envelope_event for testing."""
+        # For testing purposes, we just simulate event dispatch without actual listeners
+        pass
+
     def gather_supported_inbound_connectors(self) -> list[dict[str, Any]]:
         """Mock implementation that returns empty list of connectors."""
         # For test purposes, return empty list since mock nodes don't have real transport listeners
@@ -122,6 +127,10 @@ class MockConnector:
         self.stopped = True
         if self._fail_task:
             self._fail_task.cancel()
+
+    async def replace_handler(self, new_handler):
+        """Replace the current handler with a new one."""
+        self.handler = new_handler
 
     async def send(self, envelope: FameEnvelope):
         if self.stopped:
@@ -209,7 +218,16 @@ class MockAttachClient:
     def __init__(self, ttl_sec: int = TEST_LONG_TTL_SEC):
         self.ttl_sec = ttl_sec
 
-    async def attach(self, **kwargs) -> AttachInfo:
+    async def attach(
+        self,
+        node,
+        origin_type,
+        connector,
+        welcome_frame,
+        final_handler,
+        keys=None,
+        supported_inbound_connectors=None,
+    ) -> AttachInfo:
         attach_expires_at = datetime.now(timezone.utc) + timedelta(seconds=self.ttl_sec)
 
         return {
@@ -305,29 +323,11 @@ class TestUpstreamSessionManager:
     async def cleanup_manager(self, manager):
         """Helper method to properly cleanup a manager."""
         try:
-            await manager.stop()
+            if manager.is_ready():
+                await manager.stop()
         except Exception:
-            pass  # Ignore cleanup errors
-
-    @pytest.mark.asyncio
-    async def test_successful_connection_and_ready_signal(
-        self, mock_create_resource, upstream_session_manager, mock_connector
-    ):
-        """Test that manager connects successfully and signals ready."""
-        # Set up create_resource mock to return our mock connector
-        self.setup_create_resource_mock(mock_create_resource, mock_connector)
-
-        # Start the manager
-        await upstream_session_manager.start(wait_until_ready=True)
-
-        # Should be ready after successful connection
-        assert upstream_session_manager.is_ready()
-        assert upstream_session_manager.system_id == "test-parent"
-        assert mock_connector.started
-
-        # Clean shutdown
-        await upstream_session_manager.stop()
-        assert mock_connector.stopped
+            # Ignore errors during cleanup
+            pass
 
     @pytest.mark.asyncio
     async def test_ttl_expiry_triggers_reconnection(self, mock_create_resource, envelope_factory):

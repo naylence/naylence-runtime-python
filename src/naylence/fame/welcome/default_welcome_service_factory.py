@@ -4,10 +4,10 @@ from typing import Any, Optional
 
 from pydantic import ConfigDict
 
-from naylence.fame.core import create_resource
 from naylence.fame.placement.node_placement_strategy import (
     NodePlacementConfig,
 )
+from naylence.fame.security.auth.authorizer_factory import AuthorizerConfig, AuthorizerFactory
 from naylence.fame.security.auth.token_issuer_factory import (
     TokenIssuerConfig,
     TokenIssuerFactory,
@@ -18,38 +18,58 @@ from naylence.fame.transport.transport_provisioner import (
 )
 from naylence.fame.welcome.welcome_service import (
     WelcomeService,
-    WelcomeServiceFactory,
 )
-from naylence.fame.welcome.welcome_service_config import WelcomeServiceConfig
+from naylence.fame.welcome.welcome_service_factory import WelcomeServiceConfig, WelcomeServiceFactory
 
 
 class DefaultWelcomeServiceConfig(WelcomeServiceConfig):
     type: str = "DefaultWelcomeService"
-    model_config = ConfigDict(extra="allow")
+
     placement: Optional[NodePlacementConfig] = None
     transport: Optional[TransportProvisionerConfig] = None
     token_issuer: Optional[TokenIssuerConfig] = None
+    authorizer: Optional[AuthorizerConfig] = None
+
+    model_config = ConfigDict(extra="allow")
 
 
 class DefaultWelcomeServiceFactory(WelcomeServiceFactory):
+    is_default: bool = True
+
     async def create(
         self,
-        config: Optional[DefaultWelcomeServiceConfig] = None,
+        config: Optional[DefaultWelcomeServiceConfig | dict[str, Any]] = None,
         **kwargs: dict[str, Any],
     ) -> WelcomeService:
-        assert config
-
         from naylence.fame.placement.node_placement_strategy import (
             NodePlacementStrategyFactory,
         )
         from naylence.fame.welcome.default_welcome_service import DefaultWelcomeService
 
-        placement_strategy = await create_resource(NodePlacementStrategyFactory, config.placement)
-        transpot_provisioner = await create_resource(TransportProvisionerFactory, config.transport)
-        token_issuer = await create_resource(TokenIssuerFactory, config.token_issuer)
+        if isinstance(config, dict):
+            config = DefaultWelcomeServiceConfig(**config)
+
+        placement_strategy = await NodePlacementStrategyFactory.create_node_placement_strategy(
+            config.placement if config else None, **kwargs
+        )
+
+        transport_provider = await TransportProvisionerFactory.create_transport_provisioner(
+            config.transport if config else None, **kwargs
+        )
+
+        token_issuer = await TokenIssuerFactory.create_token_issuer(
+            config.token_issuer if config else None, **kwargs
+        )
+
+        authorizer = None
+        if config and config.authorizer:
+            authorizer = await AuthorizerFactory.create_authorizer(
+                config.authorizer
+            )
 
         return DefaultWelcomeService(
             placement_strategy=placement_strategy,
-            transport_provisioner=transpot_provisioner,
+            transport_provisioner=transport_provider,
             token_issuer=token_issuer,
+            authorizer=authorizer,
         )

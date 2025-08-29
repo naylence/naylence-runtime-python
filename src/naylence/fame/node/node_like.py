@@ -7,11 +7,8 @@ from typing import (
     AsyncIterator,
     Optional,
     Protocol,
-    TypeVar,
     runtime_checkable,
 )
-
-from pydantic import Field
 
 from naylence.fame.node.admission.admission_client import AdmissionClient
 
@@ -28,9 +25,6 @@ from naylence.fame.core import (
     FameEnvelope,
     FameEnvelopeHandler,
     FameRPCHandler,
-    ResourceConfig,
-    ResourceFactory,
-    create_resource,
 )
 
 
@@ -159,36 +153,3 @@ class NodeLike(AbstractAsyncContextManager, Protocol):
     def storage_provider(self) -> Any: ...
 
     def gather_supported_inbound_connectors(self) -> list[dict[str, Any]]: ...
-
-
-class NodeLikeConfig(ResourceConfig):
-    type: str = "NodeLike"
-
-    storage_provider: Optional[Any] = Field(
-        default=None,
-        description="Storage provider configuration for key-value stores",
-    )
-
-
-C = TypeVar("C", bound=NodeLikeConfig)
-
-
-class NodeLikeFactory(ResourceFactory[NodeLike, C]):
-    @staticmethod
-    async def create_node(config: Optional[NodeLikeConfig] = None) -> NodeLike:
-        if not config:
-            from naylence.fame.config.config import ExtendedFameConfig, get_fame_config
-
-            fame_config = get_fame_config()
-            assert isinstance(fame_config, ExtendedFameConfig)
-            config = fame_config.node
-
-        if not config:
-            from naylence.fame.node.node_config import FameNodeConfig
-
-            config = FameNodeConfig(mode="dev")
-        elif isinstance(config, dict) and "type" not in config:
-            config["type"] = "Node"
-
-        # ExtensionManager.lazy_init(group="naylence.NodeLikeFactory", base_type=NodeLikeFactory)
-        return await create_resource(NodeLikeFactory, config)

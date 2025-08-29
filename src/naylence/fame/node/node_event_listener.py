@@ -104,7 +104,12 @@ class NodeEventListener(Protocol):
         # Default implementation does nothing - this is an optional lifecycle event
         pass
 
-    async def on_attach_to_peer(
+    # async def before_node_attach_to_peer(
+    #     self, node: NodeLike, envelope: FameEnvelope
+    # ) -> None:
+    #     pass
+
+    async def on_node_attach_to_peer(
         self, node: NodeLike, attach_info: AttachInfo, connector: FameConnector
     ) -> None:
         """
@@ -127,6 +132,9 @@ class NodeEventListener(Protocol):
         """
         # Default implementation does nothing - this is an optional lifecycle event
         pass
+
+    # async def before_node_attach_to_upstream(self, node: NodeLike, env: FameEnvelope) -> None:
+    #     pass
 
     async def on_node_attach_to_upstream(self, node: NodeLike, attach_info: AttachInfo) -> None:
         """

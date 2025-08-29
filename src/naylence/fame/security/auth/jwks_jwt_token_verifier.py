@@ -3,6 +3,9 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from naylence.fame.security.auth.token_verifier import TokenVerifier
+from naylence.fame.util.logging import getLogger
+
+logger = getLogger(__name__)
 
 
 def require_jwks_dependencies():
@@ -33,6 +36,8 @@ class JWKSJWTTokenVerifier(TokenVerifier):
         self._issuer = issuer
         self._jwks_url = jwks_url
         self._jwks_client = PyJWKClient(jwks_url)
+
+        logger.debug("created_jwks_jwt_token_verifier", issuer=issuer, jwks_url=jwks_url)
 
     async def verify(
         self,
