@@ -50,10 +50,10 @@ class WebSocketPlacementStrategyFactory(NodePlacementStrategyFactory):
             self._parent_path_fn() if self._parent_path_fn is not None else get_node().physical_path
         )
 
-        # Create a StaticNodePlacementStrategy instance to perform placement
-        _ = StaticNodePlacementStrategy(
-            target_system_id=parent_system_id, target_physical_path=target_physical_path
-        )
+        # # Create a StaticNodePlacementStrategy instance to perform placement
+        # _ = StaticNodePlacementStrategy(
+        #     target_system_id=parent_system_id, target_physical_path=target_physical_path
+        # )
 
         # For compatibility, still return a WebSocketPlacementStrategy instance wired with fixed values
         return WebSocketPlacementStrategy(

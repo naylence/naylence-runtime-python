@@ -21,7 +21,8 @@ if TYPE_CHECKING:
 
 
 class TransportProvisionResult(BaseModel):
-    directive: dict[str, Any]
+    # directive: dict[str, Any] replaced directive with connection grant
+    connection_grant: dict[str, Any]
     cleanup_handle: Optional[str] = Field(default=None)
     metadata: Optional[Dict] = Field(default=None)
 

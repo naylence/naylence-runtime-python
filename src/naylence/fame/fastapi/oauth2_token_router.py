@@ -71,7 +71,7 @@ def create_oauth2_token_router(
 
     # Default values
     default_issuer = os.getenv(ENV_VAR_JWT_ISSUER) or issuer or "https://auth.fame.fabric"
-    default_audience = os.getenv(ENV_VAR_JWT_AUDIENCE) or audience or "fame-api"
+    default_audience = os.getenv(ENV_VAR_JWT_AUDIENCE) or audience or "fame-fabric"
 
     env_allowed_scopes = os.getenv(ENV_VAR_ALLOWED_SCOPES)
     if env_allowed_scopes:

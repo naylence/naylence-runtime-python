@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Test script to verify polymorphic ConnectorAuth deserialization works correctly.
+Test script to verify polymorphic Auth deserialization works correctly.
 Note: This test is deprecated as the auth system was refactored to use injection strategies.
 """
 
-# DEPRECATED: This test was for the old ConnectorAuth system which was replaced
+# DEPRECATED: This test was for the old Auth system which was replaced
 # with the new AuthInjectionStrategy system. Keeping for reference but disabled.
 
 # import asyncio
@@ -21,7 +21,7 @@ Note: This test is deprecated as the auth system was refactored to use injection
 # async def test_polymorphic_auth_deserialization():
 # """Test that polymorphic auth deserialization works through factory system."""
 
-# print("🧪 Testing polymorphic ConnectorAuth deserialization...")
+# print("🧪 Testing polymorphic Auth deserialization...")
 
 # Test BearerTokenHeaderAuth
 # config = {
@@ -67,7 +67,7 @@ Note: This test is deprecated as the auth system was refactored to use injection
 # assert isinstance(auth, NoAuth)
 # print("✅ NoAuth polymorphic deserialization works")
 
-# print("🎉 All polymorphic ConnectorAuth deserialization tests passed!")
+# print("🎉 All polymorphic Auth deserialization tests passed!")
 
 
 # async def test_legacy_format_mapping():
@@ -100,7 +100,7 @@ Note: This test is deprecated as the auth system was refactored to use injection
 
 
 # DEPRECATED: This test file is disabled as the auth system was refactored.
-# The old ConnectorAuth system was replaced with AuthInjectionStrategy.
+# The old Auth system was replaced with AuthInjectionStrategy.
 
 # if __name__ == "__main__":
 # print("DEPRECATED: This test is disabled - auth system was refactored")

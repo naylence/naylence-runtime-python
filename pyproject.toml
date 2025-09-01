@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.1.70"
+version = "0.1.75"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -39,7 +39,7 @@ httpx = "^0.28.1"
 structlog = "^25.3.0"
 cryptography = "^45.0.6"
 pyjwt = "^2.10.1"
-naylence-core = "^0.1.14"
+naylence-core = "^0.1.15"
 fastapi = "^0.116.1"
 uvicorn = "^0.35.0"
 python-multipart = "^0.0.20"
@@ -240,10 +240,10 @@ OAuth2ClientCredentialsTokenProvider = "naylence.fame.security.auth.oauth2_clien
 StaticTokenProvider = "naylence.fame.security.auth.static_token_provider_factory:StaticTokenProviderFactory"
 
 [project.entry-points."naylence.AuthInjectionStrategyFactory"]
-NoAuthStrategy = "naylence.fame.security.auth.auth_injection_strategy_factory:NoAuthStrategyFactory"
-BearerTokenHeaderStrategy = "naylence.fame.security.auth.auth_injection_strategy_factory:BearerTokenHeaderStrategyFactory"
-WebSocketSubprotocolStrategy = "naylence.fame.security.auth.auth_injection_strategy_factory:WebSocketSubprotocolStrategyFactory"
-QueryParamStrategy = "naylence.fame.security.auth.auth_injection_strategy_factory:QueryParamStrategyFactory"
+NoAuth = "naylence.fame.security.auth.auth_injection_strategy_factory:NoAuthStrategyFactory"
+BearerTokenHeaderAuth = "naylence.fame.security.auth.auth_injection_strategy_factory:BearerTokenHeaderStrategyFactory"
+WebSocketSubprotocolAuth = "naylence.fame.security.auth.auth_injection_strategy_factory:WebSocketSubprotocolStrategyFactory"
+QueryParamAuth = "naylence.fame.security.auth.auth_injection_strategy_factory:QueryParamStrategyFactory"
 
 [project.entry-points."naylence.AuthorizerFactory"]
 DefaultAuthorizer = "naylence.fame.security.auth.default_authorizer_factory:DefaultAuthorizerFactory"

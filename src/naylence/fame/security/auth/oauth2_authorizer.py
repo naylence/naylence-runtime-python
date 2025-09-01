@@ -107,7 +107,7 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
                 capabilities=(list(self._required_scopes) if self._required_scopes else ["fame:connect"]),
             )
 
-            # Create the proper ConnectorAuth instance
+            # Create the proper Auth instance
             from naylence.fame.security.auth.auth_config import BearerTokenHeaderAuth
             from naylence.fame.security.auth.static_token_provider_factory import (
                 StaticTokenProviderConfig,

@@ -6,12 +6,12 @@ from typing import Callable
 from naylence.fame.core import NodeHelloFrame
 
 from .node_placement_strategy import (
-    FameNodePlacementStrategy,
+    NodePlacementStrategy,
     PlacementDecision,
 )
 
 
-class WebSocketPlacementStrategy(FameNodePlacementStrategy):
+class WebSocketPlacementStrategy(NodePlacementStrategy):
     """
     Deprecated: use StaticNodePlacementStrategy instead.
 

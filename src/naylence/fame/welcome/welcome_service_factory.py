@@ -30,7 +30,9 @@ class WelcomeServiceFactory(ResourceFactory[WelcomeService, C]):
 
         if isinstance(config, dict):
             if "type" not in config:
-                config = await create_default_resource(WelcomeServiceFactory, config, **kwargs)
+                service = await create_default_resource(WelcomeServiceFactory, config, **kwargs)
+                assert service is not None
+                return service
             else:
                 config = WelcomeServiceConfig(**config)
 

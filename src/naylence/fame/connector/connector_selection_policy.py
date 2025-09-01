@@ -217,7 +217,7 @@ class PreferSameTypeStrategy:
 
         return WebSocketConnectorConfig(
             type=connector_dict.get("type", "WebSocketConnector"),
-            params=params,
+            # params=params,
             auth=connector_dict.get("auth"),
         )
 

@@ -49,6 +49,7 @@ class TestSentinelComprehensive:
         security_manager.on_node_initialized = AsyncMock()
         security_manager.on_node_started = AsyncMock()
         security_manager.on_node_stopped = AsyncMock()
+        security_manager.on_welcome = AsyncMock()
         return security_manager
 
     @pytest.fixture

@@ -63,6 +63,11 @@ class DefaultSecurityManagerConfig(SecurityManagerConfig):
         description="Authorizer configuration for authentication and authorization",
     )
 
+    certificate_manager: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="Certificate manager configuration",
+    )
+
 
 class DefaultSecurityManagerFactory(SecurityManagerFactory):
     """Factory for creating DefaultSecurityManager instances."""
@@ -423,11 +428,18 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
         cls, config: dict, policy: Optional[SecurityPolicy]
     ) -> Optional[CertificateManager]:
         """Create certificate manager from configuration or auto-create if needed."""
-        cert_manager_config = config.get("certificate_manager_config")
+
+        from naylence.fame.security.cert.certificate_manager_factory import CertificateManagerFactory
+
+        cert_manager_config = config.get("certificate_manager")
         if cert_manager_config:
             # Explicit configuration - re-raise any exceptions
             # Certificate managers might not have a factory pattern yet, implement as needed
-            pass
+            signing = getattr(policy, "signing", None)
+            return await CertificateManagerFactory.create_certificate_manager(
+                cfg=cert_manager_config,
+                signing=signing,
+            )
 
         # Auto-create if policy requires it
         if policy:
@@ -439,14 +451,10 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
                     should_create_certificate_manager = requirements.require_certificates
 
                 if should_create_certificate_manager:
-                    from naylence.fame.security.cert.certificate_manager_factory import (
-                        CertificateManagerFactory,
-                    )
-
                     # Try to create certificate manager using default implementation
-                    signing_config = getattr(policy, "signing", None)
+                    signing = getattr(policy, "signing", None)
                     return await CertificateManagerFactory.create_certificate_manager(
-                        {"signing_config": signing_config},
+                        signing=signing,
                     )
             except Exception as e:
                 # Re-raise auto-creation failures for better debugging

@@ -21,6 +21,7 @@ class AdmissionClient(Protocol):
     Does *not* carry arbitrary Fame frames or manage connectors—just admission.
     """
 
+    @property
     def has_upstream(self) -> bool:
         return True
 
@@ -37,7 +38,7 @@ class AdmissionClient(Protocol):
         :param options.requested_logicals: optional list of logicals
         :param options.instance_id: required unique instance identifier
         :returns: Envelope wrapping a NodeWelcomeFrame, including
-                  system_id, assigned_path, connector_directive, attach_token, etc.
+                  system_id, assigned_path, connection_grants, attach_token, etc.
         :raises: on network error or if the service rejects the hello
         """
         ...

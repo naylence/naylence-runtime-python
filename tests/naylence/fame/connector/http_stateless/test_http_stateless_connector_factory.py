@@ -29,13 +29,13 @@ class TestHttpStatelessConnectorFactory:
     @pytest.fixture
     def config_with_auth(self):
         """Create a connector configuration with authentication."""
-        from naylence.fame.core.protocol.frames import ConnectorAuth
+        from naylence.fame.core.protocol.frames import Auth
 
         return HttpStatelessConnectorConfig(
             type="HttpStatelessConnector",
             url="https://example.com/outbox",
             params={"url": "https://example.com/outbox", "max_queue": 512},
-            auth=ConnectorAuth(scheme="bearer", token="test-token-123"),
+            auth=Auth(scheme="bearer", token="test-token-123"),
         )
 
     @pytest.mark.asyncio

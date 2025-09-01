@@ -169,8 +169,17 @@ class TestSentinelIntegration:
         sentinel._physical_path = "/test/sentinel"
         sentinel._has_parent = True
         sentinel._upstream_connector = MagicMock()
-        sentinel._upstream_session_manager = MagicMock()
-        sentinel._upstream_session_manager.send = AsyncMock()
+
+        # Import the real UpstreamSessionManager to create a proper mock
+        from naylence.fame.node.upstream_session_manager import UpstreamSessionManager
+
+        # Create a mock that is actually an instance of UpstreamSessionManager
+        mock_session_manager = MagicMock(spec=UpstreamSessionManager)
+        mock_session_manager.send = AsyncMock()
+
+        # Make the mock pass isinstance checks
+        mock_session_manager.__class__ = UpstreamSessionManager
+        sentinel._session_manager = mock_session_manager
 
         # Create envelope to forward upstream with proper frame
         from naylence.fame.core.protocol.frames import NodeHeartbeatFrame
@@ -184,7 +193,7 @@ class TestSentinelIntegration:
         await sentinel.forward_upstream(envelope, context)
 
         # Verify upstream forwarding - send method is called with just the envelope
-        sentinel._upstream_session_manager.send.assert_called_once_with(envelope)
+        sentinel._session_manager.send.assert_called_once_with(envelope)
         print("✓ Upstream communication successful")
 
     async def test_route_discovery_and_management(self, sentinel, route_store):

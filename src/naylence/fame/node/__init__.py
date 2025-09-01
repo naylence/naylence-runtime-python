@@ -3,6 +3,7 @@ from .node_context import FameAuthorizedDeliveryContext, FameNodeAuthorizationCo
 from .node_factory import NodeFactory
 from .node_like import NodeLike
 from .node_like_factory import NodeLikeConfig, NodeLikeFactory
+from .root_session_manager import RootSessionManager
 from .routing_node_like import RoutingNodeLike
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "NodeFactory",
     "FameAuthorizedDeliveryContext",
     "FameNodeAuthorizationContext",
+    "RootSessionManager",
     "get_node",
 ]

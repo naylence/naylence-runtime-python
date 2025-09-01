@@ -4,9 +4,9 @@ from typing import Any, Optional
 
 from .node_placement_strategy import (
     NodePlacementConfig,
+    NodePlacementStrategy,
     NodePlacementStrategyFactory,
 )
-from .static_node_placement_strategy import StaticNodePlacementStrategy
 
 
 class StaticNodePlacementConfig(NodePlacementConfig):
@@ -20,8 +20,10 @@ class StaticNodePlacementStrategyFactory(NodePlacementStrategyFactory):
         self,
         config: Optional[StaticNodePlacementConfig | dict[str, Any]] = None,
         **kwargs: dict[str, Any],
-    ) -> StaticNodePlacementStrategy:
+    ) -> NodePlacementStrategy:
         assert config
+        
+        from .static_node_placement_strategy import StaticNodePlacementStrategy
 
         if isinstance(config, dict):
             # Support legacy alias if someone passes deprecated name

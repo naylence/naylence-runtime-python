@@ -4,8 +4,9 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from pydantic import AnyWebsocketUrl
 
-from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
 from naylence.fame.core import NodeHelloFrame
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
+from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
 from naylence.fame.transport.transport_provisioner import (
     TransportProvisioner,
     TransportProvisionerConfig,
@@ -65,12 +66,14 @@ class WebSocketTransportProvisioner(TransportProvisioner):
         # Add system_id as query parameter to the URL
         # url_with_system_id = f"{self._url}"
 
-        directive = WebSocketConnectorConfig(
+        connection_grant = WebSocketConnectionGrant(
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
             url=self._url,
             auth=auth_config,
         )
+
         return TransportProvisionResult(
-            directive=directive.model_dump(by_alias=True),
+            connection_grant=connection_grant.model_dump(by_alias=True),
             cleanup_handle=None,  # nothing to clean up
         )
 

@@ -194,6 +194,15 @@ class MockAdmissionClient:
         # Create mock welcome envelope
         welcome_frame = Mock(spec=NodeWelcomeFrame)
         welcome_frame.expires_at = expires_at
+
+        # Add both new connection_grants and legacy connector_directive for backward compatibility
+        welcome_frame.connection_grants = [
+            {
+                "type": "WebSocketConnector",
+                "purpose": "node_attach",
+                "url": "ws://test",
+            }
+        ]
         welcome_frame.connector_directive = {
             "type": "WebSocketConnector",
             "params": {"url": "ws://test"},
@@ -304,20 +313,21 @@ def upstream_session_manager(mock_connector, envelope_factory):
         outbound_origin_type=DeliveryOriginType.UPSTREAM,
         inbound_origin_type=DeliveryOriginType.DOWNSTREAM,
         inbound_handler=AsyncMock(),
+        on_welcome=AsyncMock(),
         on_attach=AsyncMock(),
         on_epoch_change=AsyncMock(),
     )
 
 
-@patch("naylence.fame.node.upstream_session_manager.create_resource")
+@patch("naylence.fame.connector.connector_factory.ConnectorFactory.create_connector")
 class TestUpstreamSessionManager:
     """Test suite for UpstreamSessionManager."""
 
-    def setup_create_resource_mock(self, mock_create_resource, connector=None):
-        """Helper to set up create_resource mock to return a connector."""
+    def setup_create_connector_mock(self, mock_create_connector, connector=None):
+        """Helper to set up create_connector mock to return a connector."""
         if connector is None:
             connector = MockConnector()
-        mock_create_resource.return_value = connector
+        mock_create_connector.return_value = connector
         return connector
 
     async def cleanup_manager(self, manager):
@@ -330,7 +340,7 @@ class TestUpstreamSessionManager:
             pass
 
     @pytest.mark.asyncio
-    async def test_ttl_expiry_triggers_reconnection(self, mock_create_resource, envelope_factory):
+    async def test_ttl_expiry_triggers_reconnection(self, mock_create_connector, envelope_factory):
         """Test that TTL expiry triggers reconnection after JWT_REFRESH_SAFETY period."""
         # Use very short TTL to test expiry logic
         short_ttl = TEST_SHORT_TTL_SEC  # 2 seconds
@@ -341,14 +351,14 @@ class TestUpstreamSessionManager:
         connect_count = 0
         connectors = []
 
-        def mock_create_resource_side_effect(*args, **kwargs):
+        def mock_create_connector_side_effect(*args, **kwargs):
             nonlocal connect_count
             connect_count += 1
             connector = MockConnector()
             connectors.append(connector)
             return connector
 
-        mock_create_resource.side_effect = mock_create_resource_side_effect
+        mock_create_connector.side_effect = mock_create_connector_side_effect
 
         # Create mock node
         mock_node = MockNode(
@@ -367,6 +377,7 @@ class TestUpstreamSessionManager:
             outbound_origin_type=DeliveryOriginType.UPSTREAM,
             inbound_origin_type=DeliveryOriginType.DOWNSTREAM,
             inbound_handler=AsyncMock(),
+            on_welcome=AsyncMock(),
             on_attach=AsyncMock(),
             on_epoch_change=AsyncMock(),
         )
@@ -394,13 +405,13 @@ class TestUpstreamSessionManager:
             await self.cleanup_manager(manager)
 
     @pytest.mark.asyncio
-    async def test_heartbeat_failure_triggers_reconnection(self, mock_create_resource, envelope_factory):
+    async def test_heartbeat_failure_triggers_reconnection(self, mock_create_connector, envelope_factory):
         """Test that missed heartbeat triggers reconnection."""
         # Track reconnections
         connect_count = 0
         connectors = []
 
-        def mock_create_resource_side_effect(*args, **kwargs):
+        def mock_create_connector_side_effect(*args, **kwargs):
             nonlocal connect_count
             connect_count += 1
             print(f"Creating connector #{connect_count}")
@@ -412,7 +423,7 @@ class TestUpstreamSessionManager:
             connectors.append(connector)
             return connector
 
-        mock_create_resource.side_effect = mock_create_resource_side_effect
+        mock_create_connector.side_effect = mock_create_connector_side_effect
 
         # Create mock node
         mock_node = MockNode(
@@ -431,6 +442,7 @@ class TestUpstreamSessionManager:
             outbound_origin_type=DeliveryOriginType.UPSTREAM,
             inbound_origin_type=DeliveryOriginType.DOWNSTREAM,
             inbound_handler=AsyncMock(),
+            on_welcome=AsyncMock(),
             on_attach=AsyncMock(),
             on_epoch_change=AsyncMock(),
         )
@@ -468,7 +480,7 @@ class TestUpstreamSessionManager:
             await self.cleanup_manager(manager)
 
     @pytest.mark.asyncio
-    async def test_transport_close_triggers_reconnection(self, mock_create_resource, envelope_factory):
+    async def test_transport_close_triggers_reconnection(self, mock_create_connector, envelope_factory):
         """Test that transport closure triggers reconnection."""
         # Create connector that fails after short delay
         failing_connector = MockConnector(
@@ -479,7 +491,7 @@ class TestUpstreamSessionManager:
         connect_count = 0
         connectors = []
 
-        def mock_create_resource_side_effect(*args, **kwargs):
+        def mock_create_connector_side_effect(*args, **kwargs):
             nonlocal connect_count
             connect_count += 1
             if connect_count == 1:
@@ -491,7 +503,7 @@ class TestUpstreamSessionManager:
                 connectors.append(connector)
                 return connector
 
-        mock_create_resource.side_effect = mock_create_resource_side_effect
+        mock_create_connector.side_effect = mock_create_connector_side_effect
 
         # Create mock node
         mock_node = MockNode(
@@ -510,6 +522,7 @@ class TestUpstreamSessionManager:
             outbound_origin_type=DeliveryOriginType.UPSTREAM,
             inbound_origin_type=DeliveryOriginType.DOWNSTREAM,
             inbound_handler=AsyncMock(),
+            on_welcome=AsyncMock(),
             on_attach=AsyncMock(),
             on_epoch_change=AsyncMock(),
         )
@@ -539,11 +552,14 @@ class TestUpstreamSessionManager:
 
     @pytest.mark.asyncio
     async def test_fast_shutdown_responsiveness(
-        self, mock_create_resource, upstream_session_manager, mock_connector
+        self,
+        mock_create_connector,
+        upstream_session_manager,
+        mock_connector,
     ):
         """Test that manager shuts down quickly without waiting for heartbeat interval."""
-        # Set up create_resource mock to return our mock connector
-        self.setup_create_resource_mock(mock_create_resource, mock_connector)
+        # Set up create_connector mock to return our mock connector
+        self.setup_create_connector_mock(mock_create_connector, mock_connector)
 
         # Start manager
         await upstream_session_manager.start(wait_until_ready=True)
@@ -559,11 +575,14 @@ class TestUpstreamSessionManager:
 
     @pytest.mark.asyncio
     async def test_message_sending_and_queuing(
-        self, mock_create_resource, upstream_session_manager, mock_connector
+        self,
+        mock_create_connector,
+        upstream_session_manager,
+        mock_connector,
     ):
         """Test message sending and queue behavior."""
-        # Set up create_resource mock to return our mock connector
-        self.setup_create_resource_mock(mock_create_resource, mock_connector)
+        # Set up create_connector mock to return our mock connector
+        self.setup_create_connector_mock(mock_create_connector, mock_connector)
 
         # Start manager
         await upstream_session_manager.start(wait_until_ready=True)
@@ -586,13 +605,13 @@ class TestUpstreamSessionManager:
         await upstream_session_manager.stop()
 
     @pytest.mark.asyncio
-    async def test_proper_task_cleanup_on_failure(self, mock_create_resource, envelope_factory):
+    async def test_proper_task_cleanup_on_failure(self, mock_create_connector, envelope_factory):
         """Test that all tasks are properly cleaned up when connection fails."""
         # Create connector that fails immediately
         failing_connector = MockConnector(fail_after=0.1)
 
         # Set up the mock to return our failing connector
-        self.setup_create_resource_mock(mock_create_resource, failing_connector)
+        self.setup_create_connector_mock(mock_create_connector, failing_connector)
 
         # Track task creation/cleanup
         created_tasks = []
@@ -613,6 +632,7 @@ class TestUpstreamSessionManager:
             outbound_origin_type=DeliveryOriginType.UPSTREAM,
             inbound_origin_type=DeliveryOriginType.DOWNSTREAM,
             inbound_handler=AsyncMock(),
+            on_welcome=AsyncMock(),
             on_attach=AsyncMock(),
             on_epoch_change=AsyncMock(),
         )
@@ -655,11 +675,14 @@ class TestUpstreamSessionManager:
 
     @pytest.mark.asyncio
     async def test_epoch_change_handling(
-        self, mock_create_resource, upstream_session_manager, mock_connector
+        self,
+        mock_create_connector,
+        upstream_session_manager,
+        mock_connector,
     ):
         """Test that epoch changes are properly handled."""
-        # Set up create_resource mock to return our mock connector
-        self.setup_create_resource_mock(mock_create_resource, mock_connector)
+        # Set up create_connector mock to return our mock connector
+        self.setup_create_connector_mock(mock_create_connector, mock_connector)
 
         epoch_changes = []
 
@@ -695,10 +718,10 @@ class TestUpstreamSessionManager:
         await upstream_session_manager.stop()
 
     @pytest.mark.asyncio
-    async def test_fail_fast_on_first_connection_error(self, mock_create_resource, envelope_factory):
+    async def test_fail_fast_on_first_connection_error(self, mock_create_connector, envelope_factory):
         """Test that manager fails fast on first connection attempt."""
         # Set up the mock (though it won't be called since admission client fails first)
-        self.setup_create_resource_mock(mock_create_resource)
+        self.setup_create_connector_mock(mock_create_connector)
 
         # Create admission client that always fails
         class FailingAdmissionClient:
@@ -721,6 +744,7 @@ class TestUpstreamSessionManager:
             outbound_origin_type=DeliveryOriginType.UPSTREAM,
             inbound_origin_type=DeliveryOriginType.DOWNSTREAM,
             inbound_handler=AsyncMock(),
+            on_welcome=AsyncMock(),
             on_attach=AsyncMock(),
             on_epoch_change=AsyncMock(),
         )
@@ -731,7 +755,7 @@ class TestUpstreamSessionManager:
 
     @pytest.mark.asyncio
     async def test_backoff_and_retry_after_successful_connection(
-        self, mock_create_resource, envelope_factory
+        self, mock_create_connector, envelope_factory
     ):
         """Test that manager retries with backoff after successful initial connection."""
         # Track connection attempts
@@ -751,9 +775,9 @@ class TestUpstreamSessionManager:
                     # Subsequent attempts succeed
                     return await MockAdmissionClient().hello(*args, **kwargs)
 
-        # Set up create_resource mock to return connector that fails after short time
+        # Set up create_connector mock to return connector that fails after short time
         failing_connector = MockConnector(fail_after=0.1)
-        self.setup_create_resource_mock(mock_create_resource, failing_connector)
+        self.setup_create_connector_mock(mock_create_connector, failing_connector)
 
         # Create mock node
         mock_node = MockNode(
@@ -771,6 +795,7 @@ class TestUpstreamSessionManager:
             outbound_origin_type=DeliveryOriginType.UPSTREAM,
             inbound_origin_type=DeliveryOriginType.DOWNSTREAM,
             inbound_handler=AsyncMock(),
+            on_welcome=AsyncMock(),
             on_attach=AsyncMock(),
             on_epoch_change=AsyncMock(),
         )

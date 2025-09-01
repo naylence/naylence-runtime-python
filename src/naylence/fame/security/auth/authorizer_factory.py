@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory, create_default_resource
+from naylence.fame.core import ResourceConfig, ResourceFactory, create_default_resource, create_resource
 from naylence.fame.security.auth.authorizer import Authorizer
 
 
@@ -31,6 +31,8 @@ class AuthorizerFactory(ResourceFactory[Authorizer, C]):
             cfg_dict = cfg.__dict__
         else:
             cfg_dict = cfg
+        if cfg_dict:
+            return await create_resource(AuthorizerFactory, config=cfg_dict, **kwargs)
         authorizer = await create_default_resource(
             AuthorizerFactory, cfg_dict, token_verifier=token_verifier, **kwargs
         )

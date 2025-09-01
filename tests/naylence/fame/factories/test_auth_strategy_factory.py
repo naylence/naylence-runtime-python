@@ -18,7 +18,7 @@ class TestAuthStrategyFactory:
     @pytest.mark.asyncio
     async def test_no_auth_strategy_factory(self):
         """Test NoAuthStrategy factory creates correct instance."""
-        config = {"type": "NoAuthStrategy"}
+        config = {"type": "NoAuth"}
         strategy = await create_resource(AuthInjectionStrategyFactory, config)
 
         assert isinstance(strategy, NoAuthStrategy)
@@ -26,8 +26,14 @@ class TestAuthStrategyFactory:
 
     @pytest.mark.asyncio
     async def test_bearer_attach_auth_strategy_factory(self):
-        """Test BearerTokenHeaderStrategy factory creates correct instance."""
-        config = {"type": "BearerTokenHeaderStrategy"}
+        """Test BearerTokenHeaderAuth factory creates correct instance."""
+        config = {
+            "type": "BearerTokenHeaderAuth",
+            "tokenProvider": {
+                "type": "StaticTokenProvider",
+                "token": "test-token-123"
+            }
+        }
         strategy = await create_resource(AuthInjectionStrategyFactory, config)
 
         assert isinstance(strategy, BearerTokenHeaderStrategy)

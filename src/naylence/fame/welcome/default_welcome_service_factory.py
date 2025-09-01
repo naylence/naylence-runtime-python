@@ -63,9 +63,7 @@ class DefaultWelcomeServiceFactory(WelcomeServiceFactory):
 
         authorizer = None
         if config and config.authorizer:
-            authorizer = await AuthorizerFactory.create_authorizer(
-                config.authorizer
-            )
+            authorizer = await AuthorizerFactory.create_authorizer(config.authorizer)
 
         return DefaultWelcomeService(
             placement_strategy=placement_strategy,

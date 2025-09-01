@@ -7,7 +7,7 @@ from naylence.fame.factory import ResourceConfig
 from naylence.fame.security.auth.token_provider_factory import TokenProviderConfig
 
 
-class ConnectorAuth(ResourceConfig):
+class Auth(ResourceConfig):
     """Base class for connector authentication configurations."""
 
     model_config = ConfigDict(
@@ -18,7 +18,7 @@ class ConnectorAuth(ResourceConfig):
     )
 
 
-class BearerTokenHeaderAuth(ConnectorAuth):
+class BearerTokenHeaderAuth(Auth):
     """Bearer token authentication via HTTP Authorization header."""
 
     type: str = "BearerTokenHeaderAuth"
@@ -43,7 +43,7 @@ class BearerTokenHeaderAuth(ConnectorAuth):
         }
 
 
-class WebSocketSubprotocolAuth(ConnectorAuth):
+class WebSocketSubprotocolAuth(Auth):
     """Bearer token authentication via WebSocket subprotocol."""
 
     type: str = "WebSocketSubprotocolAuth"
@@ -68,7 +68,7 @@ class WebSocketSubprotocolAuth(ConnectorAuth):
     #     }
 
 
-class QueryParamAuth(ConnectorAuth):
+class QueryParamAuth(Auth):
     """Authentication via URL query parameter."""
 
     type: str = "QueryParamAuth"
@@ -93,7 +93,7 @@ class QueryParamAuth(ConnectorAuth):
         }
 
 
-class NoAuth(ConnectorAuth):
+class NoAuth(Auth):
     """No authentication configuration."""
 
     type: str = "NoAuth"

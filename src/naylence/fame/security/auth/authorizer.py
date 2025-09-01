@@ -37,7 +37,7 @@ class Authorizer(Protocol):
 
         This method allows the authorizer to generate credentials/tokens that can be
         used by a parent node when connecting back to this child node. The returned
-        configuration should be a ConnectorAuth instance suitable for connector configurations.
+        configuration should be a Auth instance suitable for connector configurations.
 
         Args:
             node: The node that will receive the reverse connection

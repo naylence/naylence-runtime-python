@@ -38,8 +38,14 @@ async def test_direct_admission_client_with_reverse_connections():
         system_id="test-system", instance_id="test-instance", requested_logicals=["*"]
     )
 
-    # Verify the welcome frame has the expected connector directive
-    assert hello_response.frame.connector_directive == outbound_connector
+    # Verify the welcome frame has the expected connection grants
+    assert hello_response.frame.connection_grants is not None
+    assert len(hello_response.frame.connection_grants) > 0
+    # Check that the first grant contains the outbound connector data with purpose
+    first_grant = hello_response.frame.connection_grants[0]
+    # The grant type should be mapped from WebSocketConnector to WebSocketConnectionGrant
+    assert first_grant["type"] == "WebSocketConnectionGrant"
+    assert first_grant["purpose"] == "node.attach"
     assert hello_response.frame.system_id == "test-system"
     assert hello_response.frame.instance_id == "test-instance"
 
@@ -130,18 +136,15 @@ async def main():
 
     try:
         # Test DirectAdmissionClient
-        client = await test_direct_admission_client_with_reverse_connections()
+        await test_direct_admission_client_with_reverse_connections()
 
         # Test DefaultNodeAttachClient
         await test_attach_client_with_reverse_connections()
 
         print("\n✓ All tests passed! Reverse connection support is working correctly.")
 
-        # Show what the supported_inbound_connectors look like
-        print("\nExample supported_inbound_connectors:")
-        print(f"  Number of connectors configured: {len(client.supported_inbound_connectors or [])}")
-        if client.supported_inbound_connectors:
-            print("  ✓ Reverse connection support is properly configured")
+        # Note: Connection grants are now handled through NodeWelcomeFrame.connection_grants
+        print("\nConnection grants are now handled via NodeWelcomeFrame.connection_grants")
 
     except Exception as e:
         print(f"\n❌ Test failed: {e}")

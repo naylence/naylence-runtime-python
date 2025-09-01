@@ -26,7 +26,6 @@ from naylence.fame.core import (
     FameRPCHandler,
     NodeWelcomeFrame,
     create_channel_message,
-    generate_id,
 )
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.node_attach_client import (
@@ -41,6 +40,8 @@ from naylence.fame.node.node_envelope_factory import (
 )
 from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.node_like import NodeLike
+from naylence.fame.node.root_session_manager import RootSessionManager
+from naylence.fame.node.session_manager import SessionManager
 from naylence.fame.node.upstream_session_manager import UpstreamSessionManager
 from naylence.fame.service.default_service_manager import DefaultServiceManager
 from naylence.fame.service.service_manager import ServiceManager
@@ -163,6 +164,7 @@ class FameNode(TaskSpawner, NodeLike):
 
         self._accepted_logicals: set[str] = set()
         self._attach_expires_at: Optional[datetime] = None
+        self._welcome_expires_at: Optional[datetime] = None
 
         self._delivery_tracker = delivery_tracker
 
@@ -197,7 +199,7 @@ class FameNode(TaskSpawner, NodeLike):
             default_service_configs=service_configs,
         )
 
-        self._upstream_session_manager: Optional[UpstreamSessionManager] = None
+        self._session_manager: Optional[SessionManager] = None
 
         self._is_started = False
 
@@ -364,19 +366,7 @@ class FameNode(TaskSpawner, NodeLike):
             await self._connect_to_upstream()
             self._sid = secure_digest(self.physical_path)
         else:
-            if not self._id:
-                self._id = generate_id(mode="fingerprint")
-            # self._physical_path = "/"
-            self._physical_path = f"/{self._id}"
-            self._accepted_logicals = set(self._requested_logicals)
-            # Validate that all logicals are in host-like notation
-            from naylence.fame.util.logicals_util import validate_host_logicals
-
-            is_valid, error = validate_host_logicals(list(self._accepted_logicals))
-            if not is_valid:
-                raise ValueError(f"Invalid logicals: {error}")
-
-            self._physical_segments = [self._id]
+            await self._connect_root()
             self._sid = secure_digest(self.physical_path)
 
         node_meta = await self._node_meta_store.get("self")
@@ -412,23 +402,70 @@ class FameNode(TaskSpawner, NodeLike):
         if not self._admission_client:
             raise RuntimeError("Missing admission client")
 
-        self._upstream_session_manager = UpstreamSessionManager(
+        self._session_manager = UpstreamSessionManager(
             node=self,
             outbound_origin_type=DeliveryOriginType.DOWNSTREAM,
             inbound_origin_type=DeliveryOriginType.UPSTREAM,
             attach_client=self.attach_client,
             requested_logicals=self._requested_logicals,
             inbound_handler=self.handle_inbound_from_upstream,
+            on_welcome=self._on_welcome,
             on_attach=self._on_attach_to_upstream,
             on_epoch_change=self._on_epoch_change,
         )
-        await self._upstream_session_manager.start()
+        await self._session_manager.start()
+
+    async def _connect_root(self):
+        # For root nodes, create a no-op admission client if none provided
+        admission_client = self._admission_client
+        if not admission_client:
+            # Use proper NoopAdmissionClient for root nodes without admission service
+            from naylence.fame.node.admission.noop_admission_client import NoopAdmissionClient
+
+            admission_client = NoopAdmissionClient(
+                system_id="root-system",
+                auto_accept_logicals=True,
+            )
+
+        self._session_manager = RootSessionManager(
+            node=self,
+            admission_client=admission_client,
+            requested_logicals=self._requested_logicals,
+            on_welcome=self._on_welcome,
+            on_epoch_change=self._on_epoch_change,
+            # on_admission_failed=self._on_admission_failed,
+        )
+        await self._session_manager.start()
 
     @property
     def upstream_connector(self) -> Optional[FameConnector]:
-        return self._upstream_session_manager._connector if self._upstream_session_manager else None
+        if self._session_manager and isinstance(self._session_manager, UpstreamSessionManager):
+            return self._session_manager._connector
+        return None
+
+    async def _on_welcome(self, welcome_frame: NodeWelcomeFrame):
+        self._id = welcome_frame.system_id
+        self._accepted_logicals = set(welcome_frame.accepted_logicals or [])
+        self._welcome_expires_at = welcome_frame.expires_at
+
+        if not self._has_parent:
+            if welcome_frame.assigned_path:
+                self._physical_path = welcome_frame.assigned_path
+                assert self._physical_path == f"/{welcome_frame.system_id}"
+            else:
+                self._physical_path = f"/{welcome_frame.system_id}"
+
+            parts = self._physical_path.strip("/").split("/")
+            self._physical_segments = parts if parts != [""] else []
+
+            self._upstream_connector = None
+            self._handshake_completed = True
+
+        # Dispatch attach event to all listeners for parent-specific setup
+        await self._dispatch_event("on_welcome", welcome_frame)
 
     async def _on_attach_to_upstream(self, info: AttachInfo, connector: FameConnector):
+        assert self._id == info["system_id"]
         self._id = info["system_id"]
         self._physical_path = info["assigned_path"]
         parts = self._physical_path.strip("/").split("/")
@@ -462,8 +499,8 @@ class FameNode(TaskSpawner, NodeLike):
 
         await self._service_manager.stop()
 
-        if self._upstream_session_manager:
-            await self._upstream_session_manager.stop()
+        if self._session_manager:
+            await self._session_manager.stop()
 
         # Dispatch node stopped event to all listeners for clean shutdown
         await self._dispatch_event("on_node_stopped", self)
@@ -652,8 +689,11 @@ class FameNode(TaskSpawner, NodeLike):
         if not self._upstream_connector:
             logger.debug(f"No upstream parent for '{self.physical_path}'")
             return
-        assert self._upstream_session_manager
-        await self._upstream_session_manager.send(processed_envelope)
+
+        assert self._session_manager
+        assert isinstance(self._session_manager, UpstreamSessionManager)
+
+        await self._session_manager.send(processed_envelope)
 
         await self._dispatch_envelope_event("on_forward_upstream_complete", self, envelope, context=context)
 

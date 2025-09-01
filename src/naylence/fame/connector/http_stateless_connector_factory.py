@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import ConfigDict, Field
 from pydantic.alias_generators import to_camel
@@ -11,7 +11,9 @@ from naylence.fame.connector.connector_config import (
 from naylence.fame.connector.connector_factory import ConnectorFactory
 from naylence.fame.connector.http_stateless_connector import HttpStatelessConnector
 from naylence.fame.core import FameConnector
-from naylence.fame.security.auth.auth_config import ConnectorAuth
+from naylence.fame.grants.connection_grant import ConnectionGrant
+from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
+from naylence.fame.security.auth.auth_config import Auth
 from naylence.fame.security.auth.auth_injection_strategy_factory import (
     create_auth_strategy,
 )
@@ -26,8 +28,8 @@ class HttpStatelessConnectorConfig(ConnectorConfig):
     kind: str = "http-stateless"
 
     # Auth fields (for backward compatibility with ConnectorDirective)
-    auth: Optional[ConnectorAuth] = Field(default=None)
-    credentials: Optional[Mapping[str, str]] = Field(default=None)
+    auth: Optional[Auth] = Field(default=None)
+    # credentials: Optional[Mapping[str, str]] = Field(default=None)
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="ignore")
 
@@ -40,6 +42,56 @@ class HttpStatelessConnectorFactory(ConnectorFactory):
     - Outbound: HTTP POST requests to the specified outbox URL
     - Inbound: FastAPI routes that push bytes to the connector's queue
     """
+
+    @classmethod
+    def supported_grant_types(cls) -> List[str]:
+        """Return list of connection grant types that this factory can handle."""
+        return [
+            "HttpConnectionGrant",
+            "HttpStatelessConnector",  # Legacy support
+        ]
+
+    @classmethod
+    def config_from_grant(cls, grant: Union[ConnectionGrant, Dict[str, Any]]) -> ConnectorConfig:
+        """
+        Create an HttpStatelessConnectorConfig from a connection grant or dictionary.
+
+        Args:
+            grant: The connection grant or dictionary to convert to a config
+
+        Returns:
+            HttpStatelessConnectorConfig instance
+
+        Raises:
+            ValueError: If grant type is not supported
+        """
+        # Handle dictionary case - create proper grant first
+        if isinstance(grant, dict):
+            if grant.get("type") != "HttpConnectionGrant":
+                raise ValueError(
+                    f"HttpStatelessConnectorFactory only supports HttpConnectionGrant, got type {
+                        grant.get('type')
+                    }"
+                )
+            http_grant = HttpConnectionGrant.model_validate(grant)
+        elif isinstance(grant, HttpConnectionGrant):
+            http_grant = grant
+        elif hasattr(grant, "type") and grant.type == "HttpConnectionGrant":
+            # Convert base grant to HttpConnectionGrant if it has the right type
+            http_grant = HttpConnectionGrant.model_validate(grant.model_dump())
+        else:
+            raise ValueError(
+                f"HttpStatelessConnectorFactory only supports HttpConnectionGrant, got {type(grant)}"
+            )
+
+        # Convert grant to config
+        return HttpStatelessConnectorConfig(
+            type="HttpStatelessConnector",
+            url=http_grant.url,
+            max_queue=http_grant.max_queue,
+            kind=http_grant.kind,
+            auth=http_grant.auth,
+        )
 
     async def create(
         self,

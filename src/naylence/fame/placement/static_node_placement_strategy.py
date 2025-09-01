@@ -24,12 +24,19 @@ class StaticNodePlacementStrategy(NodePlacementStrategy):
         self._target_physical_path = target_physical_path
 
     async def place(self, hello_frame: NodeHelloFrame) -> PlacementDecision:
-        target_physical_path = self._target_physical_path
-        assigned_path = str(PurePosixPath(target_physical_path) / hello_frame.system_id)
+        if hello_frame.system_id == self._target_system_id:
+            # If the node id is the same as the target system id, it's a root node
+            target_system_id = None
+            target_physical_path = None
+            assigned_path = f"/{hello_frame.system_id}"
+        else:
+            target_system_id=self._target_system_id
+            target_physical_path = self._target_physical_path
+            assigned_path = str(PurePosixPath(target_physical_path) / hello_frame.system_id)
 
         return PlacementDecision(
             accept=True,
-            target_system_id=self._target_system_id,
+            target_system_id=target_system_id,
             target_physical_path=target_physical_path,
             assigned_path=assigned_path,
             metadata={

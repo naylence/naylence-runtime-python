@@ -15,6 +15,7 @@ from naylence.fame.util.logging import getLogger
 
 logger = getLogger(__name__)
 
+ENV_VAR_IS_ROOT = "FAME_ROOT"
 ENV_VAR_JWT_TRUSTED_ISSUER = "FAME_JWT_TRUSTED_ISSUER"
 ENV_VAR_JWT_ALGORITHM = "FAME_JWT_ALGORITHM"
 ENV_VAR_JWT_AUDIENCE = "FAME_JWT_AUDIENCE"
@@ -37,6 +38,7 @@ DEFAULT_ADMISSION_TTL = DEFAULT_ADMISSION_TTL_SEC
 
 WELCOME_SERVICE_PROFILE = {
     "type": "WelcomeServiceClient",
+    "is_root": Expressions.env(ENV_VAR_IS_ROOT, default="false"),
     "url": Expressions.env(ENV_VAR_ADMISSION_SERVICE_URL),
     "supported_transports": ["websocket"],
     "auth": {
@@ -54,40 +56,44 @@ WELCOME_SERVICE_PROFILE = {
 
 DIRECT_PROFILE = {
     "type": "DirectAdmissionClient",
-    "connector_directive": {
-        "type": "WebSocketConnector",
-        "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
-        "auth": {
-            "type": "WebSocketSubprotocolAuth",
-            "token_provider": {
-                "type": "OAuth2ClientCredentialsTokenProvider",
-                "token_url": Expressions.env(ENV_VAR_ADMISSION_TOKEN_URL),
-                "client_id": Expressions.env(ENV_VAR_ADMISSION_CLIENT_ID),
-                "client_secret": Expressions.env(ENV_VAR_ADMISSION_CLIENT_SECRET),
-                "scopes": ["node.connect"],
-                "audience": Expressions.env(ENV_VAR_JWT_AUDIENCE),
+    "connection_grants": [
+        {
+            "type": "WebSocketConnector",
+            "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
+            "auth": {
+                "type": "WebSocketSubprotocolAuth",
+                "token_provider": {
+                    "type": "OAuth2ClientCredentialsTokenProvider",
+                    "token_url": Expressions.env(ENV_VAR_ADMISSION_TOKEN_URL),
+                    "client_id": Expressions.env(ENV_VAR_ADMISSION_CLIENT_ID),
+                    "client_secret": Expressions.env(ENV_VAR_ADMISSION_CLIENT_SECRET),
+                    "scopes": ["node.connect"],
+                    "audience": Expressions.env(ENV_VAR_JWT_AUDIENCE),
+                },
             },
-        },
-        "ttl": 0,
-        "durable": False,
-    },
+            "ttl": 0,
+            "durable": False,
+        }
+    ],
 }
 
 OPEN_PROFILE = {
     "type": "DirectAdmissionClient",
-    "connector_directive": {
-        "type": "WebSocketConnector",
-        "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
-        "auth": {
-            "type": "NoAuth",
-        },
-        "ttl": 0,
-        "durable": False,
-    },
+    "connection_grants": [
+        {
+            "type": "WebSocketConnector",
+            "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
+            "auth": {
+                "type": "NoAuth",
+            },
+            "ttl": 0,
+            "durable": False,
+        }
+    ],
 }
 
 
-NOOP_PROFILE = {"type": "NoopAdmissionClient"}
+NOOP_PROFILE = {"type": "NoopAdmissionClient", "auto_accept_logicals": True}
 
 
 class AdmissionProfileConfig(AdmissionConfig):
@@ -111,31 +117,31 @@ class AdmissionProfileFactory(AdmissionClientFactory):
 
         if profile in [PROFILE_NAME_NOOP, PROFILE_NAME_NONE]:
             from naylence.fame.node.admission.noop_admission_client_factory import (
-                NoopNodeAdmissionConfig,
+                NoopAdmissionConfig,
             )
 
-            security_config = NoopNodeAdmissionConfig(**NOOP_PROFILE)
+            admission_config = NoopAdmissionConfig(**NOOP_PROFILE)
         elif profile == PROFILE_NAME_DIRECT:
             from naylence.fame.node.admission.direct_admission_client_factory import (
                 DirectNodeAdmissionConfig,
             )
 
-            security_config = DirectNodeAdmissionConfig(**DIRECT_PROFILE)
+            admission_config = DirectNodeAdmissionConfig(**DIRECT_PROFILE)
         elif profile == PROFILE_NAME_OPEN:
             from naylence.fame.node.admission.direct_admission_client_factory import (
                 DirectNodeAdmissionConfig,
             )
 
-            security_config = DirectNodeAdmissionConfig(**OPEN_PROFILE)
+            admission_config = DirectNodeAdmissionConfig(**OPEN_PROFILE)
         elif profile == PROFILE_NAME_WELCOME:
             from naylence.fame.node.admission.welcome_service_client_factory import (
                 WelcomeServiceClientConfig,
             )
 
-            security_config = WelcomeServiceClientConfig(**WELCOME_SERVICE_PROFILE)
+            admission_config = WelcomeServiceClientConfig(**WELCOME_SERVICE_PROFILE)
         else:
             raise ValueError(f"Unknown admission profile: {profile}")
 
         logger.debug("enabling_admission_profile", profile=profile)  # type: ignore
 
-        return await create_resource(AdmissionClientFactory, security_config)
+        return await create_resource(AdmissionClientFactory, admission_config)

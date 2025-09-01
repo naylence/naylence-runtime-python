@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import ssl
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from pydantic import Field
@@ -12,11 +12,14 @@ from naylence.fame.connector.connector_factory import ConnectorFactory
 from naylence.fame.connector.websocket_connector import WebSocketConnector
 from naylence.fame.core import AuthorizationContext, FameConnector
 from naylence.fame.errors.errors import FameConnectError
-from naylence.fame.security.auth.auth_config import ConnectorAuth
+from naylence.fame.security.auth.auth_config import Auth
 from naylence.fame.security.auth.auth_injection_strategy_factory import (
     create_auth_strategy,
 )
 from naylence.fame.util.logging import getLogger
+
+if TYPE_CHECKING:
+    from naylence.fame.grants.connection_grant import ConnectionGrant
 
 logger = getLogger(__name__)
 
@@ -30,7 +33,7 @@ class WebSocketConnectorConfig(ConnectorConfig):
         default=None,
         description="WebSocket URL to connect to (required if params is not set",
     )
-    auth: Optional[ConnectorAuth] = Field(default=None)
+    auth: Optional[Auth] = Field(default=None)
 
 
 class WebSocketConnectorFactory(ConnectorFactory):
@@ -44,6 +47,51 @@ class WebSocketConnectorFactory(ConnectorFactory):
 
     def __init__(self, client_factory: Optional[Callable[..., Any]] = None):
         self._client_factory = client_factory or self._default_websocket_client
+
+    @classmethod
+    def supported_grant_types(cls) -> List[str]:
+        """Return list of grant types this factory supports."""
+        return ["WebSocketConnectionGrant", "WebSocketConnector"]
+
+    @classmethod
+    def config_from_grant(cls, grant: Union[ConnectionGrant, Dict[str, Any]]) -> ConnectorConfig:
+        """
+        Create a WebSocketConnectorConfig from a connection grant or dictionary.
+
+        Args:
+            grant: The connection grant or dictionary to convert to a config
+
+        Returns:
+            WebSocketConnectorConfig instance
+
+        Raises:
+            ValueError: If grant type is not supported
+        """
+        from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
+
+        # Handle dictionary case - create proper grant first
+        if isinstance(grant, dict):
+            if grant.get("type") != "WebSocketConnectionGrant":
+                raise ValueError(
+                    f"WebSocketConnectorFactory only supports WebSocketConnectionGrant, got type {
+                        grant.get('type')
+                    }"
+                )
+            websocket_grant = WebSocketConnectionGrant.model_validate(grant)
+        elif isinstance(grant, WebSocketConnectionGrant):
+            websocket_grant = grant
+        elif hasattr(grant, "type") and grant.type == "WebSocketConnectionGrant":
+            # Convert base grant to WebSocketConnectionGrant if it has the right type
+            websocket_grant = WebSocketConnectionGrant.model_validate(grant.model_dump())
+        else:
+            raise ValueError(
+                f"WebSocketConnectorFactory only supports WebSocketConnectionGrant, got {type(grant)}"
+            )
+
+        # Convert grant to config
+        return WebSocketConnectorConfig(
+            type="WebSocketConnector", url=websocket_grant.url, auth=websocket_grant.auth
+        )
 
     async def create(
         self,

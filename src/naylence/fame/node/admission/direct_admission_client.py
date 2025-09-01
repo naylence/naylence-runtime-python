@@ -62,13 +62,31 @@ class DirectAdmissionClient(AdmissionClient):
         if not system_id:
             system_id = generate_id(mode="fingerprint")
 
+        # Convert connector_directive to connection_grants
+        # For backward compatibility, create a connection grant from the connector directive
+        # Map connector types to grant types
+        connector_type = self._connector_directive.get("type", "")
+        grant_type_mapping = {
+            "WebSocketConnector": "WebSocketConnectionGrant",
+            "HttpStatelessConnector": "HttpConnectionGrant",
+        }
+        grant_type = grant_type_mapping.get(connector_type, connector_type)
+
+        connection_grants = [
+            {
+                **self._connector_directive,
+                "type": grant_type,  # Use grant type instead of connector type
+                "purpose": "node.attach",  # Default purpose for direct admission
+            }
+        ]
+
         envelope = FameEnvelopeWith(
             frame=NodeWelcomeFrame(
                 system_id=system_id,
                 instance_id=instance_id,
                 accepted_logicals=requested_logicals or ["*"],  # TODO get rid of the *
                 expires_at=expires_at,
-                connector_directive=self._connector_directive,
+                connection_grants=connection_grants,
             )
         )
 

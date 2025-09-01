@@ -6,6 +6,7 @@ import random
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional, cast
 
+from naylence.fame.connector.connector_factory import ConnectorFactory
 from naylence.fame.core import (
     DeliveryAckFrame,
     DeliveryOriginType,
@@ -20,7 +21,6 @@ from naylence.fame.core import (
     NodeHeartbeatFrame,
     NodeWelcomeFrame,
     SecurityContext,
-    create_resource,
     generate_id,
 )
 from naylence.fame.errors.errors import (
@@ -28,8 +28,10 @@ from naylence.fame.errors.errors import (
     FameMessageTooLarge,
     FameTransportClose,
 )
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.node_attach_client import AttachInfo, NodeAttachClient
+from naylence.fame.node.session_manager import SessionManager
 from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
 from naylence.fame.util.logging import getLogger
 from naylence.fame.util.task_spawner import TaskSpawner
@@ -42,7 +44,7 @@ __all__ = ["UpstreamSessionManager"]
 logger = getLogger(__name__)
 
 
-class UpstreamSessionManager(TaskSpawner):
+class UpstreamSessionManager(TaskSpawner, SessionManager):
     """
     Keeps a child FameNode attached to its parent, independent of the underlying
     transport.  Handles admission, (re-)attachment, heart-beats, token refresh
@@ -68,9 +70,8 @@ class UpstreamSessionManager(TaskSpawner):
         outbound_origin_type: DeliveryOriginType,
         inbound_origin_type: DeliveryOriginType,
         inbound_handler: FameEnvelopeHandler,  # node's own handler
-        on_attach: Callable[
-            [AttachInfo, FameConnector], Coroutine[Any, Any, Any]
-        ],  # callback to persist ids/paths
+        on_welcome: Callable[[NodeWelcomeFrame], Coroutine[Any, Any, Any]],  # callback to persist ids/paths
+        on_attach: Callable[[AttachInfo, FameConnector], Coroutine[Any, Any, Any]],
         on_epoch_change: Callable[[str], Coroutine[Any, Any, Any]],
         admission_client: Optional[AdmissionClient] = None,
     ) -> None:
@@ -83,6 +84,7 @@ class UpstreamSessionManager(TaskSpawner):
         self._attach_client = attach_client
         # self._connector_factory = connector_factory
         self._requested_logicals = requested_logicals
+        self._on_welcome = on_welcome
         self._on_attach = on_attach
         self._on_epoch_change = on_epoch_change
 
@@ -99,6 +101,11 @@ class UpstreamSessionManager(TaskSpawner):
         self._last_seen_epoch = None
         self._had_successful_attach = False
         self._connect_epoch = 0
+        
+        logger.debug(
+            "created_upstream_session_manager",
+            target_system_id=self._target_system_id
+        )
 
     # --------------------------------------------------------------------------- #
     # PUBLIC API
@@ -188,6 +195,13 @@ class UpstreamSessionManager(TaskSpawner):
         await self._sleep_with_stop(delay + random.uniform(0, delay))
         return min(delay * 2, self.BACKOFF_CAP)
 
+    def _get_node_attach_grant(self, connection_grants: list[dict[str, Any]]) -> dict[str, Any] | None:
+        """Get the node attach grant from the list of connection grants."""
+        for grant in connection_grants:
+            if grant.get("purpose") == GRANT_PURPOSE_NODE_ATTACH:
+                return grant
+        return None
+
     async def _connect_cycle(self) -> None:
         assert self._admission_client, "Node must have an admission client"
 
@@ -199,14 +213,16 @@ class UpstreamSessionManager(TaskSpawner):
             instance_id=generate_id(),
             requested_logicals=self._requested_logicals,
         )
-        directive = welcome.frame.connector_directive
-        if not directive:
-            raise RuntimeError("welcome frame missing connector directive")
 
-        # Import ConnectorConfig here to avoid circular import
-        from naylence.fame.connector.connector_config import ConnectorConfig
+        # Get connection grants from welcome frame
+        connection_grants = welcome.frame.connection_grants
+        if not connection_grants:
+            raise RuntimeError("welcome frame missing connection grants")
 
-        connector_config = ConnectorConfig.model_validate(directive)
+        grant = self._get_node_attach_grant(connection_grants)
+
+        if not grant:
+            raise RuntimeError("welcome frame missing node attach grant")
 
         crypto_provider = get_crypto_provider()
 
@@ -217,16 +233,15 @@ class UpstreamSessionManager(TaskSpawner):
                 welcome.frame.accepted_logicals or [],
             )
 
-        # Request certificate from CA service if needed (delegated to event listeners)
-        await self._node._dispatch_event("on_welcome", welcome.frame)
+        await self._on_welcome(welcome.frame)
 
-        # 2. Provision connector and start it
-        from naylence.fame.connector.connector_factory import ConnectorFactory
+        # 2. Create connector from grant
 
-        connector = await create_resource(
-            ConnectorFactory, connector_config, system_id=welcome.frame.system_id
+        connector: FameConnector = await ConnectorFactory.create_connector(
+            grant, system_id=welcome.frame.system_id
         )
 
+        # Start the connector
         await connector.start(self._wrapped_handler)
         self._connector = connector
 

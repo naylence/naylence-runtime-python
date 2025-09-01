@@ -84,6 +84,7 @@ async def test_expiry_guard_logging():
         outbound_origin_type="test",
         inbound_origin_type="test",
         inbound_handler=AsyncMock(),
+        on_welcome=AsyncMock(),
         on_attach=AsyncMock(),
         on_epoch_change=AsyncMock(),
     )
@@ -133,6 +134,7 @@ async def test_expiry_guard_no_expiry():
         outbound_origin_type="test",
         inbound_origin_type="test",
         inbound_handler=AsyncMock(),
+        on_welcome=AsyncMock(),
         on_attach=AsyncMock(),
         on_epoch_change=AsyncMock(),
     )

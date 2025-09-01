@@ -4,17 +4,17 @@ import pytest
 
 from naylence.fame.core import create_resource
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
-from naylence.fame.node.admission.welcome_service_client import (
-    WelcomeServiceClient,
-)
-from naylence.fame.node.admission.welcome_service_client_factory import (
-    WelcomeServiceClientConfig,
-)
 from naylence.fame.node.admission.direct_admission_client import (
     DirectAdmissionClient,
 )
 from naylence.fame.node.admission.direct_admission_client_factory import (
     DirectNodeAdmissionConfig,
+)
+from naylence.fame.node.admission.welcome_service_client import (
+    WelcomeServiceClient,
+)
+from naylence.fame.node.admission.welcome_service_client_factory import (
+    WelcomeServiceClientConfig,
 )
 from naylence.fame.security.auth.auth_config import NoAuth
 from naylence.fame.security.auth.none_token_provider_factory import (

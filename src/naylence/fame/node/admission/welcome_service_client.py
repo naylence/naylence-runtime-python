@@ -23,16 +23,22 @@ class WelcomeServiceClient(AdmissionClient):
 
     def __init__(
         self,
+        has_upstream: bool,
         url: str,
         supported_transports: List[str],
         session: Optional[aiohttp.ClientSession] = None,
         auth_strategy: Optional[AuthInjectionStrategy] = None,
     ):
+        self._has_upstream = has_upstream
         self._url = url
         self._supported_transports = supported_transports
         self._session = session
         self._auth_strategy = auth_strategy
         self._auth_headers: dict[str, str] = {}
+        
+    @property
+    def has_upstream(self) -> bool:
+        return self._has_upstream
 
     def set_auth_header(self, auth_header: str) -> None:
         """Set the Authorization header for requests."""
@@ -74,7 +80,7 @@ class WelcomeServiceClient(AdmissionClient):
                 text = await resp.text()
                 if resp.status != 200:
                     raise RuntimeError(
-                        f"[WelcomeServiceClient] failed to connect to {(self._url,)}. "
+                        f"[WelcomeServiceClient] failed to connect to {self._url}. "
                         f"HTTP {resp.status}: {text}"
                     )
                 data = json.loads(text)
@@ -84,9 +90,7 @@ class WelcomeServiceClient(AdmissionClient):
 
             # Validate frame type
             if not isinstance(envelope.frame, NodeWelcomeFrame):
-                raise RuntimeError(
-                    f"[WelcomeServiceClient] Unexpected frame type '{envelope.frame.type}'"
-                )
+                raise RuntimeError(f"[WelcomeServiceClient] Unexpected frame type '{envelope.frame.type}'")
             return envelope  # type: ignore
         finally:
             # Close session if we created it for this request

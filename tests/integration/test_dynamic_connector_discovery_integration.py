@@ -176,7 +176,8 @@ async def test_dynamic_setup_event_handling():
         system_id="test-system", instance_id="test-instance", requested_logicals=["*"]
     )
 
-    assert hello_response.frame.connector_directive is not None, "Should have connector directive"
+    assert hello_response.frame.connection_grants is not None, "Should have connection grants"
+    assert len(hello_response.frame.connection_grants) > 0, "Should have at least one connection grant"
     assert hello_response.frame.system_id == "test-system", "Should preserve system_id"
 
     print("✓ Dynamic setup works without event handling")
@@ -197,7 +198,7 @@ async def test_admission_client_connector_usage():
 
     # Create admission client with a mock connector config
     mock_connector_config = WebSocketConnectorConfig(type="websocket")
-    DirectAdmissionClient(connector_directive=mock_connector_config)
+    DirectAdmissionClient(connector_directive=mock_connector_config.model_dump())
 
     # Test that admission client can work with discovered connectors
     connectors = node.gather_supported_inbound_connectors()

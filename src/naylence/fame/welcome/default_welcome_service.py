@@ -117,8 +117,8 @@ class DefaultWelcomeService(WelcomeService):
             "node_placement_accepted",
             system_id=system_id,
             assigned_path=placement_result.assigned_path,
-            target_physical_path=placement_result.target_physical_path,
-            target_system_id=placement_result.target_system_id,
+            target_physical_path=placement_result.target_physical_path or "None",
+            target_system_id=placement_result.target_system_id or "None",
         )
 
         assigned_path = placement_result.assigned_path
@@ -130,7 +130,9 @@ class DefaultWelcomeService(WelcomeService):
             if placement_result.metadata
             else hello.logicals
         )
-
+        
+        connection_grants = []
+        
         logger.debug(
             "processing_placement_result_metadata",
             accepted_capabilities=accepted_capabilities,
@@ -138,28 +140,31 @@ class DefaultWelcomeService(WelcomeService):
             has_placement_metadata=placement_result.metadata is not None,
         )
 
-        logger.debug("issuing_token", system_id=system_id, assigned_path=assigned_path)
-        token = self._token_issuer.issue(
-            claims={
-                "aud": placement_result.target_physical_path,
-                "system_id": system_id,
-                "parent_path": placement_result.target_physical_path,
-                "assigned_path": placement_result.assigned_path,
-                "accepted_logicals": accepted_logicals,
-                "instance_id": full_metadata.get("instance_id") or generate_id(),
-            },
-        )
-        logger.debug("token_issued_successfully")
+        if placement_result.target_system_id:
+            logger.debug("issuing_node_attach_token", system_id=system_id, assigned_path=assigned_path)
+            node_attach_token = self._token_issuer.issue(
+                claims={
+                    "aud": placement_result.target_physical_path,
+                    "system_id": system_id,
+                    "parent_path": placement_result.target_physical_path,
+                    "assigned_path": placement_result.assigned_path,
+                    "accepted_logicals": accepted_logicals,
+                    "instance_id": full_metadata.get("instance_id") or generate_id(),
+                },
+            )
+            logger.debug("token_issued_successfully")
 
-        logger.debug("provisioning_transport", system_id=system_id)
-        transport_info: TransportProvisionResult = await self._transport_provisioner.provision(
-            placement_result, hello, full_metadata, token
-        )
-        logger.debug(
-            "transport_provisioned_successfully",
-            system_id=system_id,
-            directive_type=type(transport_info.directive).__name__,
-        )
+            logger.debug("provisioning_transport", system_id=system_id)
+            transport_info: TransportProvisionResult = await self._transport_provisioner.provision(
+                placement_result, hello, full_metadata, node_attach_token
+            )
+            logger.debug(
+                "transport_provisioned_successfully",
+                system_id=system_id,
+                directive_type=type(transport_info.connection_grant).__name__,
+            )
+
+            connection_grants.append(transport_info.connection_grant)
 
         welcome_frame = NodeWelcomeFrame(
             system_id=system_id,
@@ -170,7 +175,7 @@ class DefaultWelcomeService(WelcomeService):
             accepted_logicals=accepted_logicals,
             rejected_logicals=None,  # Optional: enhance later
             target_physical_path=placement_result.target_physical_path,
-            connector_directive=transport_info.directive,
+            connection_grants=connection_grants,
             metadata=full_metadata,
             expires_at=expiry,
         )

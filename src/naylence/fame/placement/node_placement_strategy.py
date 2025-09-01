@@ -19,9 +19,9 @@ from naylence.fame.factory import ResourceConfig, ResourceFactory, create_defaul
 
 class PlacementDecision(BaseModel):
     accept: bool
-    target_system_id: str
+    target_system_id: Optional[str] = Field(default=None) # Must be set to None for root nodes
     assigned_path: str
-    target_physical_path: str
+    target_physical_path: Optional[str] = Field(default=None) # Must be set to None for root nodes
     accepted_logicals: Optional[Sequence[str]] = Field(default=None)
     rejected_logicals: Optional[Sequence[str]] = Field(default=None)
     metadata: Optional[Mapping[str, Any]] = Field(default=None)

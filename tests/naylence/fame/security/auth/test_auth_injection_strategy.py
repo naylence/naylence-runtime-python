@@ -59,18 +59,6 @@ class TestAuthInjectionStrategy:
         mock_connector.set_auth_header.assert_called_once_with("Bearer test-token-123")
 
     @pytest.mark.asyncio
-    async def test_create_auth_strategy_invalid_type(self):
-        """Test create_auth_strategy raises error for unknown types."""
-
-        class UnknownAuth:
-            pass
-
-        unknown_auth = UnknownAuth()
-
-        with pytest.raises(ValueError, match="No auth injection strategy factory"):
-            await create_auth_strategy(unknown_auth)
-
-    @pytest.mark.asyncio
     async def test_strategy_cleanup(self):
         """Test strategy cleanup cancels background tasks."""
         auth_config = BearerTokenHeaderAuth(

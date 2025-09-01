@@ -26,7 +26,7 @@ class CertificateManagerConfig(ResourceConfig):
     security_settings: Optional[SecuritySettings] = Field(
         default=None, description="Security settings for certificate management"
     )
-    signing_config: Optional[SigningConfig] = Field(
+    signing: Optional[SigningConfig] = Field(
         default=None, description="Signing configuration for certificate operations"
     )
 
@@ -42,8 +42,8 @@ class CertificateManagerFactory(ResourceFactory[CertificateManager, C]):
         cls,
         cfg: Optional[C | dict[str, Any]] = None,
         *,
-        security_settings=None,
-        signing_config=None,
+        security_settings: Optional[SecuritySettings] = None,
+        signing: Optional[SigningConfig] = None,
         **kwargs,
     ) -> Optional[CertificateManager]:
         """Create a CertificateManager instance based on the provided configuration."""
@@ -55,6 +55,6 @@ class CertificateManagerFactory(ResourceFactory[CertificateManager, C]):
             CertificateManagerFactory,
             cfg_dict,
             security_settings=security_settings,
-            signing_config=signing_config,
+            signing=signing,
             **kwargs,
         )

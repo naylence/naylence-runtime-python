@@ -18,7 +18,7 @@ class FameNodeConfig(NodeLikeConfig):
 
     mode: Literal["dev", "prod"] = "prod"
 
-    system_id: Optional[str] = Field(default=None)
+    id: Optional[str] = Field(default=None)
 
     direct_parent_url: Optional[str] = Field(default=None)
 

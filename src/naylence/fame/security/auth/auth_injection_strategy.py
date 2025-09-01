@@ -9,12 +9,12 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from naylence.fame.core import FameConnector, create_resource
 from naylence.fame.security.auth.auth_config import (
     BearerTokenHeaderAuth,
-    ConnectorAuth,
+    Auth,
     QueryParamAuth,
     WebSocketSubprotocolAuth,
 )
@@ -29,16 +29,16 @@ class AuthInjectionStrategy(ABC):
     """
     Base class for authentication injection strategies.
 
-    Each strategy knows how to apply a specific type of ConnectorAuth
+    Each strategy knows how to apply a specific type of Auth
     to a connector, including initial setup and ongoing token refresh.
     """
 
-    def __init__(self, auth_config: ConnectorAuth):
+    def __init__(self, auth_config: Auth):
         self.auth_config = auth_config
         self._refresh_task: Optional[asyncio.Task] = None
 
     @abstractmethod
-    async def apply(self, connector: FameConnector) -> None:
+    async def apply(self, connector: Any) -> None:
         """
         Apply authentication configuration to the connector.
 
@@ -60,7 +60,7 @@ class AuthInjectionStrategy(ABC):
 class NoAuthStrategy(AuthInjectionStrategy):
     """Strategy for no authentication."""
 
-    async def apply(self, connector: FameConnector) -> None:
+    async def apply(self, connector: Any) -> None:
         # Nothing to do for no auth
         pass
 
@@ -68,7 +68,7 @@ class NoAuthStrategy(AuthInjectionStrategy):
 class BearerTokenHeaderStrategy(AuthInjectionStrategy):
     """Strategy for Bearer token in Authorization header."""
 
-    async def apply(self, connector: FameConnector) -> None:
+    async def apply(self, connector: Any) -> None:
         if not isinstance(self.auth_config, BearerTokenHeaderAuth):
             raise ValueError(f"Expected BearerTokenHeaderAuth, got {type(self.auth_config)}")
 
@@ -81,7 +81,7 @@ class BearerTokenHeaderStrategy(AuthInjectionStrategy):
         # Start background refresh if needed
         self._start_refresh_task(connector, token_provider)
 
-    async def _update_auth_header(self, connector: FameConnector, token_provider: TokenProvider) -> None:
+    async def _update_auth_header(self, connector: Any, token_provider: TokenProvider) -> None:
         """Update the connector's auth header with current token."""
         token = await token_provider.get_token()
         auth_header = f"Bearer {token.value}"
@@ -129,7 +129,7 @@ class BearerTokenHeaderStrategy(AuthInjectionStrategy):
 class WebSocketSubprotocolStrategy(AuthInjectionStrategy):
     """Strategy for WebSocket subprotocol authentication."""
 
-    async def apply(self, connector: FameConnector) -> None:
+    async def apply(self, connector: Any) -> None:
         # For WebSocket subprotocol auth, the authentication is set during connection
         # establishment, not after the connector is created. This is handled in the factory.
         pass
@@ -154,7 +154,7 @@ class WebSocketSubprotocolStrategy(AuthInjectionStrategy):
 class QueryParamStrategy(AuthInjectionStrategy):
     """Strategy for query parameter authentication."""
 
-    async def apply(self, connector: FameConnector) -> None:
+    async def apply(self, connector: Any) -> None:
         # For query param auth, the token is added to the URL during
         # connection establishment, not after the connector is created.
         # This is handled in the factory.

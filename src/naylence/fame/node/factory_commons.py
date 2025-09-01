@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
-from naylence.fame.constants.ttl_constants import TTL_NEVER_EXPIRES
 from naylence.fame.core import create_default_resource, create_resource, generate_id
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
@@ -13,9 +12,6 @@ from naylence.fame.node.admission.default_node_attach_client import (
 )
 from naylence.fame.node.node_config import FameNodeConfig
 from naylence.fame.node.node_meta import NodeMeta
-from naylence.fame.security.auth.none_token_provider_factory import (
-    NoneTokenProviderConfig,
-)
 from naylence.fame.security.keys.attachment_key_validator_factory import (
     AttachmentKeyValidatorFactory,
 )
@@ -68,34 +64,10 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     logger.debug(
         "node_meta_store_loaded",
         node_meta=node_meta,
-        system_id=node_meta.id if node_meta else None,
+        node_id=node_meta.id if node_meta else None,
     )
 
-    system_id = cfg.system_id or (node_meta.id if node_meta else None) or generate_id(mode="fingerprint")
-
-    if cfg.mode == "dev":
-        if system_id is None and not cfg.has_parent:
-            system_id = generate_id(mode="fingerprint")
-
-        if admission_client is None and cfg.direct_parent_url:
-            from naylence.fame.connector.websocket_connector_factory import (
-                WebSocketConnectorConfig,
-            )
-            from naylence.fame.node.admission.direct_admission_client import (
-                DirectAdmissionClient,
-            )
-            from naylence.fame.security.auth.auth_config import WebSocketSubprotocolAuth
-
-            if system_id is None:
-                system_id = generate_id(mode="fingerprint")
-
-            connector_directive = WebSocketConnectorConfig(
-                url=cfg.direct_parent_url,
-                auth=WebSocketSubprotocolAuth(token_provider=NoneTokenProviderConfig()),
-            )
-            admission_client = DirectAdmissionClient(
-                connector_directive.model_dump(), ttl_sec=TTL_NEVER_EXPIRES
-            )
+    node_id = cfg.id or (node_meta.id if node_meta else None) or generate_id(mode="fingerprint")
 
     event_listeners = []
 
@@ -122,7 +94,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     has_parent = (
         cfg.has_parent
         or cfg.direct_parent_url is not None
-        or (admission_client is not None and admission_client.has_upstream())
+        or (admission_client is not None and admission_client.has_upstream)
     )
 
     # Heuristic: only enable replica-side stickiness when node acts as a child (has_parent)
@@ -201,7 +173,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     )
 
     return {
-        "system_id": system_id,
+        "system_id": node_id,
         "has_parent": has_parent,
         "delivery_tracker": delivery_tracker,
         "admission_client": admission_client,

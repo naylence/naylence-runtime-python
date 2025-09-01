@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from typing import Any, Optional, TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_resource
 from naylence.fame.security.auth.auth_config import (
+    Auth,
     BearerTokenHeaderAuth,
-    ConnectorAuth,
     NoAuth,
     QueryParamAuth,
     WebSocketSubprotocolAuth,
@@ -102,16 +102,16 @@ class QueryParamStrategyFactory(AuthInjectionStrategyFactory):
         return QueryParamStrategy(config)
 
 
-# Registry mapping ConnectorAuth types to their strategy factories
-STRATEGY_FACTORY_REGISTRY: dict[type[ConnectorAuth], type[AuthInjectionStrategyFactory]] = {
-    NoAuth: NoAuthStrategyFactory,
-    BearerTokenHeaderAuth: BearerTokenHeaderStrategyFactory,
-    WebSocketSubprotocolAuth: WebSocketSubprotocolStrategyFactory,
-    QueryParamAuth: QueryParamStrategyFactory,
-}
+# # Registry mapping Auth types to their strategy factories
+# STRATEGY_FACTORY_REGISTRY: dict[type[Auth], type[AuthInjectionStrategyFactory]] = {
+#     NoAuth: NoAuthStrategyFactory,
+#     BearerTokenHeaderAuth: BearerTokenHeaderStrategyFactory,
+#     WebSocketSubprotocolAuth: WebSocketSubprotocolStrategyFactory,
+#     QueryParamAuth: QueryParamStrategyFactory,
+# }
 
 
-async def create_auth_strategy(auth_config: ConnectorAuth) -> AuthInjectionStrategy:
+async def create_auth_strategy(auth_config: Auth) -> AuthInjectionStrategy:
     """
     Create an auth injection strategy for the given auth config.
 
@@ -124,9 +124,11 @@ async def create_auth_strategy(auth_config: ConnectorAuth) -> AuthInjectionStrat
     Raises:
         ValueError: If no strategy factory is found for the auth config type
     """
-    factory_class = STRATEGY_FACTORY_REGISTRY.get(type(auth_config))
-    if not factory_class:
-        raise ValueError(f"No auth injection strategy factory for {type(auth_config).__name__}")
+    # factory_class = STRATEGY_FACTORY_REGISTRY.get(type(auth_config))
+    # if not factory_class:
+    #     raise ValueError(f"No auth injection strategy factory for {type(auth_config).__name__}")
 
-    factory = factory_class()
-    return await factory.create(auth_config)
+    # factory = factory_class()
+    # return await factory.create(auth_config)
+    
+    return await create_resource(AuthInjectionStrategyFactory, auth_config)
