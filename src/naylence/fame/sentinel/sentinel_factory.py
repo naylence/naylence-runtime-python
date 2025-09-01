@@ -13,10 +13,12 @@ from naylence.fame.node.node_config import FameNodeConfig
 from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.node_like import NodeLike
 from naylence.fame.node.node_like_factory import NodeLikeFactory
-from naylence.fame.security.auth.auth_config import WebSocketSubprotocolAuth
 from naylence.fame.security.auth.authorizer_factory import AuthorizerConfig
 from naylence.fame.security.auth.none_token_provider_factory import (
     NoneTokenProviderConfig,
+)
+from naylence.fame.security.auth.websocket_subprotocol_auth_injection_strategy_factory import (
+    WebSocketSubprotocolAuthInjectionConfig,
 )
 from naylence.fame.sentinel.load_balancing.composite_load_balancing_strategy import (
     CompositeLoadBalancingStrategy,
@@ -188,7 +190,7 @@ class SentinelFactory(NodeLikeFactory):
 
                 connector_directive = WebSocketConnectorConfig(
                     url=peer_config.direct_url,
-                    auth=WebSocketSubprotocolAuth(token_provider=NoneTokenProviderConfig()),
+                    auth=WebSocketSubprotocolAuthInjectionConfig(token_provider=NoneTokenProviderConfig()),
                 )
                 admission_client = DirectAdmissionClient(
                     connector_directive.model_dump(by_alias=True),

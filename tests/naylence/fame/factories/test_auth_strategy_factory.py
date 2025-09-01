@@ -3,12 +3,14 @@
 import pytest
 
 from naylence.fame.core import create_resource
-from naylence.fame.security.auth.auth_injection_strategy import (
-    BearerTokenHeaderStrategy,
-    NoAuthStrategy,
-)
 from naylence.fame.security.auth.auth_injection_strategy_factory import (
     AuthInjectionStrategyFactory,
+)
+from naylence.fame.security.auth.bearer_token_header_auth_injection_strategy import (
+    BearerTokenHeaderAuthInjectionStrategy,
+)
+from naylence.fame.security.auth.no_auth_injection_strategy import (
+    NoAuthInjectionStrategy,
 )
 
 
@@ -21,23 +23,20 @@ class TestAuthStrategyFactory:
         config = {"type": "NoAuth"}
         strategy = await create_resource(AuthInjectionStrategyFactory, config)
 
-        assert isinstance(strategy, NoAuthStrategy)
-        assert strategy.__class__.__name__ == "NoAuthStrategy"
+        assert isinstance(strategy, NoAuthInjectionStrategy)
+        assert strategy.__class__.__name__ == "NoAuthInjectionStrategy"
 
     @pytest.mark.asyncio
     async def test_bearer_attach_auth_strategy_factory(self):
         """Test BearerTokenHeaderAuth factory creates correct instance."""
         config = {
             "type": "BearerTokenHeaderAuth",
-            "tokenProvider": {
-                "type": "StaticTokenProvider",
-                "token": "test-token-123"
-            }
+            "tokenProvider": {"type": "StaticTokenProvider", "token": "test-token-123"},
         }
         strategy = await create_resource(AuthInjectionStrategyFactory, config)
 
-        assert isinstance(strategy, BearerTokenHeaderStrategy)
-        assert strategy.__class__.__name__ == "BearerTokenHeaderStrategy"
+        assert isinstance(strategy, BearerTokenHeaderAuthInjectionStrategy)
+        assert strategy.__class__.__name__ == "BearerTokenHeaderAuthInjectionStrategy"
 
     @pytest.mark.asyncio
     async def test_auth_strategy_factory_invalid_type(self):

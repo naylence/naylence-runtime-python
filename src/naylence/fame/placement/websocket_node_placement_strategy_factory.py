@@ -4,7 +4,6 @@ from .node_placement_strategy import (
     NodePlacementConfig,
     NodePlacementStrategyFactory,
 )
-from .static_node_placement_strategy import StaticNodePlacementStrategy
 from .websocket_node_placement_strategy import WebSocketPlacementStrategy
 
 

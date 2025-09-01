@@ -12,11 +12,12 @@ from naylence.fame.connector.connector_factory import ConnectorFactory
 from naylence.fame.connector.websocket_connector import WebSocketConnector
 from naylence.fame.core import AuthorizationContext, FameConnector
 from naylence.fame.errors.errors import FameConnectError
-from naylence.fame.security.auth.auth_config import Auth
 from naylence.fame.security.auth.auth_injection_strategy_factory import (
-    create_auth_strategy,
+    AuthInjectionStrategyConfig,
+    AuthInjectionStrategyFactory,
 )
 from naylence.fame.util.logging import getLogger
+from naylence.fame.util.util import safe_deserialize_model
 
 if TYPE_CHECKING:
     from naylence.fame.grants.connection_grant import ConnectionGrant
@@ -33,7 +34,7 @@ class WebSocketConnectorConfig(ConnectorConfig):
         default=None,
         description="WebSocket URL to connect to (required if params is not set",
     )
-    auth: Optional[Auth] = Field(default=None)
+    auth: Optional[AuthInjectionStrategyConfig] = Field(default=None)
 
 
 class WebSocketConnectorFactory(ConnectorFactory):
@@ -77,16 +78,19 @@ class WebSocketConnectorFactory(ConnectorFactory):
                         grant.get('type')
                     }"
                 )
-            websocket_grant = WebSocketConnectionGrant.model_validate(grant)
+            websocket_grant = safe_deserialize_model(WebSocketConnectionGrant, grant)
         elif isinstance(grant, WebSocketConnectionGrant):
             websocket_grant = grant
         elif hasattr(grant, "type") and grant.type == "WebSocketConnectionGrant":
             # Convert base grant to WebSocketConnectionGrant if it has the right type
-            websocket_grant = WebSocketConnectionGrant.model_validate(grant.model_dump())
+            websocket_grant = safe_deserialize_model(WebSocketConnectionGrant, grant.model_dump())
         else:
             raise ValueError(
                 f"WebSocketConnectorFactory only supports WebSocketConnectionGrant, got {type(grant)}"
             )
+
+        if isinstance(websocket_grant.auth, dict):
+            websocket_grant.auth = safe_deserialize_model(AuthInjectionStrategyConfig, websocket_grant.auth)
 
         # Convert grant to config
         return WebSocketConnectorConfig(
@@ -106,12 +110,12 @@ class WebSocketConnectorFactory(ConnectorFactory):
         # Accept either real config or legacy dict for backward compatibility
         if isinstance(config, dict):
             # Convert dict to config
-            config = WebSocketConnectorConfig.model_validate(config)
+            config = safe_deserialize_model(WebSocketConnectorConfig, config)
 
         # Create auth strategy once if needed
         auth_strategy = None
         if config.auth:
-            auth_strategy = await create_auth_strategy(config.auth)
+            auth_strategy = await AuthInjectionStrategyFactory.create_auth_strategy(config.auth)
 
         authorization_context: Optional[AuthorizationContext] = None
 

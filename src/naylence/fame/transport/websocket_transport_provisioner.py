@@ -53,13 +53,15 @@ class WebSocketTransportProvisioner(TransportProvisioner):
         auth_config = None
         if attach_token:
             # Import here to avoid circular import issues
-            from naylence.fame.security.auth.auth_config import WebSocketSubprotocolAuth
             from naylence.fame.security.auth.static_token_provider_factory import (
                 StaticTokenProviderConfig,
             )
+            from naylence.fame.security.auth.websocket_subprotocol_auth_injection_strategy_factory import (
+                WebSocketSubprotocolAuthInjectionConfig,
+            )
 
             # Use WebSocket subprotocol auth for WebSocket connections
-            auth_config = WebSocketSubprotocolAuth(
+            auth_config = WebSocketSubprotocolAuthInjectionConfig(
                 token_provider=StaticTokenProviderConfig(token=attach_token, type="StaticTokenProvider")
             )
 

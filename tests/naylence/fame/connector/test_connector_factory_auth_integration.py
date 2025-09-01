@@ -10,7 +10,9 @@ from naylence.fame.connector.http_stateless_connector_factory import (
     HttpStatelessConnectorConfig,
     HttpStatelessConnectorFactory,
 )
-from naylence.fame.security.auth.auth_config import BearerTokenHeaderAuth
+from naylence.fame.security.auth.bearer_token_header_auth_injection_strategy_factory import (
+    BearerTokenHeaderAuthInjectionStrategyConfig,
+)
 from naylence.fame.security.auth.static_token_provider_factory import (
     StaticTokenProviderConfig,
 )
@@ -26,7 +28,7 @@ class TestConnectorFactoryAuthIntegration:
         # Create config with auth
         config = HttpStatelessConnectorConfig(
             url="https://example.com/api",
-            auth=BearerTokenHeaderAuth(
+            auth=BearerTokenHeaderAuthInjectionStrategyConfig(
                 token_provider=StaticTokenProviderConfig(
                     token="integration-test-token", type="StaticTokenProvider"
                 )

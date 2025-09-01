@@ -6,14 +6,15 @@ from unittest.mock import Mock
 
 import pytest
 
-from naylence.fame.security.auth.auth_config import BearerTokenHeaderAuth, NoAuth
-from naylence.fame.security.auth.auth_injection_strategy import (
-    BearerTokenHeaderStrategy,
-    NoAuthStrategy,
+from naylence.fame.security.auth.auth_injection_strategy_factory import AuthInjectionStrategyFactory
+from naylence.fame.security.auth.bearer_token_header_auth_injection_strategy import (
+    BearerTokenHeaderAuthInjectionStrategy,
 )
-from naylence.fame.security.auth.auth_injection_strategy_factory import (
-    create_auth_strategy,
+from naylence.fame.security.auth.bearer_token_header_auth_injection_strategy_factory import (
+    BearerTokenHeaderAuthInjectionStrategyConfig,
 )
+from naylence.fame.security.auth.no_auth_injection_strategy import NoAuthInjectionStrategy
+from naylence.fame.security.auth.no_auth_injection_strategy_factory import NoAuthInjectionStrategyConfig
 from naylence.fame.security.auth.static_token_provider_factory import (
     StaticTokenProviderConfig,
 )
@@ -26,10 +27,10 @@ class TestAuthInjectionStrategy:
     async def test_no_auth_strategy(self):
         """Test NoAuthStrategy does nothing."""
         mock_connector = Mock()
-        no_auth = NoAuth()
+        no_auth = NoAuthInjectionStrategyConfig()
 
-        strategy = await create_auth_strategy(no_auth)
-        assert isinstance(strategy, NoAuthStrategy)
+        strategy = await AuthInjectionStrategyFactory.create_auth_strategy(no_auth)
+        assert isinstance(strategy, NoAuthInjectionStrategy)
 
         # Should not raise any errors
         await strategy.apply(mock_connector)
@@ -45,12 +46,12 @@ class TestAuthInjectionStrategy:
         mock_connector.set_auth_header = Mock()
 
         # Create auth config with static token provider
-        auth_config = BearerTokenHeaderAuth(
+        auth_config = BearerTokenHeaderAuthInjectionStrategyConfig(
             token_provider=StaticTokenProviderConfig(token="test-token-123", type="StaticTokenProvider")
         )
 
-        strategy = await create_auth_strategy(auth_config)
-        assert isinstance(strategy, BearerTokenHeaderStrategy)
+        strategy = await AuthInjectionStrategyFactory.create_auth_strategy(auth_config)
+        assert isinstance(strategy, BearerTokenHeaderAuthInjectionStrategy)
 
         # Apply strategy
         await strategy.apply(mock_connector)
@@ -61,11 +62,11 @@ class TestAuthInjectionStrategy:
     @pytest.mark.asyncio
     async def test_strategy_cleanup(self):
         """Test strategy cleanup cancels background tasks."""
-        auth_config = BearerTokenHeaderAuth(
+        auth_config = BearerTokenHeaderAuthInjectionStrategyConfig(
             token_provider=StaticTokenProviderConfig(token="test-token-123", type="StaticTokenProvider")
         )
 
-        strategy = await create_auth_strategy(auth_config)
+        strategy = await AuthInjectionStrategyFactory.create_auth_strategy(auth_config)
 
         # Apply strategy to a mock connector to create the refresh task
         mock_connector = Mock()

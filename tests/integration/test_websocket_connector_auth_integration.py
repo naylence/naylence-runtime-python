@@ -11,7 +11,15 @@ from naylence.fame.connector.websocket_connector_factory import (
     WebSocketConnectorConfig,
     WebSocketConnectorFactory,
 )
-from naylence.fame.security.auth.auth_config import BearerTokenHeaderAuth, NoAuth
+from naylence.fame.security.auth.bearer_token_header_auth_injection_strategy_factory import (
+    BearerTokenHeaderAuthInjectionStrategyConfig,
+)
+from naylence.fame.security.auth.no_auth_injection_strategy_factory import (
+    NoAuthInjectionStrategyConfig,
+)
+from naylence.fame.security.auth.static_token_provider_factory import (
+    StaticTokenProviderConfig,
+)
 
 
 class MockWebSocket:
@@ -28,7 +36,9 @@ async def test_websocket_factory_with_no_auth():
     """Test WebSocket connector factory with no auth."""
     factory = WebSocketConnectorFactory()
 
-    config = WebSocketConnectorConfig(url="ws://example.com/ws/downstream", auth=NoAuth())
+    config = WebSocketConnectorConfig(
+        url="ws://example.com/ws/downstream", auth=NoAuthInjectionStrategyConfig()
+    )
 
     # Mock the client factory
     mock_websocket = MockWebSocket("ws://example.com/ws/downstream")
@@ -51,8 +61,8 @@ async def test_websocket_factory_with_bearer_token_auth():
 
     config = WebSocketConnectorConfig(
         url="ws://example.com/ws/downstream",
-        auth=BearerTokenHeaderAuth(
-            token_provider={"type": "StaticTokenProvider", "token": "test-token-123"}
+        auth=BearerTokenHeaderAuthInjectionStrategyConfig(
+            token_provider=StaticTokenProviderConfig(token="test-token-123")
         ),
     )
 

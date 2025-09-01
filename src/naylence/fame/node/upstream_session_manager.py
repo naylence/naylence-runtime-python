@@ -101,11 +101,8 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
         self._last_seen_epoch = None
         self._had_successful_attach = False
         self._connect_epoch = 0
-        
-        logger.debug(
-            "created_upstream_session_manager",
-            target_system_id=self._target_system_id
-        )
+
+        logger.debug("created_upstream_session_manager", target_system_id=self._target_system_id)
 
     # --------------------------------------------------------------------------- #
     # PUBLIC API

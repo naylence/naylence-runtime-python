@@ -22,8 +22,8 @@ from naylence.fame.core import (
 )
 from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.routing_node_like import RoutingNodeLike
-from naylence.fame.security.auth.auth_config import NoAuth
 from naylence.fame.security.auth.authorizer import Authorizer
+from naylence.fame.security.auth.no_auth_injection_strategy_factory import NoAuthInjectionStrategyConfig
 from naylence.fame.util.logging import getLogger
 
 if TYPE_CHECKING:
@@ -121,7 +121,7 @@ class HttpListener(TransportListener, NodeEventListener):
             return None
 
         # Determine auth configuration for reverse connections
-        auth_config = NoAuth()
+        auth_config = NoAuthInjectionStrategyConfig()
 
         # Check if the node has a security manager with reverse authorization capability
         if self._node and self._node.security_manager:

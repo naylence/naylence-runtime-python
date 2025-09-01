@@ -28,8 +28,8 @@ from naylence.fame.core import (
     NodeAttachFrame,
 )
 from naylence.fame.node.routing_node_like import RoutingNodeLike
-from naylence.fame.security.auth.auth_config import NoAuth
 from naylence.fame.security.auth.authorizer import Authorizer
+from naylence.fame.security.auth.no_auth_injection_strategy_factory import NoAuthInjectionStrategyConfig
 
 
 class TestHttpListenerComprehensive:
@@ -212,7 +212,7 @@ class TestHttpListenerComprehensive:
 
         # Mock reverse auth config - create a proper NoAuth instance
 
-        mock_auth_config = NoAuth()
+        mock_auth_config = NoAuthInjectionStrategyConfig()
         mock_authorizer.create_reverse_authorization_config.return_value = mock_auth_config
 
         result = http_listener.as_inbound_connector()

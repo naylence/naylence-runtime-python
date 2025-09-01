@@ -108,7 +108,7 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
             )
 
             # Create the proper Auth instance
-            from naylence.fame.security.auth.auth_config import BearerTokenHeaderAuth
+            from naylence.fame.security.auth.auth_injection_strategy_factory import BearerTokenHeaderAuth
             from naylence.fame.security.auth.static_token_provider_factory import (
                 StaticTokenProviderConfig,
             )

@@ -7,7 +7,7 @@ from naylence.fame.grants.connection_grant import (
 )
 from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
 from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
-from naylence.fame.security.auth.auth_config import Auth
+from naylence.fame.security.auth.auth_injection_strategy_factory import AuthInjectionStrategyConfig
 
 
 class TestConnectionGrants:
@@ -21,7 +21,7 @@ class TestConnectionGrants:
 
     def test_websocket_connection_grant(self):
         """Test WebSocketConnectionGrant."""
-        auth = Auth(type="none")
+        auth = AuthInjectionStrategyConfig(type="none")
         grant = WebSocketConnectionGrant(purpose="node.attach", url="ws://example.com/ws", auth=auth)
         assert grant.type == "WebSocketConnectionGrant"
         assert grant.purpose == "node.attach"
@@ -31,19 +31,15 @@ class TestConnectionGrants:
 
     def test_http_connection_grant(self):
         """Test HttpConnectionGrant."""
-        auth = Auth(type="bearer")
+        auth = AuthInjectionStrategyConfig(type="bearer")
         grant = HttpConnectionGrant(
             purpose="node.attach",
             url="http://example.com/api",
-            max_queue=2048,
-            kind="http-stateless",
             auth=auth,
         )
         assert grant.type == "HttpConnectionGrant"
         assert grant.purpose == "node.attach"
         assert grant.url == "http://example.com/api"
-        assert grant.max_queue == 2048
-        assert grant.kind == "http-stateless"
         assert grant.auth is not None
         assert grant.auth.type == "bearer"
 
@@ -88,14 +84,11 @@ class TestConnectionGrants:
             "type": "HttpConnectionGrant",
             "purpose": "node.attach",
             "url": "http://example.com/api",
-            "maxQueue": 1024,
-            "kind": "http-stateless",
         }
 
         grant = HttpConnectionGrant.model_validate(http_grant_dict)
         assert grant.type == "HttpConnectionGrant"
         assert grant.purpose == "node.attach"
-        assert grant.max_queue == 1024
 
     def test_grant_serialization(self):
         """Test that grants can be serialized/deserialized."""

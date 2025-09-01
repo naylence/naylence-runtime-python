@@ -30,7 +30,7 @@ class StaticNodePlacementStrategy(NodePlacementStrategy):
             target_physical_path = None
             assigned_path = f"/{hello_frame.system_id}"
         else:
-            target_system_id=self._target_system_id
+            target_system_id = self._target_system_id
             target_physical_path = self._target_physical_path
             assigned_path = str(PurePosixPath(target_physical_path) / hello_frame.system_id)
 

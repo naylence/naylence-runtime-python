@@ -13,6 +13,7 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 from naylence.fame.core import DataFrame
+from naylence.fame.factory import ExpressionEvaluationPolicy
 
 
 def default_json_encoder(obj):
@@ -107,3 +108,10 @@ def secure_digest(s: str, bits: int = 128) -> str:
 
 def urlsafe_base64_encode(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+
+def safe_deserialize_model(model_class, config):
+    return model_class.model_validate(
+        config,
+        context={"expression_evaluation_policy": ExpressionEvaluationPolicy.ERROR},
+    )

@@ -86,10 +86,8 @@ class RootSessionManager(TaskSpawner, SessionManager):
         self._had_successful_admission = False
         self._admission_epoch = 0
         self._current_welcome_frame: Optional[NodeWelcomeFrame] = None
-        
-        logger.debug(
-            "created_root_session_manager"
-        )
+
+        logger.debug("created_root_session_manager")
 
     # --------------------------------------------------------------------------- #
     # PUBLIC API

@@ -12,7 +12,7 @@ from naylence.fame.connector.websocket_connector_factory import (
 )
 from naylence.fame.core.protocol.envelope import FameEnvelope
 from naylence.fame.core.protocol.frames import DataFrame, KeyRequestFrame
-from naylence.fame.security.auth.auth_config import NoAuth
+from naylence.fame.security.auth.no_auth_injection_strategy_factory import NoAuthInjectionStrategyConfig
 
 
 class TestWebSocketConnector:
@@ -26,7 +26,7 @@ class TestWebSocketConnector:
         # Test creating connector with proper config
         config = WebSocketConnectorConfig(
             url="ws://localhost:8080/test",
-            auth=NoAuth(),
+            auth=NoAuthInjectionStrategyConfig(),
         )
 
         # Mock the websocket connection since we can't actually connect
@@ -40,7 +40,7 @@ class TestWebSocketConnector:
         # Test creating connector with different auth styles
         config_query = WebSocketConnectorConfig(
             url="wss://example.com:9443/secure",
-            auth=NoAuth(),
+            auth=NoAuthInjectionStrategyConfig(),
         )
 
         with patch("websockets.connect", new_callable=AsyncMock) as mock_connect:

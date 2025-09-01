@@ -22,7 +22,7 @@ class StaticNodePlacementStrategyFactory(NodePlacementStrategyFactory):
         **kwargs: dict[str, Any],
     ) -> NodePlacementStrategy:
         assert config
-        
+
         from .static_node_placement_strategy import StaticNodePlacementStrategy
 
         if isinstance(config, dict):

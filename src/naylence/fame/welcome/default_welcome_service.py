@@ -130,9 +130,9 @@ class DefaultWelcomeService(WelcomeService):
             if placement_result.metadata
             else hello.logicals
         )
-        
+
         connection_grants = []
-        
+
         logger.debug(
             "processing_placement_result_metadata",
             accepted_capabilities=accepted_capabilities,

@@ -13,10 +13,11 @@ from naylence.fame.connector.http_stateless_connector import HttpStatelessConnec
 from naylence.fame.core import FameConnector
 from naylence.fame.grants.connection_grant import ConnectionGrant
 from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
-from naylence.fame.security.auth.auth_config import Auth
 from naylence.fame.security.auth.auth_injection_strategy_factory import (
-    create_auth_strategy,
+    AuthInjectionStrategyConfig,
+    AuthInjectionStrategyFactory,
 )
+from naylence.fame.util.util import safe_deserialize_model
 
 
 class HttpStatelessConnectorConfig(ConnectorConfig):
@@ -28,7 +29,7 @@ class HttpStatelessConnectorConfig(ConnectorConfig):
     kind: str = "http-stateless"
 
     # Auth fields (for backward compatibility with ConnectorDirective)
-    auth: Optional[Auth] = Field(default=None)
+    auth: Optional[AuthInjectionStrategyConfig] = Field(default=None)
     # credentials: Optional[Mapping[str, str]] = Field(default=None)
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="ignore")
@@ -73,23 +74,26 @@ class HttpStatelessConnectorFactory(ConnectorFactory):
                         grant.get('type')
                     }"
                 )
-            http_grant = HttpConnectionGrant.model_validate(grant)
+            http_grant = safe_deserialize_model(HttpConnectionGrant, grant)
         elif isinstance(grant, HttpConnectionGrant):
             http_grant = grant
         elif hasattr(grant, "type") and grant.type == "HttpConnectionGrant":
             # Convert base grant to HttpConnectionGrant if it has the right type
-            http_grant = HttpConnectionGrant.model_validate(grant.model_dump())
+            http_grant = safe_deserialize_model(HttpConnectionGrant, grant.model_dump())
         else:
             raise ValueError(
                 f"HttpStatelessConnectorFactory only supports HttpConnectionGrant, got {type(grant)}"
             )
 
+        if isinstance(http_grant.auth, dict):
+            http_grant.auth = safe_deserialize_model(AuthInjectionStrategyConfig, http_grant.auth)
+
         # Convert grant to config
         return HttpStatelessConnectorConfig(
             type="HttpStatelessConnector",
             url=http_grant.url,
-            max_queue=http_grant.max_queue,
-            kind=http_grant.kind,
+            max_queue=1024,  # TODO: remove hardcoded
+            kind="http-stateless",
             auth=http_grant.auth,
         )
 
@@ -132,7 +136,7 @@ class HttpStatelessConnectorFactory(ConnectorFactory):
 
         # Apply authentication strategy if configured
         if config.auth:
-            strategy = await create_auth_strategy(config.auth)
+            strategy = await AuthInjectionStrategyFactory.create_auth_strategy(config.auth)
             await strategy.apply(connector)
 
         return connector

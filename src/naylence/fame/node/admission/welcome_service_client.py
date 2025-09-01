@@ -35,7 +35,7 @@ class WelcomeServiceClient(AdmissionClient):
         self._session = session
         self._auth_strategy = auth_strategy
         self._auth_headers: dict[str, str] = {}
-        
+
     @property
     def has_upstream(self) -> bool:
         return self._has_upstream

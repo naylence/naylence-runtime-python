@@ -9,17 +9,20 @@ from naylence.fame.node.admission.admission_client_factory import (
     AdmissionClientFactory,
     AdmissionConfig,
 )
-from naylence.fame.security.auth.auth_config import Auth, NoAuth
 from naylence.fame.security.auth.auth_injection_strategy_factory import (
-    create_auth_strategy,
+    AuthInjectionStrategyConfig,
+    AuthInjectionStrategyFactory,
 )
+from naylence.fame.security.auth.no_auth_injection_strategy_factory import NoAuthInjectionStrategyConfig
 
 
 class WelcomeServiceClientConfig(AdmissionConfig):
     type: str = "WelcomeServiceClient"
     url: HttpUrl
     supported_transports: List[str] = Field(..., description="Allowed transports")
-    auth: Auth = Field(default_factory=NoAuth, description="Authentication configuration")
+    auth: AuthInjectionStrategyConfig = Field(
+        default_factory=NoAuthInjectionStrategyConfig, description="Authentication configuration"
+    )
     is_root: bool = Field(default=False, description="Whether the client serves a root node")
 
 
@@ -39,7 +42,7 @@ class WelcomeServiceClientFactory(AdmissionClientFactory):
         )
 
         # Create auth strategy
-        auth_strategy = await create_auth_strategy(config.auth)
+        auth_strategy = await AuthInjectionStrategyFactory.create_auth_strategy(config.auth)
 
         # Create client
         client = WelcomeServiceClient(
