@@ -17,10 +17,7 @@ from naylence.fame.core import (
     ServeProtocol,
     ServeRPCProtocol,
 )
-from naylence.fame.factory import (
-    ExtensionManager,
-    create_resource
-)
+from naylence.fame.factory import ExtensionManager, create_resource
 from naylence.fame.service.service_manager import ServiceManager
 
 

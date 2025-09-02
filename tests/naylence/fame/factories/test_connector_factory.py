@@ -4,8 +4,8 @@ import pytest
 
 from naylence.fame.connector.connector_factory import ConnectorFactory
 from naylence.fame.connector.websocket_connector import WebSocketConnector
-from naylence.fame.factory import create_resource
 from naylence.fame.errors.errors import FameConnectError
+from naylence.fame.factory import create_resource
 
 
 class TestConnectorFactory:
