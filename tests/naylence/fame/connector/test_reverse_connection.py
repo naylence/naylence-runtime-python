@@ -21,17 +21,20 @@ from naylence.fame.node.admission.direct_admission_client_factory import (
 async def test_direct_admission_client_with_reverse_connections():
     """Test that DirectAdmissionClient works with the current architecture."""
 
-    # Create test connector directives
-    outbound_connector = {
-        "type": "WebSocketConnector",
-        "params": {"host": "upstream.example.com", "port": 8080},
-    }
+    # Create test connection grants
+    connection_grants = [
+        {
+            "type": "WebSocketConnectionGrant",
+            "purpose": "node.attach",
+            "url": "ws://upstream.example.com:8080",
+        }
+    ]
 
     # Create config for outbound connection
-    config = DirectNodeAdmissionConfig(connector_directive=outbound_connector, ttl_sec=3600)
+    config = DirectNodeAdmissionConfig(connection_grants=connection_grants, ttl_sec=3600)
 
     # Create client
-    client = DirectAdmissionClient(connector_directive=config.connector_directive, ttl_sec=config.ttl_sec)
+    client = DirectAdmissionClient(connection_grants=config.connection_grants, ttl_sec=config.ttl_sec)
 
     # Test that the client can generate welcome frames properly
     hello_response = await client.hello(

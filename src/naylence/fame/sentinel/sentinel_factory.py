@@ -188,12 +188,19 @@ class SentinelFactory(NodeLikeFactory):
                     DirectAdmissionClient,
                 )
 
-                connector_directive = WebSocketConnectorConfig(
-                    url=peer_config.direct_url,
-                    auth=WebSocketSubprotocolAuthInjectionConfig(token_provider=NoneTokenProviderConfig()),
-                )
+                connection_grants = [
+                    {
+                        "type": "WebSocketConnectionGrant",
+                        "purpose": "node.attach",
+                        "url": peer_config.direct_url,
+                        "auth": {
+                            "type": "WebSocketSubprotocolAuthInjection",
+                            "token_provider": {"type": "NoneTokenProvider"}
+                        }
+                    }
+                ]
                 admission_client = DirectAdmissionClient(
-                    connector_directive.model_dump(by_alias=True),
+                    connection_grants=connection_grants,
                     ttl_sec=TTL_NEVER_EXPIRES,
                 )
             assert admission_client is not None, "Admission client must be created"

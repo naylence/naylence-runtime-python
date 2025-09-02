@@ -42,12 +42,13 @@ class TestAdmissionClientFactory:
     async def test_direct_admission_client_factory(self):
         """Test DirectAdmissionClient factory creates correct instance."""
         config = DirectNodeAdmissionConfig(
-            connector_directive={
-                "type": "WebSocketConnector",
-                "params": {"url": "ws://localhost:8080/test"},
-            },
-            token_provider=NoneTokenProviderConfig(),
-            auth_strategy=NoAuthInjectionStrategyConfig(),
+            connection_grants=[
+                {
+                    "type": "WebSocketConnectionGrant",
+                    "purpose": "node.attach",
+                    "url": "ws://localhost:8080/test",
+                }
+            ],
         )
         client = await create_resource(AdmissionClientFactory, config)
 
@@ -71,12 +72,13 @@ class TestAdmissionClientFactory:
         """Test DirectAdmissionClient factory with dictionary configuration."""
         config = {
             "type": "DirectAdmissionClient",
-            "connector_directive": {
-                "type": "WebSocketConnector",
-                "params": {"url": "ws://localhost:8080/test"},
-            },
-            "token_provider": {"type": "NoneTokenProvider"},
-            "auth_strategy": {"type": "NoAuthStrategy"},
+            "connection_grants": [
+                {
+                    "type": "WebSocketConnectionGrant",
+                    "purpose": "node.attach",
+                    "url": "ws://localhost:8080/test",
+                }
+            ],
         }
         client = await create_resource(AdmissionClientFactory, config)
 

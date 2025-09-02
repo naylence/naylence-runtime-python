@@ -11,10 +11,10 @@ async def test_ttl_logic_with_specific_ttl():
     now = datetime.now(timezone.utc)
     client_ttl_sec = 3600  # Client TTL is 1 hour
 
-    connector_directive = {"type": "test", "params": {"target_system_id": "test"}}
+    connection_grants = [{"type": "WebSocketConnectionGrant", "purpose": "node.attach", "url": "ws://test.com"}]
 
     client = DirectAdmissionClient(
-        connector_directive=connector_directive,
+        connection_grants=connection_grants,
         ttl_sec=client_ttl_sec,
     )
 
@@ -32,10 +32,10 @@ async def test_ttl_logic_with_different_ttl():
     now = datetime.now(timezone.utc)
     client_ttl_sec = 7200  # Client TTL is 2 hours
 
-    connector_directive = {"type": "test", "params": {"target_system_id": "test"}}
+    connection_grants = [{"type": "WebSocketConnectionGrant", "purpose": "node.attach", "url": "ws://test.com"}]
 
     client = DirectAdmissionClient(
-        connector_directive=connector_directive,
+        connection_grants=connection_grants,
         ttl_sec=client_ttl_sec,
     )
 
@@ -52,10 +52,10 @@ async def test_ttl_logic_zero_ttl():
     """Test that zero TTL falls back to default 24 hours."""
     now = datetime.now(timezone.utc)
 
-    connector_directive = {"type": "test", "params": {"target_system_id": "test"}}
+    connection_grants = [{"type": "WebSocketConnectionGrant", "purpose": "node.attach", "url": "ws://test.com"}]
 
     client = DirectAdmissionClient(
-        connector_directive=connector_directive,
+        connection_grants=connection_grants,
         ttl_sec=0,  # Zero TTL
     )
 
@@ -71,10 +71,10 @@ async def test_ttl_logic_default_fallback():
     """Test that default 24h is used when no TTL is specified."""
     now = datetime.now(timezone.utc)
 
-    connector_directive = {"type": "test", "params": {"target_system_id": "test"}}
+    connection_grants = [{"type": "WebSocketConnectionGrant", "purpose": "node.attach", "url": "ws://test.com"}]
 
     client = DirectAdmissionClient(
-        connector_directive=connector_directive,
+        connection_grants=connection_grants,
         # ttl_sec defaults to 0
     )
 

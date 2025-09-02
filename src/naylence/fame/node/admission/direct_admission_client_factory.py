@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.admission_client_factory import (
@@ -12,7 +12,7 @@ from naylence.fame.node.admission.admission_client_factory import (
 class DirectNodeAdmissionConfig(AdmissionConfig):
     type: str = "DirectAdmissionClient"
 
-    connector_directive: dict[str, Any]  # ConnectorConfig
+    connection_grants: List[dict[str, Any]]
     ttl_sec: int | None = None
 
 
@@ -32,6 +32,6 @@ class DirectAdmissionClientFactory(AdmissionClientFactory):
         )
 
         return DirectAdmissionClient(
-            connector_directive=config.connector_directive,
+            connection_grants=config.connection_grants,
             ttl_sec=config.ttl_sec,
         )

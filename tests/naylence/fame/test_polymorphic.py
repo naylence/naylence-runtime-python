@@ -101,19 +101,12 @@ def test_direct_instantiation():
 
     try:
         config = DirectNodeAdmissionConfig(
-            connector_directive={
-                "type": "WebSocketConnector",
-                "params": {"host": "upstream.com", "port": 8080},
-            },
-            supported_inbound_connectors=[
+            connection_grants=[
                 {
-                    "type": "WebSocketConnector",
-                    "params": {"host": "downstream.com", "port": 9090},
-                },
-                {
-                    "type": "HttpConnector",
-                    "params": {"base_url": "https://callback.com"},
-                },
+                    "type": "WebSocketConnectionGrant",
+                    "purpose": "node.attach",
+                    "url": "ws://upstream.com:8080",
+                }
             ],
             ttl_sec=3600,
         )
@@ -163,19 +156,12 @@ def test_mixed_scenarios():
         # Create a config that mixes direct creation and polymorphic deserialization
         config_data = {
             "type": "DirectAdmissionClient",
-            "connector_directive": {
-                "type": "WebSocketConnector",
-                "params": {"host": "upstream.com", "port": 8080},
-            },
-            "supported_inbound_connectors": [
+            "connection_grants": [
                 {
-                    "type": "WebSocketConnector",
-                    "params": {"host": "callback1.com", "port": 9090},
-                },
-                {
-                    "type": "HttpConnector",
-                    "params": {"base_url": "https://callback2.com"},
-                },
+                    "type": "WebSocketConnectionGrant",
+                    "purpose": "node.attach",
+                    "url": "ws://upstream.com:8080",
+                }
             ],
             "ttl_sec": 3600,
         }
@@ -184,16 +170,18 @@ def test_mixed_scenarios():
         config = DirectNodeAdmissionConfig.model_validate(config_data)
         print("✓ Mixed config created via polymorphic deserialization")
 
-        # Check that the connector_directive became the right type
-        cd = config.connector_directive
-        print(f"✓ Connector directive type: {type(cd).__name__}")
-        print(f"✓ Is WebSocketConnectorConfig: {isinstance(cd, WebSocketConnectorConfig)}")
+        # Check that the connection_grants became the right type
+        cg = config.connection_grants
+        print(f"✓ Connection grants type: {type(cg).__name__}")
+        print(f"✓ Is list: {isinstance(cg, list)}")
+        if cg:
+            print(f"✓ First grant type: {cg[0].get('type', 'unknown')}")
 
-        # Check that supported_inbound_connectors also work
-        if config.supported_inbound_connectors:
-            print(f"✓ Has {len(config.supported_inbound_connectors)} inbound connectors")
-            for i, conn in enumerate(config.supported_inbound_connectors):
-                print(f"  Connector {i + 1}: {type(conn).__name__} - {conn.type}")
+        # Check that connection grants work
+        if config.connection_grants:
+            print(f"✓ Has {len(config.connection_grants)} connection grants")
+            for i, grant in enumerate(config.connection_grants):
+                print(f"  Grant {i}: {grant.get('type', 'unknown')}")
 
         # Test serialization
         config.model_dump()

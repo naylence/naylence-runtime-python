@@ -16,12 +16,15 @@ def test_admission_config_polymorphic():
     # This is similar to the config from the error
     config_data = {
         "type": "DirectAdmissionClient",
-        "connector_directive": {
-            "type": "HttpStatelessConnector",
-            "url": "http://localhost:8080/fame/v1/ingress/downstream/test-system",
-            "ttl": 0,
-            "durable": False,
-        },
+        "connection_grants": [
+            {
+                "type": "HttpConnectionGrant",
+                "purpose": "node.attach",
+                "url": "http://localhost:8080/fame/v1/ingress/downstream/test-system",
+                "ttl": 0,
+                "durable": False,
+            }
+        ],
         "supported_inbound_connectors": [
             {
                 "type": "HttpStatelessConnector",
@@ -40,19 +43,19 @@ def test_admission_config_polymorphic():
         print(f"✓ Created: {type(result)}")
 
         # Check if it's the right type
-        from naylence.fame.node.admission.direct_admission_client import (
+        from naylence.fame.node.admission.direct_admission_client_factory import (
             DirectNodeAdmissionConfig,
         )
 
         if isinstance(result, DirectNodeAdmissionConfig):
             print("✓ Polymorphic dispatch worked - created DirectNodeAdmissionConfig")
 
-            # Check if the token_provider field is accessible
-            if hasattr(result, "token_provider"):
-                print(f"✓ token_provider field exists: {result.token_provider}")
+            # Check if the connection_grants field is accessible
+            if hasattr(result, "connection_grants"):
+                print(f"✓ connection_grants field exists: {result.connection_grants}")
                 return True
             else:
-                print("✗ token_provider field missing")
+                print("✗ connection_grants field missing")
                 return False
         else:
             print(f"✗ Wrong type created: {type(result)}")
@@ -72,30 +75,28 @@ def test_direct_instantiation():
     print("Testing direct AdmissionConfig instantiation...")
 
     try:
-        from naylence.fame.node.admission.direct_admission_client import (
+        from naylence.fame.node.admission.direct_admission_client_factory import (
             DirectNodeAdmissionConfig,
         )
 
         # Direct instantiation should also work
         config = AdmissionConfig(
             type="DirectAdmissionClient",
-            connector_directive={
-                "type": "HttpStatelessConnector",
-                "url": "http://test.com/outbox",
-            },
-            token_provider={"type": "SharedSecretTokenProvider", "secret": "test"},
+            connection_grants=[
+                {
+                    "type": "HttpConnectionGrant",
+                    "purpose": "node.attach",
+                    "url": "http://test.com/outbox",
+                }
+            ],
         )
 
         print(f"✓ Created: {type(config)}")
 
         if isinstance(config, DirectNodeAdmissionConfig):
             print("✓ Direct instantiation worked - created DirectNodeAdmissionConfig")
-            if hasattr(config, "token_provider"):
-                print(f"✓ token_provider field exists: {config.token_provider}")
-                return True
-            else:
-                print("✗ token_provider field missing")
-                return False
+            print("✓ connection_grants field exists")
+            return True
         else:
             print(f"✗ Wrong type created: {type(config)}")
             return False

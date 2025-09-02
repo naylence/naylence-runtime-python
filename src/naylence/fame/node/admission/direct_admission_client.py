@@ -21,15 +21,15 @@ class DirectAdmissionClient(AdmissionClient):
 
     * Never talks to a Welcome-service.
     * Generates attach params entirely from config.
-    * Uses the provided connector directive as-is (including any auth configuration).
+    * Uses the provided connection grants as-is (including any auth configuration).
     """
 
     def __init__(
         self,
-        connector_directive: dict[str, Any],
+        connection_grants: List[dict[str, Any]],
         ttl_sec: int | None = TTL_NEVER_EXPIRES,  # 0 = never expires
     ) -> None:
-        self._connector_directive = connector_directive
+        self._connection_grants = connection_grants
         # Validate TTL but allow TTL_NEVER_EXPIRES (0) and None
         if ttl_sec is not None and ttl_sec != TTL_NEVER_EXPIRES:
             ttl_sec = validate_ttl_sec(
@@ -62,31 +62,13 @@ class DirectAdmissionClient(AdmissionClient):
         if not system_id:
             system_id = generate_id(mode="fingerprint")
 
-        # Convert connector_directive to connection_grants
-        # For backward compatibility, create a connection grant from the connector directive
-        # Map connector types to grant types
-        connector_type = self._connector_directive.get("type", "")
-        grant_type_mapping = {
-            "WebSocketConnector": "WebSocketConnectionGrant",
-            "HttpStatelessConnector": "HttpConnectionGrant",
-        }
-        grant_type = grant_type_mapping.get(connector_type, connector_type)
-
-        connection_grants = [
-            {
-                **self._connector_directive,
-                "type": grant_type,  # Use grant type instead of connector type
-                "purpose": "node.attach",  # Default purpose for direct admission
-            }
-        ]
-
         envelope = FameEnvelopeWith(
             frame=NodeWelcomeFrame(
                 system_id=system_id,
                 instance_id=instance_id,
                 accepted_logicals=requested_logicals or ["*"],  # TODO get rid of the *
                 expires_at=expires_at,
-                connection_grants=connection_grants,
+                connection_grants=self._connection_grants,
             )
         )
 

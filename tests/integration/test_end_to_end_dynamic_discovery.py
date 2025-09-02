@@ -57,8 +57,14 @@ async def test_end_to_end_dynamic_discovery():
     await make_common_opts(config)
 
     # Create DirectAdmissionClient with required connector config
-    mock_connector_config = WebSocketConnectorConfig(type="websocket")
-    admission_client = DirectAdmissionClient(connector_directive=mock_connector_config)
+    connection_grants = [
+        {
+            "type": "WebSocketConnectionGrant",
+            "purpose": "node.attach",
+            "url": "ws://localhost:8080/test",
+        }
+    ]
+    admission_client = DirectAdmissionClient(connection_grants=connection_grants)
 
     # Create mock node with discovery capabilities
     node = MockNode(admission_client=admission_client)
@@ -161,8 +167,14 @@ async def test_admission_client_factory_integration():
     Mock(spec=ExtensionManager)
 
     # Create DirectAdmissionClient with required connector config
-    mock_connector_config = WebSocketConnectorConfig(type="websocket")
-    admission_client = DirectAdmissionClient(connector_directive=mock_connector_config)
+    connection_grants = [
+        {
+            "type": "WebSocketConnectionGrant",
+            "purpose": "node.attach",
+            "url": "ws://localhost:8080/test",
+        }
+    ]
+    admission_client = DirectAdmissionClient(connection_grants=connection_grants)
 
     # Create mock node
     node = MockNode(admission_client=admission_client)

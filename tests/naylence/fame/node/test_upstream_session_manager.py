@@ -195,7 +195,7 @@ class MockAdmissionClient:
         welcome_frame = Mock(spec=NodeWelcomeFrame)
         welcome_frame.expires_at = expires_at
 
-        # Add both new connection_grants and legacy connector_directive for backward compatibility
+        # Set connection_grants for new connection grant pattern
         welcome_frame.connection_grants = [
             {
                 "type": "WebSocketConnector",
@@ -203,10 +203,6 @@ class MockAdmissionClient:
                 "url": "ws://test",
             }
         ]
-        welcome_frame.connector_directive = {
-            "type": "WebSocketConnector",
-            "params": {"url": "ws://test"},
-        }
         welcome_frame.assigned_path = "/test/path"  # Add assigned_path for our new logic
         welcome_frame.accepted_logicals = requested_logicals
         welcome_frame.system_id = system_id  # Add system_id for certificate provisioning

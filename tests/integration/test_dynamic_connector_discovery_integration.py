@@ -112,8 +112,14 @@ async def test_dynamic_connector_setup_integration():
     node.add_transport_listener(http_listener)
 
     # Create DirectAdmissionClient with a mock connector config
-    mock_connector_config = WebSocketConnectorConfig(type="websocket")
-    DirectAdmissionClient(connector_directive=mock_connector_config)
+    connection_grants = [
+        {
+            "type": "WebSocketConnectionGrant",
+            "purpose": "node.attach",
+            "url": "ws://localhost:8080/test",
+        }
+    ]
+    DirectAdmissionClient(connection_grants=connection_grants)
 
     # DirectAdmissionClient no longer implements NodeEventListener,
     # so we test that the node can discover connectors from its transport listeners
@@ -164,8 +170,14 @@ async def test_dynamic_setup_event_handling():
     MockNode()
 
     # Create DirectAdmissionClient
-    mock_connector_config = WebSocketConnectorConfig(type="websocket")
-    admission_client = DirectAdmissionClient(connector_directive=mock_connector_config.model_dump())
+    connection_grants = [
+        {
+            "type": "WebSocketConnectionGrant",
+            "purpose": "node.attach",
+            "url": "ws://localhost:8080/test",
+        }
+    ]
+    admission_client = DirectAdmissionClient(connection_grants=connection_grants)
 
     # DirectAdmissionClient no longer implements NodeEventListener,
     # so we test that it can be used independently and that nodes
@@ -197,8 +209,14 @@ async def test_admission_client_connector_usage():
     node.add_transport_listener(http_listener)
 
     # Create admission client with a mock connector config
-    mock_connector_config = WebSocketConnectorConfig(type="websocket")
-    DirectAdmissionClient(connector_directive=mock_connector_config.model_dump())
+    connection_grants = [
+        {
+            "type": "WebSocketConnectionGrant",
+            "purpose": "node.attach",
+            "url": "ws://localhost:8080/test",
+        }
+    ]
+    DirectAdmissionClient(connection_grants=connection_grants)
 
     # Test that admission client can work with discovered connectors
     connectors = node.gather_supported_inbound_connectors()
