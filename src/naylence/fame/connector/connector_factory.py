@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, List, Optional, TypeVar, Union
 
 from naylence.fame.connector.connector_config import ConnectorConfig
 from naylence.fame.core import FameConnector
-from naylence.fame.factory import ExtensionManager, ResourceFactory, create_resource
+from naylence.fame.factory import (
+    ExpressionEvaluationPolicy,
+    ExtensionManager,
+    ResourceFactory,
+    create_resource,
+)
 from naylence.fame.util.logging import getLogger
 
 if TYPE_CHECKING:
@@ -37,7 +42,24 @@ class ConnectorFactory(ResourceFactory[FameConnector, C]):
 
     @classmethod
     @abstractmethod
-    def config_from_grant(cls, grant: Union[ConnectionGrant, Dict[str, Any]]) -> ConnectorConfig:
+    def supported_grants(cls) -> dict[str, type[ConnectionGrant]]:
+        """
+        Return list of connection grant types that this factory can handle.
+
+        Returns:
+            List of grant type strings (e.g., ["WebSocketConnectionGrant", "WebSocketConnector"])
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def config_from_grant(
+        cls,
+        grant: Union[ConnectionGrant, dict[str, Any]],
+        expression_evaluation_policy: Optional[
+            ExpressionEvaluationPolicy
+        ] = ExpressionEvaluationPolicy.ERROR,
+    ) -> ConnectorConfig:
         """
         Create a ConnectorConfig instance from a connection grant or dictionary.
 
@@ -49,9 +71,54 @@ class ConnectorFactory(ResourceFactory[FameConnector, C]):
         """
         pass
 
+    @classmethod
+    @abstractmethod
+    def grant_from_config(
+        cls,
+        config: Union[ConnectorConfig, dict[str, Any]],
+        expression_evaluation_policy: Optional[
+            ExpressionEvaluationPolicy
+        ] = ExpressionEvaluationPolicy.ERROR,
+    ) -> ConnectionGrant:
+        """
+        Create a ConnectionGrant instance from a connector config or dictionary.
+
+        Args:
+            config: The connector config or dictionary representation to convert to a grant
+
+        Returns:
+            ConnectionGrant instance
+        """
+        pass
+
+    @classmethod
+    def evaluate_grant(cls, grant: dict[str, Any]) -> ConnectionGrant:
+        grant_type = grant.get("type")
+        if not grant_type:
+            raise ValueError("Missing 'type' field in grant")
+        factories = ExtensionManager.get_extensions_by_type(ConnectorFactory)
+
+        evaluated_grant = None
+        for factory_class in factories.values():
+            if issubclass(factory_class, ConnectorFactory):
+                grant_class = factory_class.supported_grants().get(grant_type)
+                if grant_class:
+                    grant_purpose = grant["purpose"]
+                    evaluated_config = factory_class.config_from_grant(
+                        grant, expression_evaluation_policy=ExpressionEvaluationPolicy.EVALUATE
+                    )
+                    evaluated_grant = factory_class.grant_from_config(evaluated_config)
+                    evaluated_grant.purpose = grant_purpose
+                    break
+
+        if not evaluated_grant:
+            raise ValueError(f"No suitable grant found for type {grant_type}")
+
+        return evaluated_grant
+
     @staticmethod
     async def create_connector(
-        config_or_grant: Union[ConnectorConfig, ConnectionGrant, Dict[str, Any]], **kwargs: Any
+        config_or_grant: Union[ConnectorConfig, ConnectionGrant, dict[str, Any]], **kwargs: Any
     ) -> FameConnector:
         """
         Create a connector from either a ConnectorConfig or ConnectionGrant.

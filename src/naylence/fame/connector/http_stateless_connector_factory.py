@@ -11,13 +11,14 @@ from naylence.fame.connector.connector_config import (
 from naylence.fame.connector.connector_factory import ConnectorFactory
 from naylence.fame.connector.http_stateless_connector import HttpStatelessConnector
 from naylence.fame.core import FameConnector
+from naylence.fame.factory import ExpressionEvaluationPolicy
 from naylence.fame.grants.connection_grant import ConnectionGrant
 from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
 from naylence.fame.security.auth.auth_injection_strategy_factory import (
     AuthInjectionStrategyConfig,
     AuthInjectionStrategyFactory,
 )
-from naylence.fame.util.util import safe_deserialize_model
+from naylence.fame.util.util import deserialize_model
 
 
 class HttpStatelessConnectorConfig(ConnectorConfig):
@@ -53,7 +54,19 @@ class HttpStatelessConnectorFactory(ConnectorFactory):
         ]
 
     @classmethod
-    def config_from_grant(cls, grant: Union[ConnectionGrant, Dict[str, Any]]) -> ConnectorConfig:
+    def supported_grants(cls) -> dict[str, type[ConnectionGrant]]:
+        return {
+            "HttpConnectionGrant": HttpConnectionGrant,
+        }
+
+    @classmethod
+    def config_from_grant(
+        cls,
+        grant: Union[ConnectionGrant, dict[str, Any]],
+        expression_evaluation_policy: Optional[
+            ExpressionEvaluationPolicy
+        ] = ExpressionEvaluationPolicy.ERROR,
+    ) -> ConnectorConfig:
         """
         Create an HttpStatelessConnectorConfig from a connection grant or dictionary.
 
@@ -74,19 +87,25 @@ class HttpStatelessConnectorFactory(ConnectorFactory):
                         grant.get('type')
                     }"
                 )
-            http_grant = safe_deserialize_model(HttpConnectionGrant, grant)
+            http_grant = deserialize_model(
+                HttpConnectionGrant, grant, expression_evaluation_policy=expression_evaluation_policy
+            )
         elif isinstance(grant, HttpConnectionGrant):
             http_grant = grant
         elif hasattr(grant, "type") and grant.type == "HttpConnectionGrant":
             # Convert base grant to HttpConnectionGrant if it has the right type
-            http_grant = safe_deserialize_model(HttpConnectionGrant, grant.model_dump())
+            http_grant = deserialize_model(HttpConnectionGrant, grant.model_dump(by_alias=True))
         else:
             raise ValueError(
                 f"HttpStatelessConnectorFactory only supports HttpConnectionGrant, got {type(grant)}"
             )
 
         if isinstance(http_grant.auth, dict):
-            http_grant.auth = safe_deserialize_model(AuthInjectionStrategyConfig, http_grant.auth)
+            http_grant.auth = deserialize_model(
+                AuthInjectionStrategyConfig,
+                http_grant.auth,
+                expression_evaluation_policy=expression_evaluation_policy,
+            )
 
         # Convert grant to config
         return HttpStatelessConnectorConfig(
@@ -95,6 +114,65 @@ class HttpStatelessConnectorFactory(ConnectorFactory):
             max_queue=1024,  # TODO: remove hardcoded
             kind="http-stateless",
             auth=http_grant.auth,
+        )
+
+    @classmethod
+    def grant_from_config(
+        cls,
+        config: Union[ConnectorConfig, Dict[str, Any]],
+        expression_evaluation_policy: Optional[
+            ExpressionEvaluationPolicy
+        ] = ExpressionEvaluationPolicy.ERROR,
+    ) -> ConnectionGrant:
+        """
+        Create an HttpConnectionGrant from a connector config or dictionary.
+
+        Args:
+            config: The connector config or dictionary to convert to a grant
+
+        Returns:
+            HttpConnectionGrant instance
+
+        Raises:
+            ValueError: If config type is not supported
+        """
+        from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
+
+        # Handle dictionary case - create proper config first
+        if isinstance(config, dict):
+            if config.get("type") != "HttpStatelessConnector":
+                raise ValueError(
+                    f"HttpStatelessConnectorFactory only supports HttpStatelessConnector config, got type {
+                        config.get('type')
+                    }"
+                )
+            http_config = deserialize_model(
+                HttpStatelessConnectorConfig,
+                config,
+                expression_evaluation_policy=expression_evaluation_policy,
+            )
+        elif isinstance(config, HttpStatelessConnectorConfig):
+            http_config = config
+        elif hasattr(config, "type") and config.type == "HttpStatelessConnector":
+            # Convert base config to HttpStatelessConnectorConfig if it has the right type
+            http_config = deserialize_model(
+                HttpStatelessConnectorConfig,
+                config.model_dump(by_alias=True),
+                expression_evaluation_policy=expression_evaluation_policy,
+            )
+        else:
+            raise ValueError(
+                f"HttpStatelessConnectorFactory only supports HttpStatelessConnector config, got {
+                    type(config)
+                }"
+            )
+
+        # Convert config to grant
+        return HttpConnectionGrant(
+            type="HttpConnectionGrant",
+            purpose="connection",  # Default purpose for connection grants
+            url=http_config.url,
+            auth=http_config.auth,
         )
 
     async def create(

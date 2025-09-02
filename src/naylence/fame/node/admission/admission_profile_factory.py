@@ -59,7 +59,7 @@ DIRECT_PROFILE = {
     "type": "DirectAdmissionClient",
     "connection_grants": [
         {
-            "type": "WebSocketConnector",
+            "type": "WebSocketConnectionGrant",
             "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
             "auth": {
@@ -83,7 +83,7 @@ OPEN_PROFILE = {
     "type": "DirectAdmissionClient",
     "connection_grants": [
         {
-            "type": "WebSocketConnector",
+            "type": "WebSocketConnectionGrant",
             "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
             "auth": {

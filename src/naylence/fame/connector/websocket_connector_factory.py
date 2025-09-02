@@ -12,12 +12,14 @@ from naylence.fame.connector.connector_factory import ConnectorFactory
 from naylence.fame.connector.websocket_connector import WebSocketConnector
 from naylence.fame.core import AuthorizationContext, FameConnector
 from naylence.fame.errors.errors import FameConnectError
+from naylence.fame.factory import ExpressionEvaluationPolicy
+from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
 from naylence.fame.security.auth.auth_injection_strategy_factory import (
     AuthInjectionStrategyConfig,
     AuthInjectionStrategyFactory,
 )
 from naylence.fame.util.logging import getLogger
-from naylence.fame.util.util import safe_deserialize_model
+from naylence.fame.util.util import deserialize_model
 
 if TYPE_CHECKING:
     from naylence.fame.grants.connection_grant import ConnectionGrant
@@ -55,7 +57,19 @@ class WebSocketConnectorFactory(ConnectorFactory):
         return ["WebSocketConnectionGrant", "WebSocketConnector"]
 
     @classmethod
-    def config_from_grant(cls, grant: Union[ConnectionGrant, Dict[str, Any]]) -> ConnectorConfig:
+    def supported_grants(cls) -> dict[str, type[ConnectionGrant]]:
+        return {
+            "WebSocketConnectionGrant": WebSocketConnectionGrant,
+        }
+
+    @classmethod
+    def config_from_grant(
+        cls,
+        grant: Union[ConnectionGrant, dict[str, Any]],
+        expression_evaluation_policy: Optional[
+            ExpressionEvaluationPolicy
+        ] = ExpressionEvaluationPolicy.ERROR,
+    ) -> ConnectorConfig:
         """
         Create a WebSocketConnectorConfig from a connection grant or dictionary.
 
@@ -78,23 +92,88 @@ class WebSocketConnectorFactory(ConnectorFactory):
                         grant.get('type')
                     }"
                 )
-            websocket_grant = safe_deserialize_model(WebSocketConnectionGrant, grant)
+            websocket_grant = deserialize_model(WebSocketConnectionGrant, grant)
         elif isinstance(grant, WebSocketConnectionGrant):
             websocket_grant = grant
         elif hasattr(grant, "type") and grant.type == "WebSocketConnectionGrant":
             # Convert base grant to WebSocketConnectionGrant if it has the right type
-            websocket_grant = safe_deserialize_model(WebSocketConnectionGrant, grant.model_dump())
+            websocket_grant = deserialize_model(
+                WebSocketConnectionGrant,
+                grant.model_dump(by_alias=True),
+                expression_evaluation_policy=expression_evaluation_policy,
+            )
         else:
             raise ValueError(
                 f"WebSocketConnectorFactory only supports WebSocketConnectionGrant, got {type(grant)}"
             )
 
         if isinstance(websocket_grant.auth, dict):
-            websocket_grant.auth = safe_deserialize_model(AuthInjectionStrategyConfig, websocket_grant.auth)
+            websocket_grant.auth = deserialize_model(
+                AuthInjectionStrategyConfig,
+                websocket_grant.auth,
+                expression_evaluation_policy=expression_evaluation_policy,
+            )
 
         # Convert grant to config
         return WebSocketConnectorConfig(
             type="WebSocketConnector", url=websocket_grant.url, auth=websocket_grant.auth
+        )
+
+    @classmethod
+    def grant_from_config(
+        cls,
+        config: Union[ConnectorConfig, Dict[str, Any]],
+        expression_evaluation_policy: Optional[
+            ExpressionEvaluationPolicy
+        ] = ExpressionEvaluationPolicy.ERROR,
+    ) -> ConnectionGrant:
+        """
+        Create a WebSocketConnectionGrant from a connector config or dictionary.
+
+        Args:
+            config: The connector config or dictionary to convert to a grant
+
+        Returns:
+            WebSocketConnectionGrant instance
+
+        Raises:
+            ValueError: If config type is not supported
+        """
+        from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
+
+        # Handle dictionary case - create proper config first
+        if isinstance(config, dict):
+            if config.get("type") != "WebSocketConnector":
+                raise ValueError(
+                    f"WebSocketConnectorFactory only supports WebSocketConnector config, got type {
+                        config.get('type')
+                    }"
+                )
+            websocket_config = deserialize_model(
+                WebSocketConnectorConfig,
+                config,
+                expression_evaluation_policy=expression_evaluation_policy,
+            )
+        elif isinstance(config, WebSocketConnectorConfig):
+            websocket_config = config
+        elif hasattr(config, "type") and config.type == "WebSocketConnector":
+            # Convert base config to WebSocketConnectorConfig if it has the right type
+            websocket_config = deserialize_model(
+                WebSocketConnectorConfig,
+                config.model_dump(by_alias=True),
+                expression_evaluation_policy=expression_evaluation_policy,
+            )
+        else:
+            raise ValueError(
+                f"WebSocketConnectorFactory only supports WebSocketConnector config, got {type(config)}"
+            )
+
+        # Convert config to grant
+        return WebSocketConnectionGrant(
+            type="WebSocketConnectionGrant",
+            purpose="connection",  # Default purpose for connection grants
+            url=websocket_config.url,
+            auth=websocket_config.auth,
         )
 
     async def create(
@@ -110,7 +189,7 @@ class WebSocketConnectorFactory(ConnectorFactory):
         # Accept either real config or legacy dict for backward compatibility
         if isinstance(config, dict):
             # Convert dict to config
-            config = safe_deserialize_model(WebSocketConnectorConfig, config)
+            config = deserialize_model(WebSocketConnectorConfig, config)
 
         # Create auth strategy once if needed
         auth_strategy = None

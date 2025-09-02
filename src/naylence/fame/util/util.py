@@ -110,8 +110,12 @@ def urlsafe_base64_encode(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
 
-def safe_deserialize_model(model_class, config):
+def deserialize_model(
+    model_class,
+    config,
+    expression_evaluation_policy: Optional[ExpressionEvaluationPolicy] = ExpressionEvaluationPolicy.ERROR,
+):
     return model_class.model_validate(
         config,
-        context={"expression_evaluation_policy": ExpressionEvaluationPolicy.ERROR},
+        context={"expression_evaluation_policy": expression_evaluation_policy},
     )
