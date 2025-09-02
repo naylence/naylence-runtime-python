@@ -6,6 +6,7 @@ from pydantic import Field
 
 from naylence.fame.constants.ttl_constants import DEFAULT_ADMISSION_TTL_SEC
 from naylence.fame.factory import Expressions, create_resource
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.admission_client_factory import (
     AdmissionClientFactory,
@@ -59,6 +60,7 @@ DIRECT_PROFILE = {
     "connection_grants": [
         {
             "type": "WebSocketConnector",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
             "auth": {
                 "type": "WebSocketSubprotocolAuth",
@@ -82,6 +84,7 @@ OPEN_PROFILE = {
     "connection_grants": [
         {
             "type": "WebSocketConnector",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
             "auth": {
                 "type": "NoAuth",
