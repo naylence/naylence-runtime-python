@@ -4,7 +4,6 @@ Test that the ResourceConfig fix preserves polymorphic behavior while fixing ser
 
 import json
 
-from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
 from naylence.fame.node.admission.direct_admission_client_factory import (
     DirectNodeAdmissionConfig,
 )

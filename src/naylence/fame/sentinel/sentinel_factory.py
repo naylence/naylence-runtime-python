@@ -4,7 +4,6 @@ from pydantic import Field
 
 from naylence.fame.config.peer_config import PeerConfig
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
-from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
 from naylence.fame.constants.ttl_constants import TTL_NEVER_EXPIRES
 from naylence.fame.factory import ExtensionManager, create_default_resource, create_resource
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
@@ -14,12 +13,6 @@ from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.node_like import NodeLike
 from naylence.fame.node.node_like_factory import NodeLikeFactory
 from naylence.fame.security.auth.authorizer_factory import AuthorizerConfig
-from naylence.fame.security.auth.none_token_provider_factory import (
-    NoneTokenProviderConfig,
-)
-from naylence.fame.security.auth.websocket_subprotocol_auth_injection_strategy_factory import (
-    WebSocketSubprotocolAuthInjectionConfig,
-)
 from naylence.fame.sentinel.load_balancing.composite_load_balancing_strategy import (
     CompositeLoadBalancingStrategy,
 )
@@ -195,8 +188,8 @@ class SentinelFactory(NodeLikeFactory):
                         "url": peer_config.direct_url,
                         "auth": {
                             "type": "WebSocketSubprotocolAuthInjection",
-                            "token_provider": {"type": "NoneTokenProvider"}
-                        }
+                            "token_provider": {"type": "NoneTokenProvider"},
+                        },
                     }
                 ]
                 admission_client = DirectAdmissionClient(

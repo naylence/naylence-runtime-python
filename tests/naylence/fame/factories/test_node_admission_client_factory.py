@@ -16,12 +16,6 @@ from naylence.fame.node.admission.welcome_service_client import (
 from naylence.fame.node.admission.welcome_service_client_factory import (
     WelcomeServiceClientConfig,
 )
-from naylence.fame.security.auth.no_auth_injection_strategy_factory import (
-    NoAuthInjectionStrategyConfig,
-)
-from naylence.fame.security.auth.none_token_provider_factory import (
-    NoneTokenProviderConfig,
-)
 
 
 class TestAdmissionClientFactory:
