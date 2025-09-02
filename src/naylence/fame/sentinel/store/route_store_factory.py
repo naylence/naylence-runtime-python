@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import Field
 
-from naylence.fame.core import ResourceConfig, ResourceFactory
+from naylence.fame.factory import ResourceConfig, ResourceFactory
 from naylence.fame.sentinel.store.route_store import RouteEntry, RouteStore
 from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
 

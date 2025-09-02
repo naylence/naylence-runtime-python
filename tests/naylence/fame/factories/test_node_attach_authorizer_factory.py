@@ -2,7 +2,7 @@
 
 import pytest
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.authorizer_factory import AuthorizerFactory
 from naylence.fame.security.auth.default_authorizer import DefaultAuthorizer
 from naylence.fame.security.auth.default_authorizer_factory import (

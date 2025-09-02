@@ -5,7 +5,7 @@ from typing import Any, Optional
 from pydantic import Field
 
 from naylence.fame.constants.ttl_constants import DEFAULT_ADMISSION_TTL_SEC
-from naylence.fame.core import Expressions, create_resource
+from naylence.fame.factory import Expressions, create_resource
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.admission_client_factory import (
     AdmissionClientFactory,

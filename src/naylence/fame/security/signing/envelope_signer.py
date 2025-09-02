@@ -10,7 +10,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Optional, TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory, create_default_resource
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_default_resource
 from naylence.fame.core.protocol.envelope import FameEnvelope
 
 

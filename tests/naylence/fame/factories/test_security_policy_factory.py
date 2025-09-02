@@ -2,7 +2,7 @@
 
 import pytest
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
 from naylence.fame.security.policy.default_security_policy_factory import (
     DefaultSecurityPolicyConfig,

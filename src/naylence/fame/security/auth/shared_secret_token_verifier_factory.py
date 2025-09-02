@@ -4,7 +4,7 @@ from typing import Annotated, Any, Optional
 
 from pydantic import Field
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.shared_secret_token_verifier import (
     SharedSecretTokenVerifier,
 )

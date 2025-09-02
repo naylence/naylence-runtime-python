@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from naylence.fame.core import Expressions, create_resource
+from naylence.fame.factory import Expressions, create_resource
 from naylence.fame.security.default_security_manager_factory import (
     DefaultSecurityManagerConfig,
 )

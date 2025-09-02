@@ -2,7 +2,7 @@
 
 from typing import TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory, create_resource
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_resource
 
 from .load_balancing_strategy import LoadBalancingStrategy
 

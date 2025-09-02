@@ -6,8 +6,8 @@ Test the integration of priority system with create_default_resource.
 import asyncio
 from typing import Any, Optional
 
-from naylence.fame.core.util.extension_manager import ExtensionManager
 from naylence.fame.factory import (
+    ExtensionManager,
     ResourceConfig,
     ResourceFactory,
     create_default_resource,

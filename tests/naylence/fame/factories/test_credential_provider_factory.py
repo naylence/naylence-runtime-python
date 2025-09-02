@@ -2,7 +2,7 @@
 
 import pytest
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.credential import (
     EnvCredentialProvider,
     NoneCredentialProvider,

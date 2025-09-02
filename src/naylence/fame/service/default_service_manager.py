@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Mapping, Optional
 from naylence.fame.core import (
     DEFAULT_POLLING_TIMEOUT_MS,
     Addressable,
-    ExtensionManager,
     FameAddress,
     FameMessageService,
     FameRPCService,
@@ -17,7 +16,10 @@ from naylence.fame.core import (
     InvokeProtocol,
     ServeProtocol,
     ServeRPCProtocol,
-    create_resource,
+)
+from naylence.fame.factory import (
+    ExtensionManager,
+    create_resource
 )
 from naylence.fame.service.service_manager import ServiceManager
 

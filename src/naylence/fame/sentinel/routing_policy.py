@@ -6,6 +6,8 @@ from pydantic import ConfigDict
 from naylence.fame.core import (
     FameDeliveryContext,
     FameEnvelope,
+)
+from naylence.fame.factory import (
     ResourceConfig,
     ResourceFactory,
     create_default_resource,

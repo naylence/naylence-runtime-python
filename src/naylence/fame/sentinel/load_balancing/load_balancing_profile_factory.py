@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 from pydantic import Field
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.util.logging import getLogger
 
 from .load_balancing_strategy import LoadBalancingStrategy

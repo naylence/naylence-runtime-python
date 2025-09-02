@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 from pydantic import Field
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.sentinel.routing_policy import (
     RoutingPolicy,
     RoutingPolicyConfig,

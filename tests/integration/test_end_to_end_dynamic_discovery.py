@@ -1,13 +1,10 @@
-#!/usr/bin/env python3
-"""End-to-end test for dynamic connector discovery using the complete factory setup."""
-
 from unittest.mock import Mock
 
 import pytest
 
 from naylence.fame.connector.http_listener_factory import HttpListenerFactory
 from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
-from naylence.fame.core import ExtensionManager
+from naylence.fame.factory import ExtensionManager
 from naylence.fame.node.admission.direct_admission_client import DirectAdmissionClient
 from naylence.fame.node.factory_commons import make_common_opts
 from naylence.fame.node.node_config import FameNodeConfig

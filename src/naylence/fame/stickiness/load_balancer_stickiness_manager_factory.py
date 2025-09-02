@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, TypeVar
 
-from naylence.fame.core import (
+from naylence.fame.factory import (
     ResourceConfig,
     ResourceFactory,
     create_default_resource,

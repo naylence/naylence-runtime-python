@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from naylence.fame.core import ExtensionManager, ResourceConfig, ResourceFactory
+from naylence.fame.factory import ExtensionManager, ResourceConfig, ResourceFactory
 
 
 class TestResource:

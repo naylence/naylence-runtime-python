@@ -2,7 +2,7 @@
 
 import pytest
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.none_token_provider import NoneTokenProvider
 from naylence.fame.security.auth.oauth2_client_credentials_token_provider import (
     OAuth2ClientCredentialsTokenProvider,

@@ -10,7 +10,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory
+from naylence.fame.factory import ResourceConfig, ResourceFactory
 from naylence.fame.security.keys.attachment_key_validator import AttachmentKeyValidator
 
 

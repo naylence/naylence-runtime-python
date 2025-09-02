@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 from pydantic import Field
 
-from naylence.fame.core import Expressions, create_resource
+from naylence.fame.factory import Expressions, create_resource
 from naylence.fame.storage.storage_provider import StorageProvider
 from naylence.fame.storage.storage_provider_factory import (
     StorageProviderConfig,

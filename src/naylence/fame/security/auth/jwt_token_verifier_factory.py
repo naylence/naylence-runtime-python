@@ -3,7 +3,7 @@ from typing import Annotated, Any, Optional
 from pydantic import Field, field_validator
 
 from naylence.fame.constants.ttl_constants import DEFAULT_JWT_TOKEN_TTL_SEC
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.token_verifier import TokenVerifier
 from naylence.fame.security.auth.token_verifier_factory import (
     TokenVerifierConfig,
@@ -35,7 +35,7 @@ class JWTVerifierConfig(TokenVerifierConfig):
     @classmethod
     def validate_ttl_sec(cls, v: int) -> int:
         """Validate JWT token TTL is within acceptable bounds."""
-        return validate_jwt_token_ttl_sec(v) or v
+        return int(validate_jwt_token_ttl_sec(v) or v)
 
 
 class JWTTokenVerifierFactory(TokenVerifierFactory):

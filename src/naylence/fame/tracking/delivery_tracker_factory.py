@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_resource
 from naylence.fame.storage.key_value_store import KeyValueStore
 from naylence.fame.storage.storage_provider import StorageProvider
 from naylence.fame.tracking.delivery_tracker import (
@@ -40,7 +40,6 @@ class DeliveryTrackerFactory(ResourceFactory[DeliveryTracker, C]):
         **kwargs,
     ) -> Optional[DeliveryTracker]:
         """Create an envelope tracker instance based on the provided configuration."""
-        from naylence.fame.core import create_resource
 
         return await create_resource(
             DeliveryTrackerFactory,

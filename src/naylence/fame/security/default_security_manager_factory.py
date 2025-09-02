@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import Field
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.encryption.encryption_manager import EncryptionManager
 from naylence.fame.security.encryption.secure_channel_manager import (
     SecureChannelManager,

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, List
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.auth_injection_strategy import AuthInjectionStrategy
 from naylence.fame.security.auth.token_provider import TokenProvider
 from naylence.fame.security.auth.token_provider_factory import TokenProviderFactory

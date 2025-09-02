@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from naylence.fame.core import ResourceConfig
+from naylence.fame.factory import ResourceConfig
 
 
 class SecurityManagerConfig(ResourceConfig):

@@ -43,7 +43,7 @@ class HttpListenerFactory(TransportListenerFactory):
         # Extract and create authorizer if configured
         authorizer = None
         if config.authorizer:
-            from naylence.fame.core import create_resource
+            from naylence.fame.factory import create_resource
             from naylence.fame.security.auth.authorizer_factory import AuthorizerFactory
 
             authorizer = await create_resource(AuthorizerFactory, config.authorizer)

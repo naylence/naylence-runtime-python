@@ -2,7 +2,7 @@ from typing import Any, Optional, TypeVar
 
 from pydantic import ConfigDict, Field
 
-from naylence.fame.core import ResourceConfig, ResourceFactory
+from naylence.fame.factory import ResourceConfig, ResourceFactory
 from naylence.fame.storage.storage_provider import StorageProvider
 
 

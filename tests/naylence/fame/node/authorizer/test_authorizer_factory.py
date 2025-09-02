@@ -7,7 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from naylence.fame.core import ExtensionManager, FameEnvelope, create_resource
+from naylence.fame.core import FameEnvelope
+from naylence.fame.factory import ExtensionManager, create_resource
 from naylence.fame.core.protocol.delivery_context import AuthorizationContext
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.auth.authorizer_factory import (

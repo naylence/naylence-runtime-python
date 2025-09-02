@@ -2,7 +2,7 @@
 
 import pytest
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
 from naylence.fame.node.admission.direct_admission_client import (
     DirectAdmissionClient,

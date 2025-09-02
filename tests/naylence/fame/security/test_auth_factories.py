@@ -1,6 +1,6 @@
 import pytest
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.shared_secret_authorizer_factory import (
     SharedSecretAuthorizerConfig,
 )

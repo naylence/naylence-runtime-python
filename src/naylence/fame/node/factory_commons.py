@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
-from naylence.fame.core import create_default_resource, create_resource, generate_id
+from naylence.fame.factory import create_default_resource, create_resource
+from naylence.fame.core import generate_id
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
 from naylence.fame.node.admission.default_node_attach_client import (
@@ -208,7 +209,7 @@ async def create_security_manager(cfg: FameNodeConfig, key_store, authorizer=Non
     Returns:
         SecurityManager instance
     """
-    from naylence.fame.core import create_default_resource, create_resource
+
     from naylence.fame.security.security_manager_factory import SecurityManagerFactory
 
     if cfg.security is not None:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, TypeVar
 
-from naylence.fame.core import ResourceFactory, create_default_resource
+from naylence.fame.factory import ResourceFactory, create_default_resource
 from naylence.fame.security.encryption.encryption_manager import EncryptionManager
 from naylence.fame.security.encryption.secure_channel_manager import (
     SecureChannelManager,

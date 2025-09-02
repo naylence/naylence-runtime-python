@@ -13,7 +13,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, List, Optional, TypedDict
 
-from naylence.fame.core import FameEnvelope, ResourceConfig, ResourceFactory
+from naylence.fame.core import FameEnvelope
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_default_resource
 
 if TYPE_CHECKING:
     from naylence.fame.core import FameAddress
@@ -167,7 +168,6 @@ class EncryptionManagerFactory(ResourceFactory[EncryptionManager, EncryptionMana
         **kwargs,
     ) -> Optional[EncryptionManager]:
         """Create an EncryptionManager instance based on the provided configuration."""
-        from naylence.fame.core import create_default_resource
 
         if isinstance(cfg, EncryptionManagerConfig):
             cfg_dict = cfg.__dict__

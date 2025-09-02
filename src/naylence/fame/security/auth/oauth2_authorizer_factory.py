@@ -9,7 +9,7 @@ from naylence.fame.constants.ttl_constants import (
     DEFAULT_OAUTH2_TTL_SEC,
     MAX_OAUTH2_TTL_SEC,
 )
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.auth.authorizer_factory import (
     AuthorizerConfig,

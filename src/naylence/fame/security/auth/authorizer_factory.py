@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory, create_default_resource, create_resource
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_default_resource, create_resource
 from naylence.fame.security.auth.authorizer import Authorizer
 
 

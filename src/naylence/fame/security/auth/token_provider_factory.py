@@ -5,7 +5,7 @@ from typing import TypeVar
 from pydantic import ConfigDict
 from pydantic.alias_generators import to_camel
 
-from naylence.fame.core import ResourceConfig, ResourceFactory
+from naylence.fame.factory import ResourceConfig, ResourceFactory
 from naylence.fame.security.auth.token_provider import TokenProvider
 
 

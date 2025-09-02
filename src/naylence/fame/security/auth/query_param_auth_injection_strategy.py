@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.auth_injection_strategy import AuthInjectionStrategy
 from naylence.fame.security.auth.token_provider_factory import TokenProviderFactory
 

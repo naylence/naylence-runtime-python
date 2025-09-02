@@ -4,7 +4,7 @@ from typing import Annotated, Any, Optional
 
 from pydantic import Field
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.token_provider import TokenProvider
 from naylence.fame.security.auth.token_provider_factory import (
     TokenProviderConfig,

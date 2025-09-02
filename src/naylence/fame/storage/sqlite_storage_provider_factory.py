@@ -11,7 +11,7 @@ from typing import Annotated, Any, Optional
 
 from pydantic import Field
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.credential.credential_provider import CredentialProvider
 from naylence.fame.security.credential.credential_provider_factory import (
     CredentialProviderConfig,

@@ -8,10 +8,10 @@ from typing import Any, Optional, TypeVar
 
 from pydantic import Field
 
-from naylence.fame.core import (
+from naylence.fame.core import SecuritySettings
+from naylence.fame.factory import (
     ResourceConfig,
     ResourceFactory,
-    SecuritySettings,
     create_default_resource,
 )
 from naylence.fame.security.policy.security_policy import SigningConfig

@@ -1,6 +1,6 @@
 from typing import Any, Optional, TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory, create_resource
+from naylence.fame.factory import ResourceConfig, ResourceFactory, create_resource
 from naylence.fame.security.keys.key_store import KeyStore
 from naylence.fame.storage.storage_provider import StorageProvider
 

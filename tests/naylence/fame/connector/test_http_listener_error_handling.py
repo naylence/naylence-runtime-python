@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Test HTTP listener error handling improvements."""
 
 from unittest.mock import Mock

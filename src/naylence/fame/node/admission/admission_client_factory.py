@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from naylence.fame.core import ResourceConfig, ResourceFactory
+from naylence.fame.factory import ResourceConfig, ResourceFactory
 from naylence.fame.node.admission.admission_client import AdmissionClient
 
 

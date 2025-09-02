@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Test to verify that FameDeliveryContext is preserved through sink services.
 This tests the end-to-end flow: publish -> sink -> fanout broker -> subscriber.

@@ -2,7 +2,7 @@
 
 import pytest
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.jwks_jwt_token_verifier import JWKSJWTTokenVerifier
 from naylence.fame.security.auth.jwks_jwt_token_verifier_factory import (
     JWKSVerifierConfig,

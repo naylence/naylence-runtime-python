@@ -7,7 +7,8 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Optional
 
-from naylence.fame.core import FameConnector, create_resource
+from naylence.fame.core import FameConnector
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.auth_injection_strategy import AuthInjectionStrategy
 from naylence.fame.security.auth.bearer_token_header_auth_injection_strategy_factory import (
     BearerTokenHeaderAuthInjectionStrategyConfig,

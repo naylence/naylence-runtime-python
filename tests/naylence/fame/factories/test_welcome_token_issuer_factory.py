@@ -2,7 +2,7 @@
 
 import pytest
 
-from naylence.fame.core import create_resource
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.jwt_token_issuer import JWTTokenIssuer
 from naylence.fame.security.auth.jwt_token_issuer_factory import JWTTokenIssuerConfig
 from naylence.fame.security.auth.noop_token_issuer import NoopTokenIssuer
