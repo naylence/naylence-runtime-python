@@ -14,6 +14,7 @@ from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.routing_node_like import RoutingNodeLike
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.encryption.encryption_manager import EncryptionManager
+from naylence.fame.security.keys.attachment_key_validator import AttachmentKeyValidator
 from naylence.fame.security.policy import SecurityPolicy
 from naylence.fame.security.security_manager import SecurityManager
 from naylence.fame.security.signing.envelope_signer import EnvelopeSigner
@@ -63,6 +64,7 @@ class DefaultSecurityManager(SecurityManager):
         authorizer: Optional[Authorizer] = None,
         certificate_manager: Optional[CertificateManager] = None,
         secure_channel_manager: Optional[SecureChannelManager] = None,
+        key_validator: Optional[AttachmentKeyValidator] = None,
     ):
         self._policy = policy
         self._envelope_signer = envelope_signer
@@ -71,6 +73,7 @@ class DefaultSecurityManager(SecurityManager):
         self._key_manager = key_manager
         self._authorizer = authorizer
         self._certificate_manager = certificate_manager
+        self._key_validator = key_validator
 
         # These will be created during on_node_started
         self._envelope_security_handler: Optional[EnvelopeSecurityHandler] = None
@@ -197,10 +200,12 @@ class DefaultSecurityManager(SecurityManager):
 
         # Create and start the key management handler if we have key management
         if self._key_manager is not None and self.supports_overlay_security:
+            assert self._key_validator, "Key validator must be set"
             self._key_management_handler = KeyManagementHandler(
                 node_like=node,
                 key_manager=self._key_manager,
                 encryption_manager=self._encryption,
+                key_validator=self._key_validator,
             )
             await self._key_management_handler.start()
 

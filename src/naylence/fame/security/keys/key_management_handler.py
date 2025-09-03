@@ -14,6 +14,7 @@ from naylence.fame.core import (
 from naylence.fame.core.protocol.envelope import FameEnvelope
 from naylence.fame.node.node_like import NodeLike
 from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
+from naylence.fame.security.keys.attachment_key_validator import AttachmentKeyValidator, KeyValidationError
 from naylence.fame.security.keys.key_manager import KeyManager
 from naylence.fame.util import logging
 from naylence.fame.util.envelope_context import current_trace_id
@@ -32,11 +33,13 @@ class KeyManagementHandler(TaskSpawner):
         self,
         node_like: NodeLike,
         key_manager: Optional[KeyManager],
+        key_validator: AttachmentKeyValidator,
         encryption_manager=None,
     ):
         TaskSpawner.__init__(self)
         self._node = node_like
         self._key_manager = key_manager
+        self._key_validator = key_validator
         self._encryption_manager = encryption_manager
         self._pending_key_requests: dict[
             str, tuple[asyncio.Future[None], DeliveryOriginType, str, float, int]
@@ -90,45 +93,23 @@ class KeyManagementHandler(TaskSpawner):
         # For on-demand key requests, perform certificate pre-validation with warning behavior
         validated_keys = []
         if frame.keys:
-            # Get trust store configuration
-            trust_store_pem = None
-            try:
-                import os
-
-                # Use FAME_CA_CERTS environment variable (PEM bundle)
-                trust_store_pem = os.environ.get("FAME_CA_CERTS")
-            except Exception:
-                pass
-
             # Validate each key, skip invalid certificates with warnings
             for key in frame.keys:
-                if "x5c" in key and trust_store_pem:
-                    from naylence.fame.security.cert.util import (  # TODO: fixme
-                        validate_jwk_x5c_certificate,
+                try:
+                    await self._key_validator.validate_key(key)
+                    validated_keys.append(key)
+                except KeyValidationError as e:
+                    logger.warning(
+                        "skipping_key_due_to_certificate_validation_failure",
+                        kid=key.get("kid", "unknown"),
+                        from_system_id=origin_system_id,
+                        from_physical_path=frame.physical_path,
+                        error=str(e),
+                        scenario="on_demand_key_request",
+                        action="skipped_key_not_added_to_store",
                     )
 
-                    is_valid, error_msg = validate_jwk_x5c_certificate(
-                        key,
-                        trust_store_pem=trust_store_pem,
-                        enforce_name_constraints=True,
-                        strict=False,  # Don't raise exception for on-demand requests
-                    )
-
-                    if not is_valid:
-                        logger.warning(
-                            "skipping_key_due_to_certificate_validation_failure",
-                            kid=key.get("kid", "unknown"),
-                            from_system_id=origin_system_id,
-                            from_physical_path=frame.physical_path,
-                            error=error_msg,
-                            scenario="on_demand_key_request",
-                            action="skipped_key_not_added_to_store",
-                        )
-                        continue  # Skip this key, don't add to validated_keys
-
-                validated_keys.append(key)
-
-        # Only proceed with keys that passed validation (or don't have x5c)
+        # Only proceed with keys that passed validation
         if validated_keys:
             # Check if this is a correlation-routed KeyAnnounce (SID validation should be skipped)
             is_correlation_routed = bool(envelope.corr_id)

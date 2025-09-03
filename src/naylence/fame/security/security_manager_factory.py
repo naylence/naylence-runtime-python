@@ -7,6 +7,7 @@ from naylence.fame.security.encryption.encryption_manager import EncryptionManag
 from naylence.fame.security.encryption.secure_channel_manager import (
     SecureChannelManager,
 )
+from naylence.fame.security.keys.attachment_key_validator import AttachmentKeyValidator
 from naylence.fame.security.policy.security_policy import SecurityPolicy
 from naylence.fame.security.security_manager_config import SecurityManagerConfig
 from naylence.fame.security.signing.envelope_signer import EnvelopeSigner
@@ -38,6 +39,7 @@ class SecurityManagerFactory(ResourceFactory[SecurityManager, C]):
         envelope_verifier: Optional[EnvelopeVerifier] = None,
         encryption_manager: Optional[EncryptionManager] = None,
         key_manager: Optional[KeyManager] = None,
+        key_validator: Optional[AttachmentKeyValidator] = None,
         authorizer: Optional[Authorizer] = None,
         certificate_manager: Optional[CertificateManager] = None,
         secure_channel_manager: Optional[SecureChannelManager] = None,
@@ -54,6 +56,7 @@ class SecurityManagerFactory(ResourceFactory[SecurityManager, C]):
             envelope_verifier=envelope_verifier,
             encryption_manager=encryption_manager,
             key_manager=key_manager,
+            key_validator=key_validator,
             authorizer=authorizer,
             certificate_manager=certificate_manager,
             secure_channel_manager=secure_channel_manager,

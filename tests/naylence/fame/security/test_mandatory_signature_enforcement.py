@@ -21,6 +21,7 @@ from naylence.fame.core.protocol.frames import (
 )
 from naylence.fame.security.default_security_manager import DefaultSecurityManager
 from naylence.fame.security.keys.key_store import get_key_store
+from naylence.fame.security.keys.noop_key_validator import NoopKeyValidator
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
 from naylence.fame.security.policy.security_policy import (
     InboundSigningRules,
@@ -138,11 +139,15 @@ async def test_unsigned_critical_frames_are_rejected():
 
     node_like = NonSentinelMock()
 
+    # Create key validator
+    key_validator = NoopKeyValidator()
+
     security_manager = DefaultSecurityManager(
         policy=policy,
         envelope_signer=signer,
         envelope_verifier=None,  # We'll test without verifier to focus on policy
         key_manager=key_manager,
+        key_validator=key_validator,
     )
 
     # Initialize the security manager to create the envelope security handler
@@ -232,8 +237,11 @@ async def test_critical_frames_forwarding_preserves_signatures():
         )
     )
 
+    # Create key validator
+    key_validator = NoopKeyValidator()
+
     # Create a minimal security manager without complex dependencies
-    security_manager = DefaultSecurityManager(policy=policy)
+    security_manager = DefaultSecurityManager(policy=policy, key_validator=key_validator)
 
     # Mock node for testing (ensure it's NOT a Sentinel to avoid KeyFrameHandler)
     class NonSentinelMock:

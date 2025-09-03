@@ -13,6 +13,7 @@ from naylence.fame.security.encryption.encryption_manager import EncryptionManag
 from naylence.fame.security.encryption.secure_channel_manager import (
     SecureChannelManager,
 )
+from naylence.fame.security.keys.attachment_key_validator import AttachmentKeyValidator
 from naylence.fame.security.keys.key_manager_factory import KeyManagerFactory
 from naylence.fame.security.keys.key_provider import KeyProvider
 from naylence.fame.security.keys.key_store import KeyStore
@@ -106,6 +107,7 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
             or kwargs.get("certificate_manager"),
             "secure_channel_manager": effective_config.get("secure_channel_manager")
             or kwargs.get("secure_channel_manager"),
+            "key_validator": effective_config.get("key_validator") or kwargs.get("key_validator"),
         }
 
         # Handle special case: authorizer as config dict needs to be created
@@ -453,9 +455,11 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
                 if should_create_certificate_manager:
                     # Try to create certificate manager using default implementation
                     signing = getattr(policy, "signing", None)
-                    return await CertificateManagerFactory.create_certificate_manager(
+                    certificate_manager = await CertificateManagerFactory.create_certificate_manager(
                         signing=signing,
                     )
+                    assert certificate_manager, "Failed to create certificate manager"
+                    return certificate_manager
             except Exception as e:
                 # Re-raise auto-creation failures for better debugging
                 logger.error("failed_to_auto_create_certificate_manager", exc_info=True)
@@ -473,6 +477,7 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
         encryption_manager: Optional[EncryptionManager] = None,
         key_store: Optional[KeyStore] = None,
         key_manager: Optional[KeyManager] = None,
+        key_validator: Optional[AttachmentKeyValidator] = None,
         authorizer: Optional[Authorizer] = None,
         certificate_manager: Optional[CertificateManager] = None,
         secure_channel_manager: Optional[SecureChannelManager] = None,
@@ -550,6 +555,7 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
             envelope_verifier=envelope_verifier,
             encryption=encryption_manager,
             key_manager=key_manager,
+            key_validator=key_validator,
             authorizer=authorizer,
             certificate_manager=certificate_manager,
             secure_channel_manager=secure_channel_manager,

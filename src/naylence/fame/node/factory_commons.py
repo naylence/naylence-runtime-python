@@ -13,11 +13,11 @@ from naylence.fame.node.admission.default_node_attach_client import (
 )
 from naylence.fame.node.node_config import FameNodeConfig
 from naylence.fame.node.node_meta import NodeMeta
+from naylence.fame.security.keys.attachment_key_validator import AttachmentKeyValidator
 from naylence.fame.security.keys.attachment_key_validator_factory import (
     AttachmentKeyValidatorFactory,
 )
 from naylence.fame.security.keys.key_store_factory import KeyStoreFactory
-from naylence.fame.security.policy.security_policy import CryptoLevel
 from naylence.fame.storage.storage_provider import StorageProvider
 from naylence.fame.storage.storage_provider_factory import StorageProviderFactory
 from naylence.fame.tracking.delivery_tracker import DeliveryTracker
@@ -148,28 +148,28 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
 
     binding_store = await storage_provider.get_kv_store(BindingStoreEntry, namespace="binding_store")
 
-    security_manager = await create_security_manager(cfg, key_store)
-
-    attachment_key_validator = None
+    key_validator = None
     # Create attachment key validator
     if cfg.attachment_key_validator:
-        attachment_key_validator = await create_resource(
-            AttachmentKeyValidatorFactory, cfg.attachment_key_validator
-        )
+        key_validator = await create_resource(AttachmentKeyValidatorFactory, cfg.attachment_key_validator)
+    else:
+        key_validator = await create_default_resource(AttachmentKeyValidatorFactory)
 
-    security_requirements = security_manager.policy.requirements()
-    if attachment_key_validator is None and (
-        security_requirements.minimum_crypto_level != CryptoLevel.PLAINTEXT
-        or security_requirements.encryption_required
-        or security_requirements.decryption_required
-    ):
-        # Handle security requirements
-        attachment_key_validator = await create_resource(
-            AttachmentKeyValidatorFactory, {"type": "AttachmentCertValidator"}
-        )
+    security_manager = await create_security_manager(cfg, key_store=key_store, key_validator=key_validator)
+
+    # security_requirements = security_manager.policy.requirements()
+    # if key_validator is None and (
+    #     security_requirements.minimum_crypto_level != CryptoLevel.PLAINTEXT
+    #     or security_requirements.encryption_required
+    #     or security_requirements.decryption_required
+    # ):
+    #     # Handle security requirements
+    #     key_validator = await create_resource(
+    #         AttachmentKeyValidatorFactory, {"type": "AttachmentCertValidator"}
+    #     )
 
     node_attach_client = DefaultNodeAttachClient(
-        attachment_key_validator=attachment_key_validator,
+        attachment_key_validator=key_validator,
         replica_stickiness_manager=replica_stickiness_manager,
     )
 
@@ -179,7 +179,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
         "delivery_tracker": delivery_tracker,
         "admission_client": admission_client,
         "attach_client": node_attach_client,
-        "attachment_key_validator": attachment_key_validator,
+        "attachment_key_validator": key_validator,
         "requested_logicals": cfg.requested_logicals,
         "service_configs": cfg.services,
         "env_context": cfg.env_context,
@@ -198,7 +198,9 @@ async def create_delivery_tracker(cfg: FameNodeConfig) -> Optional[DeliveryTrack
     return await create_default_resource(DeliveryTrackerFactory)
 
 
-async def create_security_manager(cfg: FameNodeConfig, key_store, authorizer=None) -> SecurityManager:
+async def create_security_manager(
+    cfg: FameNodeConfig, key_store, authorizer=None, key_validator: Optional[AttachmentKeyValidator] = None
+) -> SecurityManager:
     """Create SecurityManager using the factory pattern.
 
     Args:
@@ -213,14 +215,18 @@ async def create_security_manager(cfg: FameNodeConfig, key_store, authorizer=Non
     from naylence.fame.security.security_manager_factory import SecurityManagerFactory
 
     if cfg.security is not None:
-        return await create_resource(SecurityManagerFactory, cfg.security, key_store=key_store)
+        return await create_resource(
+            SecurityManagerFactory, cfg.security, key_validator=key_validator, key_store=key_store
+        )
 
     # Create with default implementation, optionally with authorizer
     kwargs = {"key_store": key_store}
     if authorizer is not None:
         kwargs["authorizer"] = authorizer
 
-    security_manager = await create_default_resource(SecurityManagerFactory, **kwargs)
+    security_manager = await create_default_resource(
+        SecurityManagerFactory, key_validator=key_validator, **kwargs
+    )
 
     assert security_manager is not None, "SecurityManager must be created"
 

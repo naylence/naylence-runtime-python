@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.1.81"
+version = "0.1.82"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -266,3 +266,6 @@ SimpleLoadBalancerStickinessManager = "naylence.fame.stickiness.simple_load_bala
 
 [project.entry-points."naylence.DeliveryTrackerFactory"]
 DefaultDeliveryTracker = "naylence.fame.tracking.default_delivery_tracker_factory:DefaultDeliveryTrackerFactory"
+
+[project.entry-points."naylence.AttachmentKeyValidatorFactory"]
+NoopKeyValidator = "naylence.fame.security.keys.noop_key_validator_factory:NoopKeyValidatorFactory"

@@ -16,6 +16,7 @@ from naylence.fame.core import (
     generate_id,
 )
 from naylence.fame.security.keys.key_management_handler import KeyManagementHandler
+from naylence.fame.security.keys.noop_key_validator import NoopKeyValidator
 
 
 @pytest.mark.asyncio
@@ -34,8 +35,11 @@ async def test_address_based_key_request_correlation():
     key_manager = MagicMock()
     key_manager.add_keys = AsyncMock()
 
+    # Create key validator
+    key_validator = NoopKeyValidator()
+
     # Create handler
-    handler = KeyManagementHandler(routing_node, key_manager)
+    handler = KeyManagementHandler(routing_node, key_manager, key_validator)
 
     # Mock envelope creation
     test_corr_id = "test-correlation-123"
@@ -154,8 +158,11 @@ async def test_correlation_cleanup_on_timeout():
     key_manager = MagicMock()
     key_manager.add_keys = AsyncMock()
 
+    # Create key validator
+    key_validator = NoopKeyValidator()
+
     # Create handler
-    handler = KeyManagementHandler(routing_node, key_manager)
+    handler = KeyManagementHandler(routing_node, key_manager, key_validator)
 
     # Mock envelope creation
     test_corr_id = "test-correlation-timeout-456"

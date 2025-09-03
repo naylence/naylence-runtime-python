@@ -112,7 +112,6 @@ class DefaultKeyManager(KeyManager):
         origin: DeliveryOriginType,
         skip_sid_validation: bool = False,  # New parameter for correlation routing
     ):
-        # from naylence.fame.security.cert.util import validate_jwk_x5c_certificate
         from naylence.fame.security.crypto.jwk_validation import (
             JWKValidationError,
             validate_jwk_complete,
@@ -121,20 +120,6 @@ class DefaultKeyManager(KeyManager):
         # Pre-validate all keys before processing
         valid_keys = []
         rejected_count = 0  # Get trust store configuration if available
-        trust_store_pem = None
-        try:
-            # Try to get trust store from environment or default configuration
-            import os
-
-            trust_store_pem = os.environ.get("FAME_TRUST_STORE_PATH")
-            if not trust_store_pem:
-                # Check for CA cert file which can serve as trust store
-                ca_cert_file = os.environ.get("FAME_CA_CERT_FILE")
-                if ca_cert_file:
-                    trust_store_pem = ca_cert_file
-        except Exception:
-            # If we can't get trust store config, proceed without trust store validation
-            pass
 
         for key in keys:
             try:
