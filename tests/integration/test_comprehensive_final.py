@@ -15,12 +15,14 @@ def test_reverse_connection_feature():
 
     # Create connector directives for reverse connections
     websocket_connector = {
-        "type": "WebSocketConnector",
-        "params": {"host": "callback.example.com", "port": 8080},
+        "type": "WebSocketConnectionGrant",
+        "purpose": "node_attach",
+        "url": "ws://callback.example.com:8080/ws",
     }
 
     http_connector = {
-        "type": "HttpStatelessConnector",
+        "type": "HttpConnectionGrant",
+        "purpose": "node_attach",
         "url": "http://callback.example.com:8081/outbox",
     }
 
@@ -29,12 +31,15 @@ def test_reverse_connection_feature():
 
     # Create NodeAttachFrame with reverse connection support
     frame = NodeAttachFrame(
-        system_id="downstream-system-123",
-        instance_id="downstream-instance-123",
-        supported_inbound_connectors=[websocket_connector, http_connector],
+        system_id="test-system-123",
+        instance_id="test-instance-456",
+        child_id="test-child-123",
+        physical_path="/test/path",
+        metadata={"test": "metadata"},
+        callback_grants=[websocket_connector, http_connector],
     )
 
-    print(f"✓ NodeAttachFrame created with {len(frame.supported_inbound_connectors)} connectors")
+    print(f"✓ NodeAttachFrame created with {len(frame.callback_grants)} connectors")
 
     # Test serialization of the complete frame
     try:
@@ -42,9 +47,9 @@ def test_reverse_connection_feature():
         print("✓ Frame serialization successful:")
         print(f"  System ID: {serialized['system_id']}")
         print(f"  Instance ID: {serialized['instance_id']}")
-        print(f"  Connectors: {len(serialized['supported_inbound_connectors'])}")
+        print(f"  Connectors: {len(serialized['callback_grants'])}")
 
-        for i, conn in enumerate(serialized["supported_inbound_connectors"]):
+        for i, conn in enumerate(serialized["callback_grants"]):
             print(f"    Connector {i + 1}: {conn['type']} - {conn['params']}")
 
         return True
@@ -65,13 +70,15 @@ def test_frame_deserialization():
     frame_data = {
         "system_id": "downstream-system-456",
         "instance_id": "downstream-instance-456",
-        "supported_inbound_connectors": [
+        "callback_grants": [
             {
-                "type": "WebSocketConnector",
-                "params": {"host": "ws.example.com", "port": 9090},
+                "type": "WebSocketConnectionGrant",
+                "purpose": "node_attach",
+                "url": "ws://ws.example.com:9090/ws",
             },
             {
-                "type": "HttpStatelessConnector",
+                "type": "HttpConnectionGrant",
+                "purpose": "node_attach",
                 "url": "http://http.example.com:9091/outbox",
             },
         ],
@@ -82,25 +89,19 @@ def test_frame_deserialization():
         print("✓ Frame deserialized successfully")
         print(f"  System ID: {frame.system_id}")
         print(f"  Instance ID: {frame.instance_id}")
-        print(f"  Connectors: {len(frame.supported_inbound_connectors)}")
+        print(f"  Connectors: {len(frame.callback_grants)}")
 
-        for i, conn in enumerate(frame.supported_inbound_connectors):
+        for i, conn in enumerate(frame.callback_grants):
             print(f"    Connector {i + 1}: {type(conn)} - {conn.type}")
 
         # Verify polymorphic types
-        from naylence.fame.connector.http_stateless_connector_factory import (
-            HttpStatelessConnectorConfig,
-        )
-        from naylence.fame.connector.websocket_connector_factory import (
-            WebSocketConnectorConfig,
-        )
+        from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
+        from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
 
-        ws_conn = frame.supported_inbound_connectors[0]
-        http_conn = frame.supported_inbound_connectors[1]
+        ws_conn = frame.callback_grants[0]
+        http_conn = frame.callback_grants[1]
 
-        if isinstance(ws_conn, WebSocketConnectorConfig) and isinstance(
-            http_conn, HttpStatelessConnectorConfig
-        ):
+        if isinstance(ws_conn, WebSocketConnectionGrant) and isinstance(http_conn, HttpConnectionGrant):
             print("✓ Polymorphic deserialization worked correctly!")
             return True
         else:
@@ -129,7 +130,7 @@ if __name__ == "__main__":
 
     if test1 and test2:
         print("\n🎉 SUCCESS! The reverse connection feature is fully implemented and working!")
-        print("   - NodeAttachFrame supports supported_inbound_connectors")
+        print("   - NodeAttachFrame supports callback_grants")
         print("   - ConnectorDirective polymorphic behavior works correctly")
         print("   - Serialization and deserialization both work")
         print("   - ResourceConfig validator issues have been resolved")

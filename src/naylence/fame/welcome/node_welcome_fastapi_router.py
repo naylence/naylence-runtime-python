@@ -34,7 +34,7 @@ def create_node_welcome_fastapi_router(
 
         # ① Perform authorization check
         if welcome_service.authorizer:
-            auth_result = await welcome_service.authorizer.authenticate(expected_audience, auth_header)
+            auth_result = await welcome_service.authorizer.authenticate(auth_header)
             if auth_result is None:
                 logger.warning(
                     "client_authentication_failed",

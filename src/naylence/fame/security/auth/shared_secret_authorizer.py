@@ -24,7 +24,6 @@ class SharedSecretAuthorizer(Authorizer):
 
     async def authenticate(
         self,
-        node: NodeLike,
         credentials: str | bytes,
     ) -> Optional[AuthorizationContext]:
         """Validate shared secret credentials."""

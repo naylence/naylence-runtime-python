@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, List, Optional, TypeVar
 
 from naylence.fame.factory import ResourceFactory, create_default_resource
 from naylence.fame.security.encryption.encryption_manager import EncryptionManager
@@ -16,6 +16,7 @@ from naylence.fame.security.signing.envelope_verifier import EnvelopeVerifier
 from .security_manager import SecurityManager
 
 if TYPE_CHECKING:
+    from naylence.fame.node.node_event_listener import NodeEventListener
     from naylence.fame.security.auth.authorizer import Authorizer
     from naylence.fame.security.cert.certificate_manager import CertificateManager
     from naylence.fame.security.keys.key_manager import KeyManager
@@ -43,6 +44,7 @@ class SecurityManagerFactory(ResourceFactory[SecurityManager, C]):
         authorizer: Optional[Authorizer] = None,
         certificate_manager: Optional[CertificateManager] = None,
         secure_channel_manager: Optional[SecureChannelManager] = None,
+        event_listeners: Optional[List[NodeEventListener]] = None,
     ) -> SecurityManager:
         from naylence.fame.security.security_manager_factory import (
             SecurityManagerFactory,
@@ -60,6 +62,7 @@ class SecurityManagerFactory(ResourceFactory[SecurityManager, C]):
             authorizer=authorizer,
             certificate_manager=certificate_manager,
             secure_channel_manager=secure_channel_manager,
+            event_listeners=event_listeners,
         )
 
         assert result is not None, "Failed to create SecurityManager instance"

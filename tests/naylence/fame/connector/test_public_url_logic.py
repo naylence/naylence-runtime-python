@@ -31,7 +31,7 @@ class MockHttpListener:
     def upstream_endpoint(self):
         return "/fame/v1/ingress/upstream"
 
-    def as_inbound_connector(self):
+    def as_callback_grant(self):
         """Return connector configuration for reverse connections."""
         if not self.base_url:
             return None
@@ -58,7 +58,7 @@ class MockWebSocketListener:
     def upstream_endpoint(self):
         return "/fame/v1/ingress/upstream/ws"
 
-    def as_inbound_connector(self):
+    def as_callback_grant(self):
         """Return connector configuration for reverse connections."""
         if not self.base_url:
             return None
@@ -84,7 +84,7 @@ def test_http_listener_with_public_url():
 def test_http_listener_connector_config():
     """Test HTTP listener generates correct connector configuration."""
     listener = MockHttpListener(public_url="https://api.example.com")
-    connector = listener.as_inbound_connector()
+    connector = listener.as_callback_grant()
 
     expected = {
         "type": "HttpStatelessConnector",
@@ -108,7 +108,7 @@ def test_websocket_listener_with_public_url():
 def test_websocket_listener_connector_config():
     """Test WebSocket listener generates correct connector configuration with protocol conversion."""
     listener = MockWebSocketListener(public_url="https://api.example.com")
-    connector = listener.as_inbound_connector()
+    connector = listener.as_callback_grant()
 
     expected = {
         "type": "WebSocketStatelessConnector",
@@ -120,7 +120,7 @@ def test_websocket_listener_connector_config():
 def test_websocket_http_to_ws_conversion():
     """Test WebSocket listener converts http:// to ws:// protocol."""
     listener = MockWebSocketListener(public_url="http://api.example.com")
-    connector = listener.as_inbound_connector()
+    connector = listener.as_callback_grant()
 
     expected = {
         "type": "WebSocketStatelessConnector",
@@ -155,8 +155,8 @@ def test_public_url_scenarios(public_url, expected_http, expected_ws):
     assert ws_listener.base_url == expected_http, f"WebSocket listener should use {expected_http} as base"
 
     # Check connector URLs
-    http_connector = http_listener.as_inbound_connector()
-    ws_connector = ws_listener.as_inbound_connector()
+    http_connector = http_listener.as_callback_grant()
+    ws_connector = ws_listener.as_callback_grant()
 
     expected_http_url = f"{expected_http}/fame/v1/ingress/upstream"
     expected_ws_url = f"{expected_ws}/fame/v1/ingress/upstream/ws"
@@ -174,5 +174,5 @@ def test_listener_without_base_url():
             return None
 
     listener = MockEmptyListener()
-    connector = listener.as_inbound_connector()
+    connector = listener.as_callback_grant()
     assert connector is None, "Should return None when no base URL available"

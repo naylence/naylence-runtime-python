@@ -5,9 +5,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from naylence.fame.connector.connector_selection_policy import (
-    ConnectorSelectionContext,
-    ConnectorSelectionPolicy,
+from naylence.fame.connector.grant_selection_policy import (
+    GrantSelectionContext,
+    GrantSelectionPolicy,
 )
 
 
@@ -17,53 +17,53 @@ def test_prefer_same_type_strategy():
 
     # Create mock NodeAttachFrame with HTTP and WebSocket connectors
     attach_frame = Mock()
-    attach_frame.supported_inbound_connectors = [
+    attach_frame.callback_grants = [
         {
             "config": {"port": 8080},
-            "type": "HttpStatelessConnector",
+            "type": "HttpConnectionGrant",
             "url": "http://localhost:8080",
         },
         {
             "config": {"port": 8081},
-            "type": "WebSocketConnector",
+            "type": "WebSocketConnectionGrant",
             "params": {"host": "localhost", "port": 8081},
         },
     ]
 
-    policy = ConnectorSelectionPolicy()
+    policy = GrantSelectionPolicy()
 
     # Create mock node
     mock_node = Mock()
 
     # Test with HTTP inbound context
-    http_context = ConnectorSelectionContext(
+    http_context = GrantSelectionContext(
         child_id="test-child",
-        inbound_connector_type="HttpStatelessConnector",
+        callback_grant_type="HttpConnectionGrant",
         attach_frame=attach_frame,
         node=mock_node,
     )
 
-    result = policy.select_connector(http_context)
+    result = policy.select_callback_grant(http_context)
 
     # Should prefer HTTP since it matches inbound type
-    assert result.connector_config.type == "HttpStatelessConnector"
+    assert result.grant.type == "HttpConnectionGrant"
     assert "Matching inbound connector type" in result.selection_reason
     assert not result.fallback_used
 
     print("✅ HTTP preference test passed")
 
     # Test with WebSocket inbound context
-    ws_context = ConnectorSelectionContext(
+    ws_context = GrantSelectionContext(
         child_id="test-child",
-        inbound_connector_type="WebSocketConnector",
+        callback_grant_type="WebSocketConnectionGrant",
         attach_frame=attach_frame,
         node=mock_node,
     )
 
-    result = policy.select_connector(ws_context)
+    result = policy.select_callback_grant(ws_context)
 
     # Should prefer WebSocket since it matches inbound type
-    assert result.connector_config.type == "WebSocketConnector"
+    assert result.grant.type == "WebSocketConnectionGrant"
     assert "Matching inbound connector type" in result.selection_reason
     assert not result.fallback_used
 
@@ -76,29 +76,29 @@ def test_prefer_http_strategy():
 
     # Create mock NodeAttachFrame with only WebSocket
     attach_frame = Mock()
-    attach_frame.supported_inbound_connectors = [
+    attach_frame.callback_grants = [
         {
             "config": {"port": 8081},
-            "type": "WebSocketConnector",
+            "type": "WebSocketConnectionGrant",
             "params": {"host": "localhost", "port": 8081},
         }
     ]
 
-    policy = ConnectorSelectionPolicy()
+    policy = GrantSelectionPolicy()
     mock_node = Mock()
 
     # Test with HTTP inbound context (but only websocket available)
-    http_context = ConnectorSelectionContext(
+    http_context = GrantSelectionContext(
         child_id="test-child",
-        inbound_connector_type="HttpStatelessConnector",
+        callback_grant_type="HttpConnectionGrant",
         attach_frame=attach_frame,
         node=mock_node,
     )
 
-    result = policy.select_connector(http_context)
+    result = policy.select_callback_grant(http_context)
 
     # Should select websocket since that's all that's available
-    assert result.connector_config.type == "WebSocketConnector"
+    assert result.grant.type == "WebSocketConnectionGrant"
     # Note: The actual implementation may not mark this as fallback
     # since it's the client's first preference
 
@@ -111,34 +111,34 @@ def test_client_preference_strategy():
 
     # Create mock NodeAttachFrame with multiple connectors
     attach_frame = Mock()
-    attach_frame.supported_inbound_connectors = [
+    attach_frame.callback_grants = [
         {
             "config": {"port": 8080},
-            "type": "HttpStatelessConnector",
+            "type": "HttpConnectionGrant",
             "url": "http://localhost:8080",
         },
         {
             "config": {"port": 8081},
-            "type": "WebSocketConnector",
+            "type": "WebSocketConnectionGrant",
             "params": {"host": "localhost", "port": 8081},
         },
     ]
 
-    policy = ConnectorSelectionPolicy()
+    policy = GrantSelectionPolicy()
     mock_node = Mock()
 
     # Test with HTTP inbound context - should prefer HTTP
-    context = ConnectorSelectionContext(
+    context = GrantSelectionContext(
         child_id="test-child",
-        inbound_connector_type="HttpStatelessConnector",
+        callback_grant_type="HttpConnectionGrant",
         attach_frame=attach_frame,
         node=mock_node,
     )
 
-    result = policy.select_connector(context)
+    result = policy.select_callback_grant(context)
 
     # Should select HTTP since it matches inbound type
-    assert result.connector_config.type == "HttpStatelessConnector"
+    assert result.grant.type == "HttpConnectionGrant"
     assert not result.fallback_used
 
     print("✅ Multiple connector selection test passed")
@@ -150,20 +150,20 @@ def test_no_suitable_connector():
 
     # Create mock NodeAttachFrame with empty connectors
     attach_frame = Mock()
-    attach_frame.supported_inbound_connectors = []
+    attach_frame.callback_grants = []
 
-    policy = ConnectorSelectionPolicy()
+    policy = GrantSelectionPolicy()
     mock_node = Mock()
 
-    context = ConnectorSelectionContext(
+    context = GrantSelectionContext(
         child_id="test-child",
-        inbound_connector_type="HttpStatelessConnector",
+        callback_grant_type="HttpConnectionGrant",
         attach_frame=attach_frame,
         node=mock_node,
     )
 
     with pytest.raises(ValueError) as exc_info:
-        policy.select_connector(context)
+        policy.select_callback_grant(context)
 
     assert "No suitable connector found" in str(exc_info.value)
     assert "test-child" in str(exc_info.value)
@@ -177,43 +177,26 @@ def test_unknown_connector_type():
 
     # Create mock NodeAttachFrame with unsupported connector type
     attach_frame = Mock()
-    attach_frame.supported_inbound_connectors = [
-        {"config": {"port": 9999}, "type": "UnsupportedConnectorType"}
-    ]
+    attach_frame.callback_grants = [{"config": {"port": 9999}, "type": "UnsupportedConnectorType"}]
 
-    policy = ConnectorSelectionPolicy()
+    policy = GrantSelectionPolicy()
     mock_node = Mock()
 
-    context = ConnectorSelectionContext(
+    context = GrantSelectionContext(
         child_id="test-child",
-        inbound_connector_type="HttpStatelessConnector",
+        callback_grant_type="HttpConnectionGrant",
         attach_frame=attach_frame,
         node=mock_node,
     )
 
     # Should raise error since no strategy can handle the unsupported type
     with pytest.raises(ValueError) as exc_info:
-        policy.select_connector(context)
+        policy.select_callback_grant(context)
 
     assert "No suitable connector found" in str(exc_info.value)
     assert "UnsupportedConnectorType" in str(exc_info.value)
 
     print("✅ Unsupported connector type test passed")
-
-    context = ConnectorSelectionContext(
-        child_id="test-child",
-        inbound_connector_type="HttpStatelessConnector",
-        attach_frame=attach_frame,
-        node=mock_node,
-    )
-
-    with pytest.raises(ValueError) as exc_info:
-        policy.select_connector(context)
-
-    assert "No suitable connector found" in str(exc_info.value)
-    assert "test-child" in str(exc_info.value)
-
-    print("✅ Empty connector list error test passed")
 
 
 if __name__ == "__main__":

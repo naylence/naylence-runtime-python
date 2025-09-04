@@ -149,7 +149,7 @@ async def test_oauth2_authorizer_authorization_flow():
         target_node = MockNodeLike(physical_path="fame-sentinel")
 
         # First authenticate to get auth context
-        auth_context = await authorizer.authenticate(target_node, "mock-jwt-token")
+        auth_context = await authorizer.authenticate("mock-jwt-token")
         assert auth_context is not None
 
         # Then validate the node attach request

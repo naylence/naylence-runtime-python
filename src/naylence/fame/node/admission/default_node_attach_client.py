@@ -52,7 +52,7 @@ class DefaultNodeAttachClient(NodeAttachClient):
         welcome_frame: NodeWelcomeFrame,
         final_handler: FameEnvelopeHandler,
         keys: Optional[list[dict]] = None,
-        supported_inbound_connectors: Optional[List[dict[str, Any]]] = None,
+        callback_grants: Optional[List[dict[str, Any]]] = None,
     ) -> AttachInfo:
         self._in_handshake = True
 
@@ -78,7 +78,7 @@ class DefaultNodeAttachClient(NodeAttachClient):
             capabilities=welcome_frame.accepted_capabilities,
             accepted_logicals=welcome_frame.accepted_logicals,
             keys=keys,
-            supported_inbound_connectors=supported_inbound_connectors,
+            callback_grants=callback_grants,
         )
         corr_id = generate_id()
         # Opaque stickiness offer via explicitly provided ReplicaStickinessManager, if any

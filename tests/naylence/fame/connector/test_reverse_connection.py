@@ -55,7 +55,7 @@ async def test_direct_admission_client_with_reverse_connections():
     print("✓ DirectAdmissionClient correctly generates welcome frames")
 
     # Note: supported_inbound_connectors are now handled by the node's
-    # transport listeners via gather_supported_inbound_connectors()
+    # transport listeners via gather_supported_callback_grants()
 
     return client
 

@@ -101,7 +101,7 @@ class WebSocketListener(TransportListener, NodeEventListener):
         # HTTP server lifecycle is managed externally
         pass
 
-    def get_connector_descriptor(self) -> Optional[Any]:
+    def get_callback_grant(self) -> Optional[Any]:
         """Get connector descriptor for this listener."""
         return {
             "type": "WebSocketListener",
@@ -110,7 +110,7 @@ class WebSocketListener(TransportListener, NodeEventListener):
             "port": self.advertised_port,
         }
 
-    def as_inbound_connector(self) -> Optional[dict[str, Any]]:
+    def as_callback_grant(self) -> Optional[dict[str, Any]]:
         """Return connector configuration for reverse connections."""
         if not self.base_url:
             return None
@@ -258,7 +258,7 @@ class WebSocketListener(TransportListener, NodeEventListener):
                         # First phase: authentication (token validation)
                         # Pass the token as an Authorization header for consistency with HTTP
                         auth_header = f"Bearer {token}" if token else ""
-                        auth_result = await authorizer.authenticate(self._node.physical_path, auth_header)
+                        auth_result = await authorizer.authenticate(auth_header)
 
                         if auth_result is None:
                             logger.warning(

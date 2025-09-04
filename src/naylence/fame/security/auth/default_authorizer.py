@@ -10,6 +10,7 @@ from naylence.fame.core import (
     NodeAttachFrame,
 )
 from naylence.fame.node.node_context import FameNodeAuthorizationContext
+from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.node_like import NodeLike
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.auth.token_verifier import TokenVerifier
@@ -19,10 +20,11 @@ from naylence.fame.util.logging import getLogger
 logger = getLogger(__name__)
 
 
-class DefaultAuthorizer(Authorizer, TokenVerifierProvider):
+class DefaultAuthorizer(NodeEventListener, Authorizer, TokenVerifierProvider):
     def __init__(self, token_verifier: Optional[TokenVerifier] = None):
         super().__init__()
         self._token_verifier = token_verifier
+        self._node: NodeLike | None = None
 
     @property
     def token_verifier(self) -> TokenVerifier:
@@ -31,9 +33,11 @@ class DefaultAuthorizer(Authorizer, TokenVerifierProvider):
             raise RuntimeError("Token verifier is not initialized")
         return self._token_verifier
 
+    async def on_node_started(self, node: NodeLike) -> None:
+        self._node = node
+
     async def authenticate(
         self,
-        audience: Optional[str],
         credentials: str | bytes,
     ) -> Optional[AuthorizationContext]:
         """Authenticate using JWT token with custom Fame claims."""
@@ -55,7 +59,7 @@ class DefaultAuthorizer(Authorizer, TokenVerifierProvider):
         try:
             raw_claims = await self._token_verifier.verify(
                 str(token),
-                expected_audience=audience,
+                expected_audience=self._node.physical_path if self._node else None,
             )
 
             # Create authorization context with Fame-specific claims

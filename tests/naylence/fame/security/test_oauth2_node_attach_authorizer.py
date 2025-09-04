@@ -63,7 +63,7 @@ async def test_oauth2_node_attach_authorizer_success():
     target_node = MockNodeLike(physical_path="fame-sentinel")
 
     # First authenticate to get auth context
-    auth_context = await authorizer.authenticate(target_node, "mock-jwt-token")
+    auth_context = await authorizer.authenticate("mock-jwt-token")
     assert auth_context is not None
 
     # Then validate the node attach request
@@ -144,7 +144,7 @@ async def test_oauth2_node_attach_authorizer_no_scope_requirement():
     target_node = MockNodeLike(physical_path="fame-sentinel")
 
     # First authenticate to get auth context
-    auth_context = await authorizer.authenticate(target_node, "mock-jwt-token")
+    auth_context = await authorizer.authenticate("mock-jwt-token")
     assert auth_context is not None
 
     # Then validate the node attach request - should succeed despite different scopes
@@ -177,10 +177,10 @@ async def test_oauth2_node_attach_authorizer_token_verification_failure():
     )
 
     # Create mock node
-    target_node = MockNodeLike(physical_path="fame-sentinel")
+    MockNodeLike(physical_path="fame-sentinel")
 
     # Try to authenticate with invalid token - should fail
-    auth_context = await authorizer.authenticate(target_node, "mock-jwt-token")
+    auth_context = await authorizer.authenticate("mock-jwt-token")
     assert auth_context is None
 
 
@@ -204,10 +204,10 @@ async def test_oauth2_node_attach_authorizer_missing_token():
     )
 
     # Create mock node
-    target_node = MockNodeLike(physical_path="fame-sentinel")
+    MockNodeLike(physical_path="fame-sentinel")
 
     # Try to authenticate with empty token - should fail
-    auth_context = await authorizer.authenticate(target_node, "")
+    auth_context = await authorizer.authenticate("")
     assert auth_context is None
 
 
@@ -264,7 +264,7 @@ async def test_oauth2_node_attach_authorizer_invalid_frame_type():
 
     # Create mock node and auth context
     target_node = MockNodeLike(physical_path="fame-sentinel")
-    await authorizer.authenticate(target_node, "mock-jwt-token")
+    await authorizer.authenticate("mock-jwt-token")
 
     # Create invalid frame type
     invalid_frame = MagicMock()
@@ -341,7 +341,7 @@ async def test_oauth2_node_attach_authorizer_with_multiple_required_scopes():
     target_node = MockNodeLike(physical_path="fame-sentinel")
 
     # First authenticate to get auth context
-    auth_context = await authorizer.authenticate(target_node, "mock-jwt-token")
+    auth_context = await authorizer.authenticate("mock-jwt-token")
     assert auth_context is not None
 
     # Should succeed because token has "node.read" which is in allowed scopes
@@ -418,8 +418,11 @@ async def test_oauth2_node_attach_authorizer_default_audience_to_target_system_i
 
     target_node = MockNodeLike(physical_path="/test/system/path")
 
+    # Simulate the NodeEventListener callback - this is required in the new architecture
+    await authorizer.on_node_started(target_node)
+
     # First authenticate to get auth context
-    auth_context = await authorizer.authenticate(target_node, "valid.jwt.token")
+    auth_context = await authorizer.authenticate("valid.jwt.token")
     assert auth_context is not None
 
     # Then validate the node attach request
@@ -477,7 +480,7 @@ async def test_oauth2_node_attach_authorizer_configured_audience_overrides_defau
     target_node = MockNodeLike(physical_path="/test/system/path")
 
     # First authenticate to get auth context
-    auth_context = await authorizer.authenticate(target_node, "valid.jwt.token")
+    auth_context = await authorizer.authenticate("valid.jwt.token")
     assert auth_context is not None
 
     # Then validate the node attach request

@@ -2,9 +2,6 @@
 
 import pytest
 
-from naylence.fame.grants.connection_grant import (
-    ConnectionGrant,
-)
 from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
 from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
 from naylence.fame.security.auth.auth_injection_strategy_factory import AuthInjectionStrategyConfig
@@ -15,9 +12,14 @@ class TestConnectionGrants:
 
     def test_connection_grant_base_class(self):
         """Test basic ConnectionGrant functionality."""
-        grant = ConnectionGrant(type="TestConnector", purpose="test.purpose")
+        # Since ConnectionGrant is abstract, we'll test with a concrete implementation
+        grant = HttpConnectionGrant(type="TestConnector", purpose="test.purpose", url="http://test.com")
         assert grant.type == "TestConnector"
         assert grant.purpose == "test.purpose"
+
+        # Test that the abstract method is implemented
+        assert hasattr(grant, "to_connector_config")
+        assert callable(grant.to_connector_config)
 
     def test_websocket_connection_grant(self):
         """Test WebSocketConnectionGrant."""

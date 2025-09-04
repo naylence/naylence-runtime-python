@@ -25,18 +25,18 @@ class TransportListener(ABC):
         """Called when the node is stopping."""
         pass
 
-    def get_connector_descriptor(self) -> Optional[dict[str, Any]]:
+    def get_callback_grant(self) -> Optional[dict[str, Any]]:
         """
-        Return a descriptor that can be used to create inbound connectors
+        Return a descriptor that can be used to create callback grants
         for this listener. This will be used to automatically derive
-        supported_inbound_connectors for admission.
+        callback_grants in NodeAttachFrame for reverse admission.
 
         Returns:
             Dictionary containing connector type and configuration
         """
         return None
 
-    def as_inbound_connector(self) -> Optional[dict[str, Any]]:
+    def as_callback_grant(self) -> Optional[dict[str, Any]]:
         """
         Return a connector configuration that can be used by parents to connect
         to this listener for reverse connections.
@@ -44,4 +44,4 @@ class TransportListener(ABC):
         Returns:
             Dictionary with connector configuration or None if not supported
         """
-        return self.get_connector_descriptor()
+        return self.get_callback_grant()

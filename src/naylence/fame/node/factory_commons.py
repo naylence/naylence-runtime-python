@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
@@ -25,7 +25,9 @@ from naylence.fame.tracking.delivery_tracker_factory import DeliveryTrackerFacto
 from naylence.fame.util.logging import getLogger
 
 if TYPE_CHECKING:
+    from naylence.fame.node.node_event_listener import NodeEventListener
     from naylence.fame.security.security_manager import SecurityManager
+
 
 logger = getLogger(__name__)
 
@@ -155,7 +157,9 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     else:
         key_validator = await create_default_resource(AttachmentKeyValidatorFactory)
 
-    security_manager = await create_security_manager(cfg, key_store=key_store, key_validator=key_validator)
+    security_manager = await create_security_manager(
+        cfg, key_store=key_store, key_validator=key_validator, event_listeners=event_listeners
+    )
 
     # security_requirements = security_manager.policy.requirements()
     # if key_validator is None and (
@@ -199,7 +203,11 @@ async def create_delivery_tracker(cfg: FameNodeConfig) -> Optional[DeliveryTrack
 
 
 async def create_security_manager(
-    cfg: FameNodeConfig, key_store, authorizer=None, key_validator: Optional[AttachmentKeyValidator] = None
+    cfg: FameNodeConfig,
+    key_store,
+    authorizer=None,
+    key_validator: Optional[AttachmentKeyValidator] = None,
+    event_listeners: Optional[List[NodeEventListener]] = None,
 ) -> SecurityManager:
     """Create SecurityManager using the factory pattern.
 
@@ -216,7 +224,11 @@ async def create_security_manager(
 
     if cfg.security is not None:
         return await create_resource(
-            SecurityManagerFactory, cfg.security, key_validator=key_validator, key_store=key_store
+            SecurityManagerFactory,
+            cfg.security,
+            key_validator=key_validator,
+            key_store=key_store,
+            event_listeners=event_listeners,
         )
 
     # Create with default implementation, optionally with authorizer

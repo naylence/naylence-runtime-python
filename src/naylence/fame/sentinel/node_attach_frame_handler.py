@@ -308,7 +308,7 @@ class NodeAttachFrameHandler(TaskSpawner):
                     attach_expires_at=attach_expires_at,
                     metadata={},  # No auth metadata since authorization is now centralized
                     durable=connector_config.durable,
-                    supported_inbound_connectors=frame.supported_inbound_connectors,
+                    callback_grants=frame.callback_grants,
                 ),
             )
 

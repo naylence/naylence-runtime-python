@@ -58,7 +58,7 @@ async def test_websocket_listener_lifecycle():
         print("✓ Node started event handled")
 
         # Verify connector descriptor
-        descriptor = listener.get_connector_descriptor()
+        descriptor = listener.get_callback_grant()
         assert descriptor is not None
         assert descriptor["type"] == "WebSocketListener"
         print(f"✓ Connector descriptor: {descriptor}")

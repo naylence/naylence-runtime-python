@@ -4,11 +4,12 @@ Factory for creating DefaultSecurityManager instances.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from pydantic import Field
 
 from naylence.fame.factory import create_resource
+from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.security.encryption.encryption_manager import EncryptionManager
 from naylence.fame.security.encryption.secure_channel_manager import (
     SecureChannelManager,
@@ -108,14 +109,20 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
             "secure_channel_manager": effective_config.get("secure_channel_manager")
             or kwargs.get("secure_channel_manager"),
             "key_validator": effective_config.get("key_validator") or kwargs.get("key_validator"),
+            "event_listeners": kwargs.get("event_listeners"),
         }
 
         # Handle special case: authorizer as config dict needs to be created
+        event_listeners: Optional[List[NodeEventListener]] = provided_components.get("event_listeners")
         authorizer = provided_components["authorizer"]
         if isinstance(authorizer, dict):
             from naylence.fame.security.auth.authorizer_factory import AuthorizerFactory
 
-            provided_components["authorizer"] = await create_resource(AuthorizerFactory, authorizer)
+            authorizer = provided_components["authorizer"] = await create_resource(
+                AuthorizerFactory, authorizer
+            )
+            if event_listeners is not None and isinstance(authorizer, NodeEventListener):
+                event_listeners.append(authorizer)
 
         # Delegate all component creation and assembly to _create_security_manager
         return await self._create_security_manager(config=effective_config, **provided_components)
@@ -481,6 +488,7 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
         authorizer: Optional[Authorizer] = None,
         certificate_manager: Optional[CertificateManager] = None,
         secure_channel_manager: Optional[SecureChannelManager] = None,
+        event_listeners: Optional[List[NodeEventListener]] = None,
     ) -> SecurityManager:
         """
         Create SecurityManager with components created from config or auto-created defaults.
@@ -533,6 +541,8 @@ class DefaultSecurityManagerFactory(SecurityManagerFactory):
 
         if authorizer is None:
             authorizer = await cls._create_authorizer_from_config(config, policy)
+            if event_listeners is not None and isinstance(authorizer, NodeEventListener):
+                event_listeners.append(authorizer)
 
         if certificate_manager is None:
             certificate_manager = await cls._create_certificate_manager_from_config(config, policy)

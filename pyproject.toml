@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.1.83"
+version = "0.1.84"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -39,7 +39,7 @@ httpx = "^0.28.1"
 structlog = "^25.3.0"
 cryptography = "^45.0.6"
 pyjwt = "^2.10.1"
-naylence-core = "^0.1.17"
+naylence-core = "^0.1.18"
 fastapi = "^0.116.1"
 uvicorn = "^0.35.0"
 python-multipart = "^0.0.20"

@@ -20,7 +20,6 @@ class Authorizer(Protocol):
 
     async def authenticate(
         self,
-        audience: Optional[str],
         credentials: str | bytes,
     ) -> Optional[AuthorizationContext]: ...
 

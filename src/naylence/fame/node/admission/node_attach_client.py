@@ -42,7 +42,7 @@ class NodeAttachClient(Protocol):
         welcome_frame: NodeWelcomeFrame,
         final_handler: FameEnvelopeHandler,
         keys: Optional[list[dict]] = None,
-        supported_inbound_connectors: Optional[List[dict[str, Any]]] = None,
+        callback_grants: Optional[List[dict[str, Any]]] = None,
     ) -> AttachInfo:
         """
         Perform the attach handshake.
@@ -51,7 +51,7 @@ class NodeAttachClient(Protocol):
         :param welcome: The NodeWelcomeFrame from admission phase.
         :param final_handler: Your node's post-handshake FameHandler.
         :param keys: Optional list of keys for authentication.
-        :param supported_inbound_connectors: Optional list of connector directives
+        :param callback_grants: Optional list of callback grants
                for reverse connections that upstream can use to connect back.
         :returns: AttachInfo containing system_id, paths, and the connector.
         :raises: on timeout or non-success ACK

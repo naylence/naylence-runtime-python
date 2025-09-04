@@ -61,7 +61,7 @@ class MockNode:
     def add_transport_listener(self, listener):
         self.transport_listeners.append(listener)
 
-    def gather_supported_inbound_connectors(self):
+    def gather_supported_callback_grants(self):
         """Gather connectors from all transport listeners."""
         connectors = []
         for listener in self.transport_listeners:
@@ -123,7 +123,7 @@ async def test_dynamic_connector_setup_integration():
 
     # DirectAdmissionClient no longer implements NodeEventListener,
     # so we test that the node can discover connectors from its transport listeners
-    discovered_connectors = node.gather_supported_inbound_connectors()
+    discovered_connectors = node.gather_supported_callback_grants()
     assert discovered_connectors is not None, "Should have discovered connectors"
     assert len(discovered_connectors) > 0, "Should discover connectors"
 
@@ -151,7 +151,7 @@ async def test_multiple_transport_listeners():
     node.add_transport_listener(ws_listener)
 
     # Test connector discovery
-    connectors = node.gather_supported_inbound_connectors()
+    connectors = node.gather_supported_callback_grants()
 
     # Should discover both HTTP and WebSocket connectors
     connector_types = [c.get("connector_type") for c in connectors]
@@ -219,7 +219,7 @@ async def test_admission_client_connector_usage():
     DirectAdmissionClient(connection_grants=connection_grants)
 
     # Test that admission client can work with discovered connectors
-    connectors = node.gather_supported_inbound_connectors()
+    connectors = node.gather_supported_callback_grants()
 
     # Admission client should be able to use these connectors
     # (Actual usage depends on implementation details)
@@ -241,7 +241,7 @@ def test_connector_configuration_compatibility():
     node.add_transport_listener(http_listener)
 
     # Discover connectors
-    connectors = node.gather_supported_inbound_connectors()
+    connectors = node.gather_supported_callback_grants()
 
     # Check that connectors have expected format
     for connector in connectors:
@@ -266,7 +266,7 @@ async def test_error_handling_in_discovery():
 
     # Create a listener that might fail
     class FailingListener:
-        def gather_supported_inbound_connectors(self):
+        def gather_supported_callback_grants(self):
             raise Exception("Discovery failed")
 
     failing_listener = FailingListener()
@@ -279,7 +279,7 @@ async def test_error_handling_in_discovery():
 
     # Discovery should handle failures gracefully
     try:
-        connectors = node.gather_supported_inbound_connectors()
+        connectors = node.gather_supported_callback_grants()
         # Should get connectors from working listener despite failure
         print(f"✓ Discovery resilient to failures, got {len(connectors)} connectors")
     except Exception as e:

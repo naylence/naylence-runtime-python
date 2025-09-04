@@ -29,9 +29,9 @@ class RouteEntry(BaseModel):
         description="Arbitrary extra metadata (e.g. capabilities, source info)",
     )
 
-    supported_inbound_connectors: Optional[List[dict[str, Any]]] = Field(
+    callback_grants: Optional[List[dict[str, Any]]] = Field(
         default=None,
-        description="List of inbound connector directives the child supports for reverse connections",
+        description="List of inbound connector grants the child supports for reverse connections",
     )
 
 

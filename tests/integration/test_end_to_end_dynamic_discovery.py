@@ -21,7 +21,7 @@ class MockNode:
         self.admission_client = admission_client
         self.event_listeners = event_listeners or []
 
-    def gather_supported_inbound_connectors(self):
+    def gather_supported_callback_grants(self):
         """Gather connectors from transport listeners."""
         result = []
 
@@ -70,7 +70,7 @@ async def test_end_to_end_dynamic_discovery():
     node = MockNode(admission_client=admission_client)
 
     # Test connector discovery
-    connectors = node.gather_supported_inbound_connectors()
+    connectors = node.gather_supported_callback_grants()
 
     assert len(connectors) >= 2, "Should discover multiple connectors"
 
@@ -137,7 +137,7 @@ def test_discovery_configuration_validation():
     node = MockNode()
 
     # Discover connectors
-    connectors = node.gather_supported_inbound_connectors()
+    connectors = node.gather_supported_callback_grants()
 
     for connector in connectors:
         # Validate connector structure
@@ -180,7 +180,7 @@ async def test_admission_client_factory_integration():
     node = MockNode(admission_client=admission_client)
 
     # Test that admission client can work with discovered connectors
-    connectors = node.gather_supported_inbound_connectors()
+    connectors = node.gather_supported_callback_grants()
 
     # Admission client should be able to process these connectors
     for connector in connectors:
@@ -202,10 +202,10 @@ async def test_discovery_error_recovery():
     class PartiallyFailingNode(MockNode):
         """Node that fails some discovery operations."""
 
-        def gather_supported_inbound_connectors(self):
+        def gather_supported_callback_grants(self):
             # Return partial results even if some discovery fails
             try:
-                connectors = super().gather_supported_inbound_connectors()
+                connectors = super().gather_supported_callback_grants()
                 # Simulate partial failure - remove one connector
                 return connectors[:1]  # Return only first connector
             except Exception:
@@ -214,7 +214,7 @@ async def test_discovery_error_recovery():
 
     # Test with partially failing node
     node = PartiallyFailingNode()
-    connectors = node.gather_supported_inbound_connectors()
+    connectors = node.gather_supported_callback_grants()
 
     # Should get at least some connectors despite failures
     print(f"✓ Error recovery: got {len(connectors)} connectors despite failures")

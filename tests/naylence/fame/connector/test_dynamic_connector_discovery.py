@@ -56,7 +56,7 @@ def test_http_listener_discovery():
     HttpListener(http_server=mock_server)
 
     # Mock the connector discovery since HttpListener doesn't have this method
-    # In reality, this would be provided by the node's gather_supported_inbound_connectors
+    # In reality, this would be provided by the node's gather_supported_callback_grants
     def mock_gather_connectors():
         return [
             {

@@ -92,7 +92,7 @@ class MockNode:
         # For testing purposes, we just simulate event dispatch without actual listeners
         pass
 
-    def gather_supported_inbound_connectors(self) -> list[dict[str, Any]]:
+    def gather_supported_callback_grants(self) -> list[dict[str, Any]]:
         """Mock implementation that returns empty list of connectors."""
         # For test purposes, return empty list since mock nodes don't have real transport listeners
         return []
@@ -231,7 +231,7 @@ class MockAttachClient:
         welcome_frame,
         final_handler,
         keys=None,
-        supported_inbound_connectors=None,
+        callback_grants=None,
     ) -> AttachInfo:
         attach_expires_at = datetime.now(timezone.utc) + timedelta(seconds=self.ttl_sec)
 

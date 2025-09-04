@@ -178,6 +178,7 @@ class HttpStatelessConnectorFactory(ConnectorFactory):
     async def create(
         self,
         config: Optional[HttpStatelessConnectorConfig | dict[str, Any]] = None,
+        system_id: Optional[str] = None,
         **kwargs: Dict[str, Any],
     ) -> FameConnector:
         # Check if we're being passed an existing connector (transport primitive pattern)
@@ -204,11 +205,16 @@ class HttpStatelessConnectorFactory(ConnectorFactory):
         if not url:
             raise ValueError("url is required in config params")
 
+        if system_id:
+            final_url = url + f"/{system_id}"
+        else:
+            final_url = url
+
         max_queue = config.max_queue or 1024
 
         # Create connector first
         connector = HttpStatelessConnector(
-            url=url,
+            url=final_url,
             max_queue=max_queue,
         )
 

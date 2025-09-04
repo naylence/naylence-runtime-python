@@ -186,24 +186,24 @@ class TestHttpListenerComprehensive:
         await http_listener.stop()
         # No assertions needed as this is primarily cleanup
 
-    def test_as_inbound_connector_no_base_url(self, http_listener):
-        """Test as_inbound_connector when no base URL available."""
+    def test_as_callback_grant_no_base_url(self, http_listener):
+        """Test as_callback_grant when no base URL available."""
         http_listener._http_server.actual_base_url = None
 
-        result = http_listener.as_inbound_connector()
+        result = http_listener.as_callback_grant()
 
         assert result is None
 
-    def test_as_inbound_connector_basic(self, http_listener):
-        """Test as_inbound_connector with basic configuration."""
-        result = http_listener.as_inbound_connector()
+    def test_as_callback_grant_basic(self, http_listener):
+        """Test as_callback_grant with basic configuration."""
+        result = http_listener.as_callback_grant()
 
         assert result is not None
         assert result["url"] == "http://localhost:8080/fame/v1/ingress/upstream"
         assert "auth" in result
 
-    def test_as_inbound_connector_with_reverse_auth(self, http_listener, mock_node, mock_authorizer):
-        """Test as_inbound_connector with reverse authorization."""
+    def test_as_callback_grant_with_reverse_auth(self, http_listener, mock_node, mock_authorizer):
+        """Test as_callback_grant with reverse authorization."""
         # Set up node with security manager
         mock_security_manager = Mock()
         mock_security_manager.authorizer = mock_authorizer
@@ -215,13 +215,13 @@ class TestHttpListenerComprehensive:
         mock_auth_config = NoAuthInjectionStrategyConfig()
         mock_authorizer.create_reverse_authorization_config.return_value = mock_auth_config
 
-        result = http_listener.as_inbound_connector()
+        result = http_listener.as_callback_grant()
 
         assert result is not None
         mock_authorizer.create_reverse_authorization_config.assert_called_once_with(mock_node)
 
-    def test_as_inbound_connector_reverse_auth_failure(self, http_listener, mock_node, mock_authorizer):
-        """Test as_inbound_connector when reverse auth creation fails."""
+    def test_as_callback_grant_reverse_auth_failure(self, http_listener, mock_node, mock_authorizer):
+        """Test as_callback_grant when reverse auth creation fails."""
         # Set up node with security manager
         mock_security_manager = Mock()
         mock_security_manager.authorizer = mock_authorizer
@@ -231,13 +231,13 @@ class TestHttpListenerComprehensive:
         # Mock reverse auth config to raise exception
         mock_authorizer.create_reverse_authorization_config.side_effect = Exception("Auth failed")
 
-        result = http_listener.as_inbound_connector()
+        result = http_listener.as_callback_grant()
 
         assert result is not None
         # Should fall back to NoAuth
 
-    def test_as_inbound_connector_no_reverse_auth_method(self, http_listener, mock_node):
-        """Test as_inbound_connector when authorizer has no reverse auth method."""
+    def test_as_callback_grant_no_reverse_auth_method(self, http_listener, mock_node):
+        """Test as_callback_grant when authorizer has no reverse auth method."""
         # Set up node with security manager but authorizer without reverse auth
         mock_security_manager = Mock()
         mock_authorizer = Mock()
@@ -246,7 +246,7 @@ class TestHttpListenerComprehensive:
         mock_node.security_manager = mock_security_manager
         http_listener._node = mock_node
 
-        result = http_listener.as_inbound_connector()
+        result = http_listener.as_callback_grant()
 
         assert result is not None
         # Should use NoAuth
@@ -416,7 +416,7 @@ class TestHttpListenerComprehensive:
     ):
         """Test upstream endpoint with successful authentication."""
         # Set up auth result
-        auth_result = AuthorizationContext(system_id="test-system")
+        auth_result = AuthorizationContext(authenticated=False, authorized=False, principal="test-system")
         mock_authorizer.authenticate.return_value = auth_result
 
         # Set up upstream connector
@@ -450,7 +450,7 @@ class TestHttpListenerComprehensive:
         )
 
         assert response.status_code == 202
-        mock_authorizer.authenticate.assert_called_once_with(mock_node.physical_path, "Bearer token123")
+        mock_authorizer.authenticate.assert_called_once_with("Bearer token123")
 
         # Verify the connector received a FameChannelMessage with authorization context
         mock_connector.push_to_receive.assert_called_once()
@@ -596,7 +596,7 @@ class TestHttpListenerComprehensive:
             attach_frame = NodeAttachFrame(
                 system_id="test-child",
                 instance_id="test-instance",
-                supported_inbound_connectors=[],
+                callback_grants=[],
             )
             envelope = FameEnvelope(frame=attach_frame)
 
@@ -628,7 +628,7 @@ class TestHttpListenerComprehensive:
         attach_frame = NodeAttachFrame(
             system_id="different-child",
             instance_id="test-instance",
-            supported_inbound_connectors=[],
+            callback_grants=[],
         )
         envelope = FameEnvelope(frame=attach_frame)
 
@@ -665,7 +665,7 @@ class TestHttpListenerComprehensive:
             attach_frame = NodeAttachFrame(
                 system_id="test-child",
                 instance_id="test-instance",
-                supported_inbound_connectors=[],
+                callback_grants=[],
             )
             envelope = FameEnvelope(frame=attach_frame)
 
@@ -817,7 +817,7 @@ class TestHttpListenerComprehensive:
         attach_frame = NodeAttachFrame(
             system_id="test-child",
             instance_id="test-instance",
-            supported_inbound_connectors=[],
+            callback_grants=[],
         )
         envelope = FameEnvelope(frame=attach_frame)
 
@@ -825,15 +825,15 @@ class TestHttpListenerComprehensive:
         mock_connector = Mock()
         mock_node.create_origin_connector.return_value = mock_connector
 
-        with patch("naylence.fame.connector.connector_selection_policy.ConnectorSelectionContext"):
+        with patch("naylence.fame.connector.grant_selection_policy.GrantSelectionContext"):
             with patch(
-                "naylence.fame.connector.connector_selection_policy.default_connector_selection_policy"
+                "naylence.fame.connector.grant_selection_policy.default_grant_selection_policy"
             ) as mock_policy:
                 mock_selection_result = Mock()
                 mock_selection_result.fallback_used = False
                 mock_selection_result.selection_reason = "Best match"
                 mock_selection_result.connector_config = Mock()
-                mock_policy.select_connector.return_value = mock_selection_result
+                mock_policy.select_callback_grant.return_value = mock_selection_result
 
                 result = await http_listener._handle_node_attach_frame(
                     child_id="test-child",
@@ -846,7 +846,7 @@ class TestHttpListenerComprehensive:
                 mock_node.create_origin_connector.assert_called_once_with(
                     origin_type=DeliveryOriginType.DOWNSTREAM,
                     system_id="test-child",
-                    connector_config=mock_selection_result.connector_config,
+                    connector_config=mock_selection_result.grant.to_connector_config(),
                     authorization=None,
                 )
 
@@ -857,24 +857,24 @@ class TestHttpListenerComprehensive:
         attach_frame = NodeAttachFrame(
             system_id="test-child",
             instance_id="test-instance",
-            supported_inbound_connectors=[],
+            callback_grants=[],
         )
         envelope = FameEnvelope(frame=attach_frame)
-        auth_context = AuthorizationContext(system_id="test-child")
+        auth_context = AuthorizationContext(authenticated=False, authorized=False, principal="test-child")
 
         # Mock connector creation
         mock_connector = Mock()
         mock_node.create_origin_connector.return_value = mock_connector
 
-        with patch("naylence.fame.connector.connector_selection_policy.ConnectorSelectionContext"):
+        with patch("naylence.fame.connector.grant_selection_policy.GrantSelectionContext"):
             with patch(
-                "naylence.fame.connector.connector_selection_policy.default_connector_selection_policy"
+                "naylence.fame.connector.grant_selection_policy.default_grant_selection_policy"
             ) as mock_policy:
                 mock_selection_result = Mock()
                 mock_selection_result.fallback_used = False
                 mock_selection_result.selection_reason = "Best match"
                 mock_selection_result.connector_config = Mock()
-                mock_policy.select_connector.return_value = mock_selection_result
+                mock_policy.select_callback_grant.return_value = mock_selection_result
 
                 result = await http_listener._handle_node_attach_frame(
                     child_id="test-child",
@@ -888,7 +888,7 @@ class TestHttpListenerComprehensive:
                 mock_node.create_origin_connector.assert_called_once_with(
                     origin_type=DeliveryOriginType.DOWNSTREAM,
                     system_id="test-child",
-                    connector_config=mock_selection_result.connector_config,
+                    connector_config=mock_selection_result.grant.to_connector_config(),
                     authorization=auth_context,
                 )
 
@@ -899,7 +899,7 @@ class TestHttpListenerComprehensive:
         attach_frame = NodeAttachFrame(
             system_id="test-child",
             instance_id="test-instance",
-            supported_inbound_connectors=[],
+            callback_grants=[],
         )
         envelope = FameEnvelope(frame=attach_frame)
 
@@ -907,15 +907,15 @@ class TestHttpListenerComprehensive:
         mock_connector = Mock()
         mock_node.create_origin_connector.return_value = mock_connector
 
-        with patch("naylence.fame.connector.connector_selection_policy.ConnectorSelectionContext"):
+        with patch("naylence.fame.connector.grant_selection_policy.GrantSelectionContext"):
             with patch(
-                "naylence.fame.connector.connector_selection_policy.default_connector_selection_policy"
+                "naylence.fame.connector.grant_selection_policy.default_grant_selection_policy"
             ) as mock_policy:
                 mock_selection_result = Mock()
                 mock_selection_result.fallback_used = True
                 mock_selection_result.selection_reason = "Fallback used"
                 mock_selection_result.connector_config = Mock()
-                mock_policy.select_connector.return_value = mock_selection_result
+                mock_policy.select_callback_grant.return_value = mock_selection_result
 
                 result = await http_listener._handle_node_attach_frame(
                     child_id="test-child",
@@ -1130,7 +1130,7 @@ class TestHttpListenerComprehensive:
             attach_frame = NodeAttachFrame(
                 system_id="test-child",
                 instance_id="test-instance",
-                supported_inbound_connectors=[],
+                callback_grants=[],
             )
             envelope = FameEnvelope(frame=attach_frame)
 
@@ -1179,7 +1179,7 @@ class TestHttpListenerComprehensive:
                 attach_frame = NodeAttachFrame(
                     system_id="test-child",
                     instance_id="test-instance",
-                    supported_inbound_connectors=[],
+                    callback_grants=[],
                 )
                 envelope = FameEnvelope(frame=attach_frame)
 
@@ -1264,7 +1264,9 @@ class TestHttpListenerComprehensive:
         # Set up node security manager with authorizer
         mock_security_manager = Mock()
         mock_authorizer = Mock()
-        mock_authorizer.authenticate = AsyncMock(return_value=AuthorizationContext(system_id="test"))
+        mock_authorizer.authenticate = AsyncMock(
+            return_value=AuthorizationContext(authenticated=False, authorized=False, principal="test")
+        )
         mock_security_manager.authorizer = mock_authorizer
         mock_node.security_manager = mock_security_manager
 
@@ -1298,8 +1300,8 @@ class TestHttpListenerComprehensive:
                 },
             )
 
-            assert response.status_code == 202
-            mock_authorizer.authenticate.assert_called_once_with(mock_node.physical_path, "Bearer token123")
+        assert response.status_code == 202
+        mock_authorizer.authenticate.assert_called_once_with("Bearer token123")
 
     @pytest.mark.asyncio
     async def test_upstream_endpoint_auth_with_security_manager(self, http_listener, mock_node):
@@ -1307,7 +1309,9 @@ class TestHttpListenerComprehensive:
         # Set up node security manager with authorizer
         mock_security_manager = Mock()
         mock_authorizer = Mock()
-        mock_authorizer.authenticate = AsyncMock(return_value=AuthorizationContext(system_id="test"))
+        mock_authorizer.authenticate = AsyncMock(
+            return_value=AuthorizationContext(authenticated=False, authorized=False, principal="test")
+        )
         mock_security_manager.authorizer = mock_authorizer
         mock_node.security_manager = mock_security_manager
 
@@ -1342,4 +1346,4 @@ class TestHttpListenerComprehensive:
         )
 
         assert response.status_code == 202
-        mock_authorizer.authenticate.assert_called_once_with(mock_node.physical_path, "Bearer token123")
+        mock_authorizer.authenticate.assert_called_once_with("Bearer token123")

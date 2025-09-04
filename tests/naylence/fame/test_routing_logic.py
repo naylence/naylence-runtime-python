@@ -17,7 +17,7 @@ def test_connector_routing_logic():
     )
     from naylence.fame.sentinel.store.route_store import RouteEntry
 
-    print("✓ Testing RouteEntry with supported_inbound_connectors...")
+    print("✓ Testing RouteEntry with callback_grants...")
 
     # Create test connector configurations (local config)
     child_inbound_config = HttpStatelessConnectorConfig(
@@ -39,17 +39,17 @@ def test_connector_routing_logic():
         system_id="test-child-456",
         assigned_path="/test-child-456",
         instance_id="instance-789",
-        supported_inbound_connectors=[child_inbound_connector],
+        callback_grants=[child_inbound_connector],
         durable=False,
     )
 
     print(f"✓ RouteEntry created for system: {route_entry.system_id}")
-    print(f"✓ Supported connectors count: {len(route_entry.supported_inbound_connectors)}")
+    print(f"✓ Supported connectors count: {len(route_entry.callback_grants)}")
 
     # Test the extraction logic from the HTTP router
     def extract_child_url(route_entry: RouteEntry) -> str | None:
-        """Replicate the logic from _get_child_supported_inbound_connectors"""
-        supported_connectors = route_entry.supported_inbound_connectors
+        """Replicate the logic from _get_child_callback_grants"""
+        supported_connectors = route_entry.callback_grants
         if not supported_connectors:
             return None
 
@@ -151,7 +151,7 @@ def test_wire_protocol_completeness():
     frame = NodeAttachFrame(
         system_id="production-agent-001",
         instance_id="prod-instance-20241216-001",
-        supported_inbound_connectors=[agent_connector],
+        callback_grants=[agent_connector],
     )
 
     # Generate wire protocol JSON
@@ -165,7 +165,7 @@ def test_wire_protocol_completeness():
         "type",
         "system_id",
         "instance_id",
-        "supported_inbound_connectors",
+        "callback_grants",
     ]
     missing_top = [f for f in required_top_level if f not in parsed]
 
@@ -173,7 +173,7 @@ def test_wire_protocol_completeness():
         print(f"❌ Missing top-level fields: {missing_top}")
         assert False, f"Missing top-level fields: {missing_top}"
 
-    connectors = parsed["supported_inbound_connectors"]
+    connectors = parsed["callback_grants"]
     if not connectors:
         print("❌ No connectors in wire protocol")
         assert False, "No connectors in wire protocol"

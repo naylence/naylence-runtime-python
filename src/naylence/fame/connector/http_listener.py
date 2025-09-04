@@ -6,9 +6,6 @@ from typing import TYPE_CHECKING, Any, Optional
 from fastapi import APIRouter, HTTPException, Request
 
 from naylence.fame.connector.http_stateless_connector import HttpStatelessConnector
-from naylence.fame.connector.http_stateless_connector_factory import (
-    HttpStatelessConnectorConfig,
-)
 from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.core import (
     AuthorizationContext,
@@ -20,6 +17,8 @@ from naylence.fame.core import (
     NodeAttachFrame,
     SecurityContext,
 )
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
+from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
 from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.routing_node_like import RoutingNodeLike
 from naylence.fame.security.auth.authorizer import Authorizer
@@ -115,7 +114,7 @@ class HttpListener(TransportListener, NodeEventListener):
         # Currently connectors are managed by RoutingNodeLike, so no action needed
         logger.debug("http_listener_stopped")
 
-    def as_inbound_connector(self) -> Optional[dict[str, Any]]:
+    def as_callback_grant(self) -> Optional[dict[str, Any]]:
         """Return connector configuration for reverse connections."""
         if not self.base_url:
             return None
@@ -143,8 +142,10 @@ class HttpListener(TransportListener, NodeEventListener):
                             node_id=getattr(self._node, "id", "unknown"),
                         )
 
-        connector = HttpStatelessConnectorConfig(
-            url=f"{self.base_url}{self.upstream_endpoint}", auth=auth_config
+        connector = HttpConnectionGrant(
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
+            url=f"{self.base_url}{self.upstream_endpoint}",
+            auth=auth_config,
         )
 
         return connector.model_dump(by_alias=True)
@@ -207,7 +208,9 @@ class HttpListener(TransportListener, NodeEventListener):
                 if authorizer:
                     try:
                         # First phase: authentication (token validation)
-                        auth_result = await authorizer.authenticate(self._node.physical_path, auth_header)
+                        auth_result = await authorizer.authenticate(
+                            auth_header
+                        )  # self._node.physical_path, auth_header)
 
                         if auth_result is None:
                             logger.warning(
@@ -311,7 +314,7 @@ class HttpListener(TransportListener, NodeEventListener):
                 if authorizer:
                     try:
                         # First phase: authentication (token validation)
-                        auth_result = await authorizer.authenticate(self._node.physical_path, auth_header)
+                        auth_result = await authorizer.authenticate(auth_header)
 
                         if auth_result is None:
                             logger.warning(
@@ -500,9 +503,9 @@ class HttpListener(TransportListener, NodeEventListener):
         Returns:
             FameConnector instance for the child (type determined by selection policy)
         """
-        from naylence.fame.connector.connector_selection_policy import (
-            ConnectorSelectionContext,
-            default_connector_selection_policy,
+        from naylence.fame.connector.grant_selection_policy import (
+            GrantSelectionContext,
+            default_grant_selection_policy,
         )
 
         # Use the connector selection policy to choose the appropriate connector
@@ -512,15 +515,17 @@ class HttpListener(TransportListener, NodeEventListener):
         # - Inbound connector type that received the request
         # - Fallback strategies
 
-        context = ConnectorSelectionContext(
+        context = GrantSelectionContext(
             child_id=child_id,
             attach_frame=attach_frame,
-            inbound_connector_type="HttpStatelessConnector",  # This is an HTTP listener
+            callback_grant_type="HttpConnectionGrant",  # This is an HTTP listener
             node=node,
         )
 
         # Use the policy to select the best connector configuration
-        selection_result = default_connector_selection_policy.select_connector(context)
+        selection_result = default_grant_selection_policy.select_callback_grant(context)
+
+        assert selection_result is not None, "No suitable connector found"
 
         # Log the selection for debugging
         if selection_result.fallback_used:
@@ -528,24 +533,26 @@ class HttpListener(TransportListener, NodeEventListener):
                 "using_fallback_connector",
                 child=child_id,
                 reason=selection_result.selection_reason,
-                connector_type=selection_result.connector_config.type,
+                connector_type=selection_result.grant.type,
             )
         else:
             logger.debug(
                 "connector_selected",
                 child=child_id,
                 reason=selection_result.selection_reason,
-                connector_type=selection_result.connector_config.type,
+                connector_type=selection_result.grant.type,
             )
 
-        config = selection_result.connector_config
+        grant = selection_result.grant
+
+        connector_config = grant.to_connector_config()
 
         # Check if node has create_origin_connector method (for Sentinel nodes)
         assert node and isinstance(node, RoutingNodeLike), "Node must be a RoutingNodeLike instance"
         connector = await node.create_origin_connector(
             origin_type=DeliveryOriginType.DOWNSTREAM,  # HTTP child connections are downstream
             system_id=child_id,
-            connector_config=config,
+            connector_config=connector_config,
             authorization=authorization,
         )
 
@@ -554,7 +561,7 @@ class HttpListener(TransportListener, NodeEventListener):
             "created_http_connector",
             child=child_id,
             connector_type=type(connector).__name__,
-            config_details=str(config),
+            config_details=str(grant),
         )
 
         return connector

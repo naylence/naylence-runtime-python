@@ -108,7 +108,7 @@ class TestAuthenticationFactories:
         target_node = MockNodeLike(node_id="target-node")
 
         # First authenticate
-        auth_context = await authorizer.authenticate(target_node, "test-secret")
+        auth_context = await authorizer.authenticate("test-secret")
         assert auth_context is not None
 
         # Then validate the node attach request

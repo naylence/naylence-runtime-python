@@ -244,7 +244,7 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
 
         # 3. Attach
         # Get supported inbound connectors directly from the node
-        supported_inbound_connectors = self._node.gather_supported_inbound_connectors()
+        callback_grants = self._node.gather_supported_callback_grants()
 
         attach_info = await self._attach_client.attach(
             self._node,
@@ -253,7 +253,7 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
             welcome_frame=welcome.frame,
             final_handler=self._wrapped_handler,
             keys=self._get_keys(),
-            supported_inbound_connectors=supported_inbound_connectors,
+            callback_grants=callback_grants,
         )
 
         self._target_system_id = attach_info.get("target_system_id")

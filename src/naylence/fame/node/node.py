@@ -270,7 +270,7 @@ class FameNode(TaskSpawner, NodeLike):
         if listener in self._event_listeners:
             self._event_listeners.remove(listener)
 
-    def gather_supported_inbound_connectors(self) -> list[dict[str, Any]]:
+    def gather_supported_callback_grants(self) -> list[dict[str, Any]]:
         """
         Gather supported inbound connectors from all active transport listeners.
 
@@ -284,7 +284,7 @@ class FameNode(TaskSpawner, NodeLike):
         for listener in self._event_listeners:
             if isinstance(listener, TransportListener):
                 try:
-                    connector_config = listener.as_inbound_connector()
+                    connector_config = listener.as_callback_grant()
                     if connector_config:
                         result.append(connector_config)
                 except Exception:

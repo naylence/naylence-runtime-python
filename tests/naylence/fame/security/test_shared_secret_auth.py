@@ -86,7 +86,7 @@ class TestSharedSecretAuth:
         )
 
         # First authenticate to get auth context
-        auth_context = await authorizer.authenticate(MockNodeLike(node_id="parent-node"), "test-secret-123")
+        auth_context = await authorizer.authenticate("test-secret-123")
         assert auth_context is not None
 
         # Then validate the node attach request
@@ -111,7 +111,7 @@ class TestSharedSecretAuth:
         )
 
         # Try to authenticate with wrong token
-        auth_context = await authorizer.authenticate(MockNodeLike(node_id="parent-node"), "wrong-secret")
+        auth_context = await authorizer.authenticate("wrong-secret")
         assert auth_context is None
 
     @pytest.mark.asyncio
@@ -123,5 +123,5 @@ class TestSharedSecretAuth:
         )
 
         # Try to authenticate with no credentials
-        auth_context = await authorizer.authenticate(MockNodeLike(node_id="parent-node"), "")
+        auth_context = await authorizer.authenticate("")
         assert auth_context is None

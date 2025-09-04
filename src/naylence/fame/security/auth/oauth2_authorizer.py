@@ -10,6 +10,7 @@ from naylence.fame.core import (
     NodeAttachFrame,
 )
 from naylence.fame.node.node_context import FameNodeAuthorizationContext
+from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.node_like import NodeLike
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.auth.token_issuer import TokenIssuer
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 logger = getLogger(__name__)
 
 
-class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
+class OAuth2Authorizer(NodeEventListener, Authorizer, TokenVerifierProvider):
     """
     OAuth2-specific authorizer for general-purpose OAuth2 providers.
 
@@ -56,6 +57,10 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
         self._max_ttl_sec = max_ttl_sec
         self._token_issuer = token_issuer
         self._reverse_auth_ttl_sec = reverse_auth_ttl_sec
+        self._node: Optional[NodeLike] = None
+
+    async def on_node_started(self, node: NodeLike) -> None:
+        self._node = node
 
     @property
     def token_verifier(self) -> TokenVerifier:
@@ -90,14 +95,6 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
                     "instance_id": getattr(node, "instance_id", None),  # Include instance ID
                     "capabilities": (list(self._required_scopes) if self._required_scopes else []),
                 }
-                # system_id=f"reverse-auth/{node.id}",
-                # parent_path="tbd", #node.physical_path,  # The path this token will be used to access
-                # assigned_path="tbd", #node.physical_path,  # Same as parent_path for reverse connections
-                # accepted_capabilities=[], #list(self._required_scopes)
-                # if self._required_scopes else ["fame:connect"],
-                # accepted_logicals=[],  # No logicals for reverse connections
-                # instance_id=getattr(node, 'instance_id', None),
-                # attach_expires_at=expires_at,
             )
 
             logger.debug(
@@ -108,7 +105,9 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
             )
 
             # Create the proper Auth instance
-            from naylence.fame.security.auth.auth_injection_strategy_factory import BearerTokenHeaderAuth
+            from naylence.fame.security.auth.bearer_token_header_auth_injection_strategy_factory import (
+                BearerTokenHeaderAuthInjectionStrategyConfig,
+            )
             from naylence.fame.security.auth.static_token_provider_factory import (
                 StaticTokenProviderConfig,
             )
@@ -117,7 +116,7 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
                 type="StaticTokenProvider", token=token, expires_at=expires_at
             )
 
-            return BearerTokenHeaderAuth(token_provider=static_token_config)
+            return BearerTokenHeaderAuthInjectionStrategyConfig(token_provider=static_token_config)
 
         except Exception as e:
             logger.warning("failed_to_generate_reverse_auth_token", node_id=node.id, error=str(e))
@@ -125,7 +124,6 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
 
     async def authenticate(
         self,
-        node: NodeLike,
         credentials: str | bytes,
     ) -> Optional[AuthorizationContext]:
         """Authenticate using OAuth2 JWT token."""
@@ -143,7 +141,7 @@ class OAuth2Authorizer(Authorizer, TokenVerifierProvider):
 
         try:
             # Use configured audience, or fall back to target node physical path
-            expected_audience = self._audience or node.physical_path
+            expected_audience = self._audience or (self._node.physical_path if self._node else None)
             raw_claims = await self._token_verifier.verify(
                 str(token),  # Ensure token is string
                 expected_audience=expected_audience,

@@ -95,7 +95,7 @@ def test_direct_instantiation():
         traceback.print_exc()
         return False
 
-    # Test 2: DirectNodeAdmissionConfig with supported_inbound_connectors
+    # Test 2: DirectNodeAdmissionConfig with callback_grants
     print("\n2. Testing DirectNodeAdmissionConfig with dict format...")
 
     try:
@@ -116,8 +116,8 @@ def test_direct_instantiation():
         dict_dump = config.model_dump()
         print("✓ Config serialization works")
 
-        sic = dict_dump.get("supported_inbound_connectors", [])
-        print(f"✓ Found {len(sic)} supported inbound connectors")
+        sic = dict_dump.get("connection_grants", [])
+        print(f"✓ Found {len(sic)} connection grants")
 
         all_good = True
         for i, conn in enumerate(sic):

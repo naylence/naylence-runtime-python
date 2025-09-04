@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import Field
 
 from naylence.fame.grants.connection_grant import ConnectionGrant
+
+if TYPE_CHECKING:
+    from naylence.fame.connector.connector_config import ConnectorConfig
 
 
 class WebSocketConnectionGrant(ConnectionGrant):
@@ -22,3 +25,8 @@ class WebSocketConnectionGrant(ConnectionGrant):
         default=None, description="WebSocket URL to connect to (required if params is not set)"
     )
     auth: Optional[Any] = Field(default=None, description="Authentication configuration")
+
+    def to_connector_config(self) -> ConnectorConfig:
+        from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
+
+        return WebSocketConnectorConfig(url=self.url, auth=self.auth)
