@@ -30,6 +30,7 @@ ENV_VAR_ADMISSION_TTL = "FAME_ADMISSSION_TTL"
 
 PROFILE_NAME_WELCOME = "welcome"
 PROFILE_NAME_DIRECT = "direct"
+PROFILE_NAME_DIRECT_HTTP = "direct-http"
 PROFILE_NAME_OPEN = "open"
 PROFILE_NAME_NOOP = "noop"
 PROFILE_NAME_NONE = "none"
@@ -78,6 +79,32 @@ DIRECT_PROFILE = {
         }
     ],
 }
+
+
+DIRECT_HTTP_PROFILE = {
+    "type": "DirectAdmissionClient",
+    "connection_grants": [
+        {
+            "type": "HttpConnectionGrant",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
+            "url": Expressions.env(ENV_VAR_DIRECT_ADMISSION_URL),
+            "auth": {
+                "type": "BearerTokenHeaderAuth",
+                "token_provider": {
+                    "type": "OAuth2ClientCredentialsTokenProvider",
+                    "token_url": Expressions.env(ENV_VAR_ADMISSION_TOKEN_URL),
+                    "client_id": Expressions.env(ENV_VAR_ADMISSION_CLIENT_ID),
+                    "client_secret": Expressions.env(ENV_VAR_ADMISSION_CLIENT_SECRET),
+                    "scopes": ["node.connect"],
+                    "audience": Expressions.env(ENV_VAR_JWT_AUDIENCE),
+                },
+            },
+            "ttl": 0,
+            "durable": False,
+        }
+    ],
+}
+
 
 OPEN_PROFILE = {
     "type": "DirectAdmissionClient",
@@ -130,6 +157,12 @@ class AdmissionProfileFactory(AdmissionClientFactory):
             )
 
             admission_config = DirectNodeAdmissionConfig(**DIRECT_PROFILE)
+        elif profile == PROFILE_NAME_DIRECT_HTTP:
+            from naylence.fame.node.admission.direct_admission_client_factory import (
+                DirectNodeAdmissionConfig,
+            )
+
+            admission_config = DirectNodeAdmissionConfig(**DIRECT_HTTP_PROFILE)
         elif profile == PROFILE_NAME_OPEN:
             from naylence.fame.node.admission.direct_admission_client_factory import (
                 DirectNodeAdmissionConfig,
