@@ -113,6 +113,18 @@ def _stringify_non_primitives(_logger: WrappedLogger, _method: str, ev: EventDic
     return ev
 
 
+def _add_otel_ids(_logger: WrappedLogger, _method: str, ev: EventDict) -> EventDict:
+    from naylence.fame.telemetry.otel_context import otel_span_id_var, otel_trace_id_var
+
+    tid = otel_trace_id_var.get()
+    sid = otel_span_id_var.get()
+    if tid:
+        ev.setdefault("otel.trace_id", tid)
+    if sid:
+        ev.setdefault("otel.span_id", sid)
+    return ev
+
+
 structlog.configure(
     context_class=dict,
     logger_factory=LoggerFactory(),
@@ -121,6 +133,7 @@ structlog.configure(
     processors=[
         merge_contextvars,  # 0 – pull contextvars (if any)
         _add_envelope_fields,  # 1 – inject envelope metadata
+        _add_otel_ids,
         _drop_empty,  # 2 – strip empty values
         _stringify_non_primitives,  # 3 – make every value JSON-safe
         add_log_level,  # 4 – inject "level"

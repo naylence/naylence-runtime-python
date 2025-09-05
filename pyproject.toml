@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.1.89"
+version = "0.2.0"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -61,6 +61,11 @@ mcp = "^1.9.1"
 
 # Package sources: allow fallback to TestPyPI for packages that
 # don't exist on PyPI yet (e.g., naylence-factory while in early testing).
+
+[tool.poetry.group.observability.dependencies]
+opentelemetry-sdk = "^1.36.0"
+opentelemetry-exporter-otlp = "^1.36.0"
+
 [[tool.poetry.source]]
 name = "testpypi"
 url = "https://test.pypi.org/simple"
@@ -269,3 +274,8 @@ DefaultDeliveryTracker = "naylence.fame.tracking.default_delivery_tracker_factor
 
 [project.entry-points."naylence.AttachmentKeyValidatorFactory"]
 NoopKeyValidator = "naylence.fame.security.keys.noop_key_validator_factory:NoopKeyValidatorFactory"
+
+[project.entry-points."naylence.TraceEmitterFactory"]
+NoopTraceEmitter = "naylence.fame.telemetry.noop_trace_emitter_factory:NoopTraceEmitterFactory"
+OpenTelemetryTraceEmitter = "naylence.fame.telemetry.open_telemetry_trace_emitter_factory:OpenTelemetryTraceEmitterFactory"
+TraceEmitterProfile = "naylence.fame.telemetry.trace_emitter_profile_factory:TraceEmitterProfileFactory"

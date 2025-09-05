@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
+from naylence.fame import telemetry
 from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
 from naylence.fame.core import generate_id
@@ -176,6 +177,16 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
         attachment_key_validator=key_validator,
         replica_stickiness_manager=replica_stickiness_manager,
     )
+    
+    telemetry_config = cfg.telemetry
+    if telemetry_config is not None:
+        telemetry_config = await create_resource(
+            telemetry.TraceEmitterFactory, telemetry_config
+        )
+    else:
+        telemetry_config = create_default_resource(
+            telemetry.TraceEmitterFactory
+        )
 
     return {
         "system_id": node_id,

@@ -11,6 +11,7 @@ from naylence.fame.security.keys.attachment_key_validator_factory import (
 from naylence.fame.security.keys.key_store_factory import KeyStoreConfig
 from naylence.fame.security.security_manager_config import SecurityManagerConfig
 from naylence.fame.storage.storage_provider_factory import StorageProviderConfig
+from naylence.fame.telemetry.trace_emitter_factory import TraceEmitterConfig
 
 
 class FameNodeConfig(NodeLikeConfig):
@@ -75,4 +76,9 @@ class FameNodeConfig(NodeLikeConfig):
         default=None,
         description="Attachment key validator configuration for certificate validation"
         " during node handshake",
+    )
+
+    telemetry: Optional[TraceEmitterConfig] = Field(
+        default=None,
+        description="Telemetry configuration",
     )

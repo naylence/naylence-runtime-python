@@ -94,18 +94,27 @@ class DefaultNodeAttachClient(NodeAttachClient):
 
         local_context = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL)
 
-        processed_env = await node._dispatch_envelope_event(
-            "on_forward_upstream", self, env, context=local_context
-        )
-
-        if processed_env is not None:
-            await connector.send(processed_env)
+        processed_env: Optional[FameEnvelope] = None
+        try:
+            processed_env = await node._dispatch_envelope_event(
+                "on_forward_upstream", self, env, context=local_context
+            )
+            if processed_env is not None:
+                await connector.send(processed_env)
+            else:
+                raise RuntimeError("Envelope was blocked by on_forward_upstream event")
+        except Exception as e:
+            # Capture the exception for the completion event
+            await node._dispatch_envelope_event(
+                "on_forward_upstream_complete", self, processed_env or env, error=e, context=local_context
+            )
+            # Re-rasie the original exception
+            raise
         else:
-            raise RuntimeError("Envelope was blocked by on_forward_upstream event")
-
-        await node._dispatch_envelope_event(
-            "on_forward_upstream_complete", self, processed_env, context=local_context
-        )
+            # No exception occurred - call completion event without error
+            await node._dispatch_envelope_event(
+                "on_forward_upstream_complete", self, processed_env or env, context=local_context
+            )
 
         # 3) wait for ACK
         ack_env = await self._await_ack(connector)

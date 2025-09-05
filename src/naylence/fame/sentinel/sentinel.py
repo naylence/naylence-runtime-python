@@ -436,39 +436,58 @@ class Sentinel(FameNode, RoutingNodeLike):
             # Don't forward envelopes that originated from the same downstream route to avoid loops
             logger.debug("downstream_loop_detected", envp_id=envelope.id, segment=next_segment)
 
-        # Dispatch to all event listeners for security processing
-        processed_envelope = await self._dispatch_envelope_event(
-            "on_forward_to_route", self, next_segment, envelope, context=context
-        )
+        processed_envelope: Optional[FameEnvelope] = None
 
-        # If any listener returns None, halt forwarding (envelope queued for keys)
-        if processed_envelope is None:
-            return
+        try:
+            # Dispatch to all event listeners for security processing
+            processed_envelope = await self._dispatch_envelope_event(
+                "on_forward_to_route", self, next_segment, envelope, context=context
+            )
+            # If any listener returns None, halt forwarding (envelope queued for keys)
+            if processed_envelope is None:
+                return
 
-        # Downstream routes may disappear at any time (child crashed / detached).
-        # Treat that as a normal run-time event: inform the sender instead of
-        # crashing the receive-loop, mirroring the peer-handling logic.
-        logger.debug(
-            "forwarding_downstream",
-            **summarize_env(processed_envelope, prefix=""),
-            route=next_segment,
-        )
-        conn = self._route_manager.downstream_routes.get(next_segment)
-        if not conn:
-            logger.warning("no_route_for_child_segment", segment=next_segment)
-            await self.emit_delivery_nack(processed_envelope, code="CHILD_UNREACHABLE", context=context)
-            return
-        await conn.send(processed_envelope)
+            # Downstream routes may disappear at any time (child crashed / detached).
+            # Treat that as a normal run-time event: inform the sender instead of
+            # crashing the receive-loop, mirroring the peer-handling logic.
+            logger.debug(
+                "forwarding_downstream",
+                **summarize_env(processed_envelope, prefix=""),
+                route=next_segment,
+            )
+            conn = self._route_manager.downstream_routes.get(next_segment)
+            if not conn:
+                logger.warning("no_route_for_child_segment", segment=next_segment)
+                await self.emit_delivery_nack(processed_envelope, code="CHILD_UNREACHABLE", context=context)
+                return
+            await conn.send(processed_envelope)
 
-        await self._dispatch_envelope_event(
-            "on_forward_to_route_complete", self, next_segment, envelope, context=context
-        )
+            fid = processed_envelope.flow_id
+            if fid and fid not in self._route_manager._flow_routes:
+                self._route_manager._flow_routes[fid] = conn
 
-        fid = processed_envelope.flow_id
-        if fid and fid not in self._route_manager._flow_routes:
-            self._route_manager._flow_routes[fid] = conn
-
-        self._maybe_forget_flow(processed_envelope)
+            self._maybe_forget_flow(processed_envelope)
+        except Exception as e:
+            # Capture the exception for the completion event
+            await self._dispatch_envelope_event(
+                "on_forward_to_route_complete",
+                self,
+                next_segment,
+                processed_envelope or envelope,
+                error=e,
+                context=context,
+            )
+            # Re-raise the original exception
+            raise
+        else:
+            # No exception occurred - call completion event without error
+            await self._dispatch_envelope_event(
+                "on_forward_to_route_complete",
+                self,
+                next_segment,
+                processed_envelope or envelope,
+                context=context,
+            )
 
     async def forward_to_peer(
         self,
@@ -576,16 +595,6 @@ class Sentinel(FameNode, RoutingNodeLike):
                 origin_type=context.origin_type,
             )
             return
-
-        # Super method will call the event listeners
-        # # Dispatch to all event listeners for security processing
-        # processed_envelope = await self._dispatch_envelope_event(
-        #     "on_forward_upstream", self, envelope, context=context
-        # )
-
-        # # If any listener returns None, halt forwarding (envelope queued for keys)
-        # if processed_envelope is None:
-        #     return
 
         await super().forward_upstream(envelope, context)
         if not self._upstream_connector:

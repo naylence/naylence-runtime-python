@@ -677,25 +677,42 @@ class FameNode(TaskSpawner, NodeLike):
 
         logger.debug("forward_upstream", **summarize_env(envelope, prefix=""))
 
-        # Dispatch to all event listeners for security processing
-        processed_envelope = await self._dispatch_envelope_event(
-            "on_forward_upstream", self, envelope, context=context
-        )
+        processed_envelope: Optional[FameEnvelope] = None
 
-        # If any listener returns None, halt forwarding (envelope queued for keys)
-        if processed_envelope is None:
-            return
+        try:
+            # Dispatch to all event listeners for security processing
+            processed_envelope = await self._dispatch_envelope_event(
+                "on_forward_upstream", self, envelope, context=context
+            )
 
-        if not self._upstream_connector:
-            logger.debug(f"No upstream parent for '{self.physical_path}'")
-            return
+            # If any listener returns None, halt forwarding (envelope queued for keys)
+            if processed_envelope is None:
+                return
 
-        assert self._session_manager
-        assert isinstance(self._session_manager, UpstreamSessionManager)
+            if not self._upstream_connector:
+                logger.debug(f"No upstream parent for '{self.physical_path}'")
+                return
 
-        await self._session_manager.send(processed_envelope)
+            assert self._session_manager
+            assert isinstance(self._session_manager, UpstreamSessionManager)
 
-        await self._dispatch_envelope_event("on_forward_upstream_complete", self, envelope, context=context)
+            await self._session_manager.send(processed_envelope)
+        except Exception as e:
+            # Capture the exception for the completion event
+            await self._dispatch_envelope_event(
+                "on_forward_upstream_complete",
+                self,
+                processed_envelope or envelope,
+                error=e,
+                context=context,
+            )
+            # Re-raise the original exception
+            raise
+        else:
+            # No exception occurred - call completion event without error
+            await self._dispatch_envelope_event(
+                "on_forward_upstream_complete", self, processed_envelope or envelope, context=context
+            )
 
     async def deliver(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
         # Dispatch to all event listeners for security processing

@@ -564,7 +564,7 @@ class TestSentinelComprehensive:
                 if hasattr(arg, "frame"):
                     return arg
             return args[0] if args else None
-        
+
         sentinel._dispatch_envelope_event = AsyncMock(side_effect=mock_dispatch_envelope_event)
 
         # Test different frame types
@@ -825,6 +825,7 @@ class TestSentinelComprehensive:
 
     async def test_forward_to_peers_missing_peer(self, sentinel):
         """Test forward_to_peers when specified peer doesn't exist."""
+
         # Mock dispatch_envelope_event to return the envelope unchanged
         # Simulate the real behavior which finds the envelope by checking for .frame attribute
         def mock_dispatch_envelope_event(event, *args, **kwargs):
@@ -835,7 +836,7 @@ class TestSentinelComprehensive:
                 if hasattr(arg, "frame"):
                     return arg
             return args[0] if args else None
-        
+
         sentinel._dispatch_envelope_event = AsyncMock(side_effect=mock_dispatch_envelope_event)
 
         envelope = create_fame_envelope(frame=NodeHeartbeatFrame())
@@ -847,6 +848,7 @@ class TestSentinelComprehensive:
 
     async def test_forward_upstream_with_flow(self, sentinel):
         """Test forward_upstream with flow tracking."""
+
         # Mock dispatch_envelope_event to return the envelope unchanged
         # Simulate the real behavior which finds the envelope by checking for .frame attribute
         def mock_dispatch_envelope_event(event, *args, **kwargs):
@@ -857,7 +859,7 @@ class TestSentinelComprehensive:
                 if hasattr(arg, "frame"):
                     return arg
             return args[0] if args else None
-        
+
         sentinel._dispatch_envelope_event = AsyncMock(side_effect=mock_dispatch_envelope_event)
 
         # Mock parent class forward_upstream
