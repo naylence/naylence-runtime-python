@@ -1,7 +1,8 @@
 from contextlib import contextmanager
 from typing import Any, Mapping, Optional
 
-from naylence.fame.telemetry.trace_emitter import Span, TraceEmitter
+from naylence.fame.telemetry.base_trace_emitter import BaseTraceEmitter
+from naylence.fame.telemetry.trace_emitter import Span
 
 
 class _NoopSpan(Span):
@@ -15,7 +16,10 @@ class _NoopSpan(Span):
         pass
 
 
-class NoopTraceEmitter(TraceEmitter):
+class NoopTraceEmitter(BaseTraceEmitter):
+    def __init__(self) -> None:
+        super().__init__()
+
     @contextmanager
     def start_span(self, name: str, attributes: Optional[Mapping[str, Any]] = None, links=None):
         yield _NoopSpan()

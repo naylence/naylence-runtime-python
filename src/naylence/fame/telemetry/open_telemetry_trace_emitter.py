@@ -4,8 +4,10 @@ from typing import Any, Mapping, Optional
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
+from naylence.fame.telemetry.base_trace_emitter import BaseTraceEmitter
+
 from .otel_context import otel_span_id_var, otel_trace_id_var
-from .trace_emitter import Span, TraceEmitter
+from .trace_emitter import Span
 
 
 class _OpenTelemetrySpan(Span):
@@ -22,8 +24,9 @@ class _OpenTelemetrySpan(Span):
         self._span.set_status(Status(StatusCode.ERROR, description))
 
 
-class OpenTelemetryTraceEmitter(TraceEmitter):
+class OpenTelemetryTraceEmitter(BaseTraceEmitter):
     def __init__(self, service_name: str, tracer=None):
+        super().__init__()
         self._tracer = tracer or trace.get_tracer(service_name)
 
     @contextmanager
