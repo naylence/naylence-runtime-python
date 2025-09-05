@@ -16,6 +16,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
 
 from naylence.fame.grants.connection_grant import ConnectionGrant
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
 from naylence.fame.util.logging import getLogger
 
@@ -196,7 +197,7 @@ class PreferSameTypeStrategy(GrantSelectionStrategy):
 
         return HttpConnectionGrant(
             url=url,
-            purpose=connector_dict.get("purpose", "node_attach"),
+            purpose=connector_dict.get("purpose", GRANT_PURPOSE_NODE_ATTACH),
             # max_queue=connector_dict.get("max_queue", 1024),
             auth=connector_dict.get("auth"),
         )
@@ -212,7 +213,7 @@ class PreferSameTypeStrategy(GrantSelectionStrategy):
 
         return WebSocketConnectionGrant(
             type=connector_dict.get("type", "WebSocketConnectionGrant"),
-            purpose=connector_dict.get("purpose", "node_attach"),
+            purpose=connector_dict.get("purpose", GRANT_PURPOSE_NODE_ATTACH),
             # params=params,
             auth=connector_dict.get("auth"),
         )
@@ -243,7 +244,7 @@ class PreferHttpStrategy(GrantSelectionStrategy):
 
         return HttpConnectionGrant(
             url=url,
-            purpose=connector_dict.get("purpose", "node_attach"),
+            purpose=connector_dict.get("purpose", GRANT_PURPOSE_NODE_ATTACH),
             # max_queue=connector_dict.get("max_queue", 1024),
             auth=connector_dict.get("auth"),
         )

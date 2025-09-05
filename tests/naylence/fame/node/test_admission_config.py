@@ -1,11 +1,8 @@
-#!/usr/bin/env python3
 """Test AdmissionConfig polymorphic behavior."""
 
-import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "naylence-fame-core", "src"))
-
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.admission_client_factory import AdmissionConfig
 
 
@@ -19,7 +16,7 @@ def test_admission_config_polymorphic():
         "connection_grants": [
             {
                 "type": "HttpConnectionGrant",
-                "purpose": "node.attach",
+                "purpose": GRANT_PURPOSE_NODE_ATTACH,
                 "url": "http://localhost:8080/fame/v1/ingress/downstream/test-system",
                 "ttl": 0,
                 "durable": False,
@@ -85,7 +82,7 @@ def test_direct_instantiation():
             connection_grants=[
                 {
                     "type": "HttpConnectionGrant",
-                    "purpose": "node.attach",
+                    "purpose": GRANT_PURPOSE_NODE_ATTACH,
                     "url": "http://test.com/outbox",
                 }
             ],

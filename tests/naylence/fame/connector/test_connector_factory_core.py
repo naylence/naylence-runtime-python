@@ -9,6 +9,7 @@ from naylence.fame.connector.http_stateless_connector import HttpStatelessConnec
 from naylence.fame.connector.http_stateless_connector_factory import HttpStatelessConnectorFactory
 from naylence.fame.connector.websocket_connector import WebSocketConnector
 from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorFactory
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
 from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
 
@@ -38,7 +39,7 @@ class TestConnectorFactoryCore:
         """Test WebSocketConnectorFactory.config_from_grant() works with dict as class method."""
         grant_dict = {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "wss://example.com/test",
             "auth": None,
         }
@@ -57,7 +58,7 @@ class TestConnectorFactoryCore:
         """Test HttpStatelessConnectorFactory.config_from_grant() works with dict as class method."""
         grant_dict = {
             "type": "HttpConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "https://example.com/test",
             "auth": None,
         }
@@ -77,7 +78,7 @@ class TestConnectorFactoryCore:
         factory = WebSocketConnectorFactory()
         grant = WebSocketConnectionGrant(
             type="WebSocketConnectionGrant",
-            purpose="node.attach",
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
             url="ws://example.com/test",  # Use ws:// to avoid SSL issues
             auth=None,
         )
@@ -103,7 +104,10 @@ class TestConnectorFactoryCore:
         """Test HttpStatelessConnectorFactory by converting grant to config and creating connector."""
         factory = HttpStatelessConnectorFactory()
         grant = HttpConnectionGrant(
-            type="HttpConnectionGrant", purpose="node.attach", url="https://example.com/test", auth=None
+            type="HttpConnectionGrant",
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
+            url="https://example.com/test",
+            auth=None,
         )
 
         # Convert grant to config
@@ -119,7 +123,10 @@ class TestConnectorFactoryCore:
     def test_websocket_factory_config_from_grant_invalid_type(self):
         """Test WebSocketConnectorFactory rejects unsupported grant types."""
         grant = HttpConnectionGrant(  # Wrong grant type for WebSocket factory
-            type="HttpConnectionGrant", purpose="node.attach", url="https://example.com/test", auth=None
+            type="HttpConnectionGrant",
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
+            url="https://example.com/test",
+            auth=None,
         )
 
         with pytest.raises(
@@ -132,7 +139,10 @@ class TestConnectorFactoryCore:
         """Test HttpStatelessConnectorFactory rejects unsupported grant types."""
         factory = HttpStatelessConnectorFactory()
         grant = WebSocketConnectionGrant(  # Wrong grant type for HTTP factory
-            type="WebSocketConnectionGrant", purpose="node.attach", url="wss://example.com/test", auth=None
+            type="WebSocketConnectionGrant",
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
+            url="wss://example.com/test",
+            auth=None,
         )
 
         with pytest.raises(
@@ -163,7 +173,7 @@ class TestConnectorFactoryCore:
         ws_grant_types = WebSocketConnectorFactory.supported_grant_types()
         ws_grant_dict = {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://example.com/test",
             "auth": None,
         }
@@ -177,7 +187,7 @@ class TestConnectorFactoryCore:
         http_grant_types = HttpStatelessConnectorFactory.supported_grant_types()
         http_grant_dict = {
             "type": "HttpConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "https://example.com/test",
             "auth": None,
         }
@@ -233,7 +243,7 @@ class TestConnectorFactoryCore:
             # Should be able to create config from dict
             grant_dict = {
                 "type": grant_types[0],  # Use the first supported grant type
-                "purpose": "node.attach",
+                "purpose": GRANT_PURPOSE_NODE_ATTACH,
                 "url": "http://example.com" if "Http" in grant_types[0] else "ws://example.com",
                 "auth": None,
             }
@@ -278,7 +288,7 @@ class TestConnectorFactoryCore:
         # WebSocket roundtrip
         ws_grant_dict = {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://example.com/test",
             "auth": None,
         }
@@ -301,7 +311,7 @@ class TestConnectorFactoryCore:
         # HTTP roundtrip
         http_grant_dict = {
             "type": "HttpConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "https://example.com/test",
             "auth": None,
         }

@@ -4,6 +4,7 @@ Test that the ResourceConfig fix preserves polymorphic behavior while fixing ser
 
 import json
 
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.direct_admission_client_factory import (
     DirectNodeAdmissionConfig,
 )
@@ -103,7 +104,7 @@ def test_direct_instantiation():
             connection_grants=[
                 {
                     "type": "WebSocketConnectionGrant",
-                    "purpose": "node.attach",
+                    "purpose": GRANT_PURPOSE_NODE_ATTACH,
                     "url": "ws://upstream.com:8080",
                 }
             ],
@@ -158,7 +159,7 @@ def test_mixed_scenarios():
             "connection_grants": [
                 {
                     "type": "WebSocketConnectionGrant",
-                    "purpose": "node.attach",
+                    "purpose": GRANT_PURPOSE_NODE_ATTACH,
                     "url": "ws://upstream.com:8080",
                 }
             ],

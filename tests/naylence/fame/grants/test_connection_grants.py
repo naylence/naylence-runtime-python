@@ -2,6 +2,7 @@
 
 import pytest
 
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
 from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
 from naylence.fame.security.auth.auth_injection_strategy_factory import AuthInjectionStrategyConfig
@@ -24,9 +25,11 @@ class TestConnectionGrants:
     def test_websocket_connection_grant(self):
         """Test WebSocketConnectionGrant."""
         auth = AuthInjectionStrategyConfig(type="none")
-        grant = WebSocketConnectionGrant(purpose="node.attach", url="ws://example.com/ws", auth=auth)
+        grant = WebSocketConnectionGrant(
+            purpose=GRANT_PURPOSE_NODE_ATTACH, url="ws://example.com/ws", auth=auth
+        )
         assert grant.type == "WebSocketConnectionGrant"
-        assert grant.purpose == "node.attach"
+        assert grant.purpose == GRANT_PURPOSE_NODE_ATTACH
         assert grant.url == "ws://example.com/ws"
         assert grant.auth is not None
         assert grant.auth.type == "none"
@@ -35,12 +38,12 @@ class TestConnectionGrants:
         """Test HttpConnectionGrant."""
         auth = AuthInjectionStrategyConfig(type="bearer")
         grant = HttpConnectionGrant(
-            purpose="node.attach",
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
             url="http://example.com/api",
             auth=auth,
         )
         assert grant.type == "HttpConnectionGrant"
-        assert grant.purpose == "node.attach"
+        assert grant.purpose == GRANT_PURPOSE_NODE_ATTACH
         assert grant.url == "http://example.com/api"
         assert grant.auth is not None
         assert grant.auth.type == "bearer"
@@ -48,7 +51,7 @@ class TestConnectionGrants:
     @pytest.mark.asyncio
     async def test_connector_from_websocket_grant(self):
         """Test creating connector from WebSocket grant."""
-        grant = WebSocketConnectionGrant(purpose="node.attach", url="ws://example.com/ws")
+        grant = WebSocketConnectionGrant(purpose=GRANT_PURPOSE_NODE_ATTACH, url="ws://example.com/ws")
 
         # This would require mocking the ConnectorFactory, so we'll test the logic
         # by checking that it can parse the grant correctly
@@ -58,7 +61,7 @@ class TestConnectionGrants:
     @pytest.mark.asyncio
     async def test_connector_from_http_grant(self):
         """Test creating connector from HTTP grant."""
-        grant = HttpConnectionGrant(purpose="node.attach", url="http://example.com/api")
+        grant = HttpConnectionGrant(purpose=GRANT_PURPOSE_NODE_ATTACH, url="http://example.com/api")
 
         # This would require mocking the ConnectorFactory, so we'll test the logic
         # by checking that it can parse the grant correctly
@@ -71,7 +74,7 @@ class TestConnectionGrants:
         # Test WebSocket dict grant
         ws_grant_dict = {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://example.com/ws",
         }
 
@@ -79,27 +82,27 @@ class TestConnectionGrants:
         # This is mainly testing the validation logic
         grant = WebSocketConnectionGrant.model_validate(ws_grant_dict)
         assert grant.type == "WebSocketConnectionGrant"
-        assert grant.purpose == "node.attach"
+        assert grant.purpose == GRANT_PURPOSE_NODE_ATTACH
 
         # Test HTTP dict grant
         http_grant_dict = {
             "type": "HttpConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "http://example.com/api",
         }
 
         grant = HttpConnectionGrant.model_validate(http_grant_dict)
         assert grant.type == "HttpConnectionGrant"
-        assert grant.purpose == "node.attach"
+        assert grant.purpose == GRANT_PURPOSE_NODE_ATTACH
 
     def test_grant_serialization(self):
         """Test that grants can be serialized/deserialized."""
-        grant = WebSocketConnectionGrant(purpose="node.attach", url="ws://example.com/ws")
+        grant = WebSocketConnectionGrant(purpose=GRANT_PURPOSE_NODE_ATTACH, url="ws://example.com/ws")
 
         # Test model_dump (serialization)
         data = grant.model_dump()
         assert data["type"] == "WebSocketConnectionGrant"
-        assert data["purpose"] == "node.attach"
+        assert data["purpose"] == GRANT_PURPOSE_NODE_ATTACH
         assert data["url"] == "ws://example.com/ws"
 
         # Test model_validate (deserialization)

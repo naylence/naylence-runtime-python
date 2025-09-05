@@ -9,6 +9,7 @@ from naylence.fame.connector.http_stateless_connector import HttpStatelessConnec
 from naylence.fame.connector.http_stateless_connector_factory import HttpStatelessConnectorFactory
 from naylence.fame.connector.websocket_connector import WebSocketConnector
 from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorFactory
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.grants.http_connection_grant import HttpConnectionGrant
 from naylence.fame.grants.websocket_connection_grant import WebSocketConnectionGrant
 
@@ -43,7 +44,7 @@ class TestConnectorFactoryDynamicMappingIntegration:
         # Test config_from_grant as class method with dict
         grant_dict = {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://example.com/test",
             "auth": None,
         }
@@ -63,7 +64,7 @@ class TestConnectorFactoryDynamicMappingIntegration:
         # Test config_from_grant as class method with dict
         grant_dict = {
             "type": "HttpConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "https://example.com/test",
             "auth": None,
         }
@@ -80,7 +81,7 @@ class TestConnectorFactoryDynamicMappingIntegration:
         # Mock the websocket connection
         mock_connect.side_effect = self.mock_websockets_connect
 
-        grant = WebSocketConnectionGrant(url="ws://example.com/test", purpose="node.attach")
+        grant = WebSocketConnectionGrant(url="ws://example.com/test", purpose=GRANT_PURPOSE_NODE_ATTACH)
         factory = WebSocketConnectorFactory()
         config = factory.config_from_grant(grant)
         from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
@@ -100,7 +101,10 @@ class TestConnectorFactoryDynamicMappingIntegration:
         """Test real HTTP grant to connector conversion."""
         factory = HttpStatelessConnectorFactory()
         grant = HttpConnectionGrant(
-            type="HttpConnectionGrant", purpose="node.attach", url="https://example.com/test", auth=None
+            type="HttpConnectionGrant",
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
+            url="https://example.com/test",
+            auth=None,
         )
         config = factory.config_from_grant(grant)
         from naylence.fame.connector.http_stateless_connector_factory import HttpStatelessConnectorConfig
@@ -120,7 +124,7 @@ class TestConnectorFactoryDynamicMappingIntegration:
         grant_dict = {
             "type": "WebSocketConnectionGrant",
             "url": "ws://example.com/test",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
         }
 
         # Use the static create_connector method
@@ -132,7 +136,7 @@ class TestConnectorFactoryDynamicMappingIntegration:
         """Test end-to-end HTTP grant dict to connector creation with minimal mocking."""
         grant_dict = {
             "type": "HttpConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "https://example.com/test",
             "auth": None,
         }
@@ -157,12 +161,12 @@ class TestConnectorFactoryDynamicMappingIntegration:
         mock_connect.side_effect = self.mock_websockets_connect
 
         # Test WebSocket grant
-        ws_grant = WebSocketConnectionGrant(url="ws://example.com/test", purpose="node.attach")
+        ws_grant = WebSocketConnectionGrant(url="ws://example.com/test", purpose=GRANT_PURPOSE_NODE_ATTACH)
         connector = await ConnectorFactory.create_connector(ws_grant)
         assert isinstance(connector, WebSocketConnector)
 
         # Test HTTP grant
-        http_grant = HttpConnectionGrant(url="http://example.com", purpose="node.attach")
+        http_grant = HttpConnectionGrant(url="http://example.com", purpose=GRANT_PURPOSE_NODE_ATTACH)
         connector = await ConnectorFactory.create_connector(http_grant)
         assert isinstance(connector, HttpStatelessConnector)
 
@@ -184,7 +188,7 @@ class TestConnectorFactoryDynamicMappingIntegration:
         ws_grant_types = WebSocketConnectorFactory.supported_grant_types()
         ws_grant_dict = {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://example.com/test",
             "auth": None,
         }
@@ -198,7 +202,7 @@ class TestConnectorFactoryDynamicMappingIntegration:
         http_grant_types = HttpStatelessConnectorFactory.supported_grant_types()
         http_grant_dict = {
             "type": "HttpConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "https://example.com/test",
             "auth": None,
         }
@@ -214,7 +218,10 @@ class TestConnectorFactoryDynamicMappingIntegration:
         # WebSocket factory should reject HTTP grants
         ws_factory = WebSocketConnectorFactory()
         http_grant = HttpConnectionGrant(
-            type="HttpConnectionGrant", purpose="node.attach", url="https://example.com/test", auth=None
+            type="HttpConnectionGrant",
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
+            url="https://example.com/test",
+            auth=None,
         )
 
         with pytest.raises(ValueError, match="WebSocketConnectorFactory only supports"):
@@ -226,7 +233,10 @@ class TestConnectorFactoryDynamicMappingIntegration:
         # HTTP factory should reject WebSocket grants
         http_factory = HttpStatelessConnectorFactory()
         ws_grant = WebSocketConnectionGrant(
-            type="WebSocketConnectionGrant", purpose="node.attach", url="ws://example.com/test", auth=None
+            type="WebSocketConnectionGrant",
+            purpose=GRANT_PURPOSE_NODE_ATTACH,
+            url="ws://example.com/test",
+            auth=None,
         )
 
         with pytest.raises(ValueError, match="HttpStatelessConnectorFactory only supports"):

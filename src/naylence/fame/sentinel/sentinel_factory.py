@@ -6,6 +6,7 @@ from naylence.fame.config.peer_config import PeerConfig
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
 from naylence.fame.constants.ttl_constants import TTL_NEVER_EXPIRES
 from naylence.fame.factory import ExtensionManager, create_default_resource, create_resource
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
 from naylence.fame.node.factory_commons import make_common_opts
 from naylence.fame.node.node_config import FameNodeConfig
@@ -184,10 +185,10 @@ class SentinelFactory(NodeLikeFactory):
                 connection_grants = [
                     {
                         "type": "WebSocketConnectionGrant",
-                        "purpose": "node.attach",
+                        "purpose": GRANT_PURPOSE_NODE_ATTACH,
                         "url": peer_config.direct_url,
                         "auth": {
-                            "type": "WebSocketSubprotocolAuthInjection",
+                            "type": "WebSocketSubprotocolAuth",
                             "token_provider": {"type": "NoneTokenProvider"},
                         },
                     }

@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 # Some well-known grant purposes
-GRANT_PURPOSE_NODE_ATTACH = "node_attach"
+GRANT_PURPOSE_NODE_ATTACH = "node.attach"
 
 
 class Grant(BaseModel):

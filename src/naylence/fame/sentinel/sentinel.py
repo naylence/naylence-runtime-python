@@ -548,7 +548,7 @@ class Sentinel(FameNode, RoutingNodeLike):
                 raise RuntimeError(f"No route for peer segment '{peer_id}'")
 
             processed_envelope = await self._dispatch_envelope_event(
-                "on_forward_to_peer", self, envelope, peers, exclude_peers, context=context
+                "on_forward_to_peer", self, peer_id, envelope, context=context
             )
             if processed_envelope is None:
                 continue
@@ -556,7 +556,7 @@ class Sentinel(FameNode, RoutingNodeLike):
             await conn.send(processed_envelope)
 
             await self._dispatch_envelope_event(
-                "on_forward_to_peer_complete", self, envelope, peers, exclude_peers, context=context
+                "on_forward_to_peer_complete", self, peer_id, envelope, context=context
             )
 
             fid = processed_envelope.flow_id

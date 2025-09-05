@@ -3,6 +3,7 @@
 import pytest
 
 from naylence.fame.factory import create_resource
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
 from naylence.fame.node.admission.direct_admission_client import (
     DirectAdmissionClient,
@@ -39,7 +40,7 @@ class TestAdmissionClientFactory:
             connection_grants=[
                 {
                     "type": "WebSocketConnectionGrant",
-                    "purpose": "node.attach",
+                    "purpose": GRANT_PURPOSE_NODE_ATTACH,
                     "url": "ws://localhost:8080/test",
                 }
             ],
@@ -69,7 +70,7 @@ class TestAdmissionClientFactory:
             "connection_grants": [
                 {
                     "type": "WebSocketConnectionGrant",
-                    "purpose": "node.attach",
+                    "purpose": GRANT_PURPOSE_NODE_ATTACH,
                     "url": "ws://localhost:8080/test",
                 }
             ],

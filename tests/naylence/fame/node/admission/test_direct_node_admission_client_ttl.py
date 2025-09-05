@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.direct_admission_client import DirectAdmissionClient
 
 
@@ -12,7 +13,7 @@ async def test_ttl_logic_with_specific_ttl():
     client_ttl_sec = 3600  # Client TTL is 1 hour
 
     connection_grants = [
-        {"type": "WebSocketConnectionGrant", "purpose": "node.attach", "url": "ws://test.com"}
+        {"type": "WebSocketConnectionGrant", "purpose": GRANT_PURPOSE_NODE_ATTACH, "url": "ws://test.com"}
     ]
 
     client = DirectAdmissionClient(
@@ -35,7 +36,7 @@ async def test_ttl_logic_with_different_ttl():
     client_ttl_sec = 7200  # Client TTL is 2 hours
 
     connection_grants = [
-        {"type": "WebSocketConnectionGrant", "purpose": "node.attach", "url": "ws://test.com"}
+        {"type": "WebSocketConnectionGrant", "purpose": GRANT_PURPOSE_NODE_ATTACH, "url": "ws://test.com"}
     ]
 
     client = DirectAdmissionClient(
@@ -57,7 +58,7 @@ async def test_ttl_logic_zero_ttl():
     now = datetime.now(timezone.utc)
 
     connection_grants = [
-        {"type": "WebSocketConnectionGrant", "purpose": "node.attach", "url": "ws://test.com"}
+        {"type": "WebSocketConnectionGrant", "purpose": GRANT_PURPOSE_NODE_ATTACH, "url": "ws://test.com"}
     ]
 
     client = DirectAdmissionClient(
@@ -78,7 +79,7 @@ async def test_ttl_logic_default_fallback():
     now = datetime.now(timezone.utc)
 
     connection_grants = [
-        {"type": "WebSocketConnectionGrant", "purpose": "node.attach", "url": "ws://test.com"}
+        {"type": "WebSocketConnectionGrant", "purpose": GRANT_PURPOSE_NODE_ATTACH, "url": "ws://test.com"}
     ]
 
     client = DirectAdmissionClient(

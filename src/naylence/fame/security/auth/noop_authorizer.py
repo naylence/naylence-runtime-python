@@ -15,7 +15,6 @@ class NoopAuthorizer(Authorizer):
 
     async def authenticate(
         self,
-        node: NodeLike,
         credentials: str | bytes,
     ) -> Optional[AuthorizationContext]:
         # No authentication needed, just return an empty context

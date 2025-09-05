@@ -7,6 +7,7 @@ import asyncio
 from unittest.mock import AsyncMock, Mock
 
 from naylence.fame.core import DeliveryOriginType, NodeWelcomeFrame
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.default_node_attach_client import (
     DefaultNodeAttachClient,
 )
@@ -25,7 +26,7 @@ async def test_direct_admission_client_with_reverse_connections():
     connection_grants = [
         {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://upstream.example.com:8080",
         }
     ]
@@ -48,7 +49,7 @@ async def test_direct_admission_client_with_reverse_connections():
     first_grant = hello_response.frame.connection_grants[0]
     # The grant type should be mapped from WebSocketConnector to WebSocketConnectionGrant
     assert first_grant["type"] == "WebSocketConnectionGrant"
-    assert first_grant["purpose"] == "node.attach"
+    assert first_grant["purpose"] == GRANT_PURPOSE_NODE_ATTACH
     assert hello_response.frame.system_id == "test-system"
     assert hello_response.frame.instance_id == "test-instance"
 

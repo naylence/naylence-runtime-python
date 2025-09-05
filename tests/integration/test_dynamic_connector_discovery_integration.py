@@ -6,6 +6,7 @@ from unittest.mock import Mock
 import pytest
 
 # Import only what we need to avoid circular import issues
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.direct_admission_client import DirectAdmissionClient
 
 
@@ -115,7 +116,7 @@ async def test_dynamic_connector_setup_integration():
     connection_grants = [
         {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://localhost:8080/test",
         }
     ]
@@ -173,7 +174,7 @@ async def test_dynamic_setup_event_handling():
     connection_grants = [
         {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://localhost:8080/test",
         }
     ]
@@ -212,7 +213,7 @@ async def test_admission_client_connector_usage():
     connection_grants = [
         {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://localhost:8080/test",
         }
     ]

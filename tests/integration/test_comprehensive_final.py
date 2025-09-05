@@ -1,12 +1,5 @@
-#!/usr/bin/env python3
-"""Final comprehensive test of the reverse connection feature with fixed serialization."""
-
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "naylence-fame-core", "src"))
-
 from naylence.fame.core.protocol.frames import NodeAttachFrame
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 
 
 def test_reverse_connection_feature():
@@ -16,13 +9,13 @@ def test_reverse_connection_feature():
     # Create connector directives for reverse connections
     websocket_connector = {
         "type": "WebSocketConnectionGrant",
-        "purpose": "node_attach",
+        "purpose": GRANT_PURPOSE_NODE_ATTACH,
         "url": "ws://callback.example.com:8080/ws",
     }
 
     http_connector = {
         "type": "HttpConnectionGrant",
-        "purpose": "node_attach",
+        "purpose": GRANT_PURPOSE_NODE_ATTACH,
         "url": "http://callback.example.com:8081/outbox",
     }
 
@@ -73,12 +66,12 @@ def test_frame_deserialization():
         "callback_grants": [
             {
                 "type": "WebSocketConnectionGrant",
-                "purpose": "node_attach",
+                "purpose": GRANT_PURPOSE_NODE_ATTACH,
                 "url": "ws://ws.example.com:9090/ws",
             },
             {
                 "type": "HttpConnectionGrant",
-                "purpose": "node_attach",
+                "purpose": GRANT_PURPOSE_NODE_ATTACH,
                 "url": "http://http.example.com:9091/outbox",
             },
         ],
@@ -114,27 +107,3 @@ def test_frame_deserialization():
 
         traceback.print_exc()
         return False
-
-
-if __name__ == "__main__":
-    print("Final Comprehensive Test: Reverse Connection Feature")
-    print("=" * 70)
-
-    test1 = test_reverse_connection_feature()
-    test2 = test_frame_deserialization()
-
-    print("\n" + "=" * 70)
-    print("FINAL RESULTS:")
-    print(f"Reverse connection serialization: {'✓' if test1 else '✗'}")
-    print(f"Frame deserialization: {'✓' if test2 else '✗'}")
-
-    if test1 and test2:
-        print("\n🎉 SUCCESS! The reverse connection feature is fully implemented and working!")
-        print("   - NodeAttachFrame supports callback_grants")
-        print("   - ConnectorDirective polymorphic behavior works correctly")
-        print("   - Serialization and deserialization both work")
-        print("   - ResourceConfig validator issues have been resolved")
-        sys.exit(0)
-    else:
-        print("\n❌ Some issues remain.")
-        sys.exit(1)

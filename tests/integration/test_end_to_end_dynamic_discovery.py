@@ -5,6 +5,7 @@ import pytest
 from naylence.fame.connector.http_listener_factory import HttpListenerFactory
 from naylence.fame.connector.websocket_connector_factory import WebSocketConnectorConfig
 from naylence.fame.factory import ExtensionManager
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.direct_admission_client import DirectAdmissionClient
 from naylence.fame.node.factory_commons import make_common_opts
 from naylence.fame.node.node_config import FameNodeConfig
@@ -60,7 +61,7 @@ async def test_end_to_end_dynamic_discovery():
     connection_grants = [
         {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://localhost:8080/test",
         }
     ]
@@ -170,7 +171,7 @@ async def test_admission_client_factory_integration():
     connection_grants = [
         {
             "type": "WebSocketConnectionGrant",
-            "purpose": "node.attach",
+            "purpose": GRANT_PURPOSE_NODE_ATTACH,
             "url": "ws://localhost:8080/test",
         }
     ]

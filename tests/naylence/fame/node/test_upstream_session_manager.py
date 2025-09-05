@@ -21,6 +21,7 @@ from naylence.fame.core import (
     NodeWelcomeFrame,
 )
 from naylence.fame.errors.errors import FameConnectError, FameTransportClose
+from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.node_attach_client import AttachInfo
 from naylence.fame.node.upstream_session_manager import UpstreamSessionManager
 
@@ -199,7 +200,7 @@ class MockAdmissionClient:
         welcome_frame.connection_grants = [
             {
                 "type": "WebSocketConnector",
-                "purpose": "node_attach",
+                "purpose": GRANT_PURPOSE_NODE_ATTACH,
                 "url": "ws://test",
             }
         ]
