@@ -110,16 +110,16 @@ jobs:
       run: |
         # Run integration tests in separate groups to avoid docker-compose conflicts
         echo "🧪 Running non-Docker integration tests..."
-        poetry run pytest tests/integration/test_*.py -v --tb=short
+        poetry run pytest tests/integration/test_*.py -v -s --tb=short --no-cov
         
         echo "🐳 Running RPC integration tests..."
-        poetry run pytest tests/integration/sentinel/ -v --tb=short
+        poetry run pytest tests/integration/sentinel/ -v -s --tb=short --no-cov
         
         echo "📊 Running telemetry integration tests..."
-        poetry run pytest tests/integration/telemetry/ -v --tb=short
+        poetry run pytest tests/integration/telemetry/ -v -s --tb=short --no-cov
         
         echo "🔒 Running security integration tests..."
-        poetry run pytest tests/integration/security/ -v --tb=short
+        poetry run pytest tests/integration/security/ -v -s --tb=short --no-cov
       env:
         # Enable Docker support for integration tests
         DOCKER_BUILDKIT: 1
