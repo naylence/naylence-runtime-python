@@ -92,8 +92,38 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+    - name: Verify Docker and Docker Compose
+      run: |
+        docker version
+        docker compose version
+        docker info
+
+    - name: Pre-build integration test Docker images
+      run: |
+        # Build the main integration test image
+        docker build -f tests/integration/docker/Dockerfile -t naylence-integration-test .
+        
+        # Pull OpenTelemetry collector image for telemetry tests
+        docker pull otel/opentelemetry-collector-contrib:latest
+
     - name: Run integration tests
-      run: poetry run pytest tests/integration/ -v --tb=short
+      run: |
+        # Run integration tests in separate groups to avoid docker-compose conflicts
+        echo "🧪 Running non-Docker integration tests..."
+        poetry run pytest tests/integration/test_*.py -v --tb=short
+        
+        echo "🐳 Running RPC integration tests..."
+        poetry run pytest tests/integration/sentinel/ -v --tb=short
+        
+        echo "📊 Running telemetry integration tests..."
+        poetry run pytest tests/integration/telemetry/ -v --tb=short
+        
+        echo "🔒 Running security integration tests..."
+        poetry run pytest tests/integration/security/ -v --tb=short
       env:
         # Enable Docker support for integration tests
         DOCKER_BUILDKIT: 1
+        COMPOSE_DOCKER_CLI_BUILD: 1
+        # Control integration test Docker behavior
+        PYTEST_DOCKER_REBUILD: false
+        PYTEST_DOCKER_LOGS: true
