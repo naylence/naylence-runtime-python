@@ -91,17 +91,17 @@ class DefaultServiceManager(ServiceManager):
                 # don’t block the event-loop if it does I/O
                 await asyncio.to_thread(start_fn)
 
-        if isinstance(service, FameRPCService):
-            address = await self._serve_rpc(
-                service_name,
-                service.handle_rpc_request,
-                capabilities=service.capabilities,
-                poll_timeout_ms=self._poll_timeout_ms,
-            )
-        elif isinstance(service, FameMessageService):
+        if isinstance(service, FameMessageService):
             address = await self._serve(
                 service_name,
                 service.handle_message,
+                capabilities=service.capabilities,
+                poll_timeout_ms=self._poll_timeout_ms,
+            )
+        elif isinstance(service, FameRPCService):
+            address = await self._serve_rpc(
+                service_name,
+                service.handle_rpc_request,
                 capabilities=service.capabilities,
                 poll_timeout_ms=self._poll_timeout_ms,
             )

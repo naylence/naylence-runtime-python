@@ -6,6 +6,7 @@ using proper FameFabric pattern.
 
 import asyncio
 import time
+from typing import Any
 
 import pytest
 from opentelemetry import trace
@@ -42,7 +43,7 @@ async def test_telemetry_service_to_service_integration(telemetry_services, tele
 
             # Test basic data processing with telemetry
             test_data = {"operation": "test_process", "value": 42, "timestamp": time.time()}
-            result = await telemetry_service.process_data(data=test_data)
+            result: Any = await telemetry_service.process_data(data=test_data)
             print(f"✅ TelemetryService.process_data({test_data}) = {result}")
             assert result["processed"] is True
             assert result["input"] == test_data
@@ -118,7 +119,7 @@ async def test_telemetry_trace_correlation(telemetry_services, telemetry_client_
                             print(f"✅ Error scenario handled: {scenario['scenario']}")
                         else:
                             # Normal operations
-                            result = await telemetry_service.process_data(
+                            result: Any = await telemetry_service.process_data(
                                 data=scenario["data"], trace_context={"scenario": scenario["scenario"]}
                             )
                             print(

@@ -53,6 +53,15 @@ async def test_client_to_docker_rpc_integration(rpc_docker_service, rpc_client_c
             assert "Division by zero" in str(exc_info.value)
             print(f"✅ Calculator properly handles division by zero: {exc_info.value}")
 
+            fib_numbers = []
+            async for v in await calculator.fib_stream(_stream=True, n=10):
+                print(v, end=" ")
+                fib_numbers.append(v)
+            assert fib_numbers == [0, 1, 1, 2, 3, 5, 8, 13, 21, 34], (
+                f"Expected Fibonacci sequence, got {fib_numbers}"
+            )
+            print()
+
             print("🎉 All Calculator RPC tests passed!")
 
     except Exception as e:

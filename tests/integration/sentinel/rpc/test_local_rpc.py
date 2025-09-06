@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
 """
 Local RPC test - test Calculator service without Docker to verify basic RPC functionality.
 Tests the pattern: async with FameFabric.get_or_create() -> bind service -> get proxy -> invoke proxy
 """
 
-import asyncio
-import sys
 from typing import List, Optional
+
+import pytest
 
 from naylence.fame.core import FameFabric, FameRPCService
 from naylence.fame.service import RpcProxy
@@ -48,8 +47,16 @@ class CalculatorService(RpcMixin, FameRPCService):
         print(f"🧮 Calculator.divide({a}, {b}) = {result}")
         return result
 
+    @operation(name="fib_stream", streaming=True)
+    async def fib(self, n: int):
+        a, b = 0, 1
+        for _ in range(n):
+            yield a
+            a, b = b, a + b
 
-async def main():
+
+@pytest.mark.asyncio
+async def test_local_rpc():
     """Test RPC service locally using FameFabric.get_or_create() pattern."""
     print("🚀 Starting local RPC test...")
 
@@ -95,6 +102,10 @@ async def main():
                     print(f"❌ Unexpected error: {e}")
                     raise
 
+            async for v in await calculator_proxy.fib_stream(_stream=True, n=10):
+                print(v, end=" ")
+            print()
+
             print("\n🎉 All local RPC tests passed!")
 
     except Exception as e:
@@ -107,6 +118,6 @@ async def main():
     return True
 
 
-if __name__ == "__main__":
-    success = asyncio.run(main())
-    sys.exit(0 if success else 1)
+# if __name__ == "__main__":
+#     success = asyncio.run(main())
+#     sys.exit(0 if success else 1)

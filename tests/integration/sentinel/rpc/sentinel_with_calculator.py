@@ -46,6 +46,13 @@ class CalculatorService(RpcMixin, FameRPCService):
         print(f"🧮 Calculator.divide({a}, {b}) = {result}")
         return result
 
+    @operation(name="fib_stream", streaming=True)
+    async def fib(self, n: int):
+        a, b = 0, 1
+        for _ in range(n):
+            yield a
+            a, b = b, a + b
+
 
 async def main():
     """Start sentinel with calculator service using proper FameFabric pattern."""

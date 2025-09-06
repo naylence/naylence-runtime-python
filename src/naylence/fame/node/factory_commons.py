@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from naylence.fame import telemetry
 from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
 from naylence.fame.core import generate_id
@@ -21,6 +20,7 @@ from naylence.fame.security.keys.attachment_key_validator_factory import (
 from naylence.fame.security.keys.key_store_factory import KeyStoreFactory
 from naylence.fame.storage.storage_provider import StorageProvider
 from naylence.fame.storage.storage_provider_factory import StorageProviderFactory
+from naylence.fame.telemetry.trace_emitter_factory import TraceEmitterFactory
 from naylence.fame.tracking.delivery_tracker import DeliveryTracker
 from naylence.fame.tracking.delivery_tracker_factory import DeliveryTrackerFactory
 from naylence.fame.util.logging import getLogger
@@ -180,9 +180,9 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
 
     telemetry_config = cfg.telemetry
     if telemetry_config is not None:
-        trace_emitter = await create_resource(telemetry.TraceEmitterFactory, telemetry_config)
+        trace_emitter = await create_resource(TraceEmitterFactory, telemetry_config)
     else:
-        trace_emitter = await create_default_resource(telemetry.TraceEmitterFactory)
+        trace_emitter = await create_default_resource(TraceEmitterFactory)
 
     from naylence.fame.node.node_event_listener import NodeEventListener
 

@@ -1,3 +1,4 @@
+import inspect
 from functools import wraps
 from types import MappingProxyType
 from typing import Any, Callable, Mapping, ParamSpec, TypeVar, overload
@@ -114,7 +115,12 @@ class RpcMixin:
             kwargs = params.get("kwargs", {}) if params else {}
 
             # Call the decorated method
-            return await handler(**kwargs)
+            if inspect.isasyncgenfunction(handler):
+                # For async generators, don't await - return the async iterator directly
+                return handler(**kwargs)
+            else:
+                # For regular async functions, await the result
+                return await handler(**kwargs)
         else:
             raise ValueError(f"Unknown RPC method: {method}")
 
@@ -139,7 +145,7 @@ class RpcProxy(FameServiceProxy):
                 if self._address:
                     return await fabric.invoke_stream(self._address, name, params, timeout_ms=self._timeout)
                 return await fabric.invoke_by_capability_stream(
-                    self._capabilities,
+                    self._capabilities,  # type: ignore
                     name,
                     params,
                     timeout_ms=self._timeout,  # type: ignore

@@ -10,19 +10,38 @@ import pytest
 import requests
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def docker_compose_file():
     """Path to the docker-compose file for multi-service tests."""
     return str(Path(__file__).parent / "docker-compose.yml")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def docker_compose_project_name():
     """Project name for Docker Compose to avoid conflicts."""
     return "naylence-multi-service-test"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
+def docker_services(docker_compose_file, docker_compose_project_name):
+    """Create package-scoped docker services for multi-service tests."""
+    from pytest_docker.plugin import DockerComposeExecutor, Services
+
+    executor = DockerComposeExecutor("docker compose", [docker_compose_file], docker_compose_project_name)
+    services = Services(executor)
+
+    # Ensure cleanup on exit
+    try:
+        yield services
+    finally:
+        # Cleanup: stop and remove containers
+        try:
+            executor.execute("down -v --remove-orphans")
+        except Exception:
+            pass  # Ignore cleanup errors
+
+
+@pytest.fixture(scope="package")
 def multi_service_cluster(docker_ip, docker_services) -> Generator[dict, None, None]:
     """Start multi-service cluster and wait for all services to be ready."""
 
