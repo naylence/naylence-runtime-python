@@ -1,0 +1,23 @@
+services:
+  sentinel:
+    build:
+      context: ../../../../  # Build from project root
+      dockerfile: tests/integration/docker/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the test script as a volume
+      - ./sentinel_with_calculator.py:/test/sentinel_with_calculator.py:ro
+    command: ["poetry", "run", "python", "/test/sentinel_with_calculator.py"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+    environment:
+      - PYTHONUNBUFFERED=1  # Ensure logs are flushed immediately
+
+networks:
+  rpc-test:
+    driver: bridge

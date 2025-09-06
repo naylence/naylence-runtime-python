@@ -1,0 +1,41 @@
+# Docker Compose configuration for telemetry integration tests
+
+services:
+  # OpenTelemetry Collector (minimal setup for testing)
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "14317:4317"   # OTLP gRPC receiver (using different external port)
+      - "14318:4318"   # OTLP HTTP receiver (using different external port)
+    # Note: No healthcheck for now - OTEL collector image doesn't have nc/curl
+    # The service will be ready when it starts listening on ports
+
+  # Fame Sentinel with telemetry service for testing
+  telemetry-sentinel:
+    build:
+      context: ../../../  # Build from project root (three levels up: telemetry -> integration -> tests -> project_root)
+      dockerfile: tests/integration/docker/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the telemetry sentinel script
+      - ./sentinel_with_telemetry.py:/test/sentinel_with_telemetry.py:ro
+    command: ["poetry", "run", "python", "/test/sentinel_with_telemetry.py"]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+    depends_on:
+      - otel-collector  # Start after collector, but don't wait for health check
+
+networks:
+  default:
+    name: naylence-telemetry-test

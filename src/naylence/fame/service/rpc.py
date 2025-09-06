@@ -1,6 +1,6 @@
 from functools import wraps
 from types import MappingProxyType
-from typing import Callable, Mapping, ParamSpec, TypeVar, overload
+from typing import Any, Callable, Mapping, ParamSpec, TypeVar, overload
 
 from naylence.fame.core import FameFabric, FameServiceProxy
 
@@ -62,7 +62,7 @@ def operation(  # noqa: D401
 
 class RpcMixin:
     """
-    Adds wiring for @rpc-decorated methods.
+    Adds wiring for @operation-decorated methods.
 
     After subclass creation, `cls._rpc_registry` contains:
 
@@ -72,6 +72,9 @@ class RpcMixin:
         }
 
     Registry is immutable (MappingProxyType) and cumulative across inheritance.
+
+    Provides a default implementation of handle_rpc_request() that automatically
+    routes to @operation-decorated methods based on the registry.
     """
 
     _rpc_registry: Mapping[str, tuple[str, bool]] = MappingProxyType({})
@@ -84,11 +87,36 @@ class RpcMixin:
 
         # Scan the new subclass' namespace
         for attr, obj in cls.__dict__.items():
-            if hasattr(obj, "_rpc_name"):  # set by @rpc
+            if hasattr(obj, "_rpc_name"):  # set by @operation
                 registry[obj._rpc_name] = (attr, obj._rpc_streaming)  # type: ignore[attr-defined]
 
         # Freeze to prevent accidental mutation
         cls._rpc_registry = MappingProxyType(registry)
+
+    async def handle_rpc_request(self, method: str, params: dict) -> Any:
+        """
+        Generic RPC request handler that routes to @operation-decorated methods.
+
+        This implementation:
+        1. Looks up the method in the _rpc_registry
+        2. Extracts kwargs from the params structure created by RpcProxy
+        3. Calls the appropriate decorated method with the extracted parameters
+        4. Returns the result or raises ValueError for unknown methods
+
+        Subclasses can override this for custom routing logic if needed.
+        """
+        # Check if method is in the RPC registry
+        if method in self._rpc_registry:
+            attr_name, is_streaming = self._rpc_registry[method]
+            handler = getattr(self, attr_name)
+
+            # Extract arguments from params structure created by RpcProxy
+            kwargs = params.get("kwargs", {}) if params else {}
+
+            # Call the decorated method
+            return await handler(**kwargs)
+        else:
+            raise ValueError(f"Unknown RPC method: {method}")
 
 
 class RpcProxy(FameServiceProxy):
@@ -111,10 +139,13 @@ class RpcProxy(FameServiceProxy):
                 if self._address:
                     return await fabric.invoke_stream(self._address, name, params, timeout_ms=self._timeout)
                 return await fabric.invoke_by_capability_stream(
-                    self._capabilities, name, params, timeout_ms=self._timeout
+                    self._capabilities,
+                    name,
+                    params,
+                    timeout_ms=self._timeout,  # type: ignore
                 )
             if self._address:
                 return await self._invoke(self._address, name, params)
-            return await self._invoke_by_capability(self._capabilities, name, params)
+            return await self._invoke_by_capability(self._capabilities, name, params)  # type: ignore
 
         return _call

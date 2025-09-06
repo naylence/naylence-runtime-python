@@ -11,6 +11,10 @@ on:
         default: 'testpypi'
         type: choice
         options: [testpypi, pypi]
+  workflow_run:
+    workflows: ["Test"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -19,6 +23,11 @@ permissions:
 jobs:
   # Build once and upload where needed
   build:
+    # Only run if tests passed or if manually triggered
+    if: |
+      github.event_name == 'release' || 
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     outputs:
       dist-path: ${{ steps.set-dist.outputs.path }}
@@ -34,9 +43,6 @@ jobs:
 
       - name: Install deps and package
         run: poetry install --no-interaction
-
-      - name: Run tests
-        run: poetry run pytest
 
       - name: Build dists
         run: poetry build

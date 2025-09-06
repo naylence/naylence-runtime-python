@@ -605,6 +605,29 @@ test = ["certifi (>=2024)", "cryptography-vectors (==45.0.7)", "pretend (>=0.7)"
 test-randomorder = ["pytest-randomly"]
 
 [[package]]
+name = "docker"
+version = "7.1.0"
+description = "A Python library for the Docker Engine API."
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "docker-7.1.0-py3-none-any.whl", hash = "sha256:c96b93b7f0a746f9e77d325bcfb87422a3d8bd4f03136ae8a85b37f1898d5fc0"},
+    {file = "docker-7.1.0.tar.gz", hash = "sha256:ad8c70e6e3f8926cb8a92619b832b4ea5299e2831c14284663184e200546fa6c"},
+]
+
+[package.dependencies]
+pywin32 = {version = ">=304", markers = "sys_platform == \"win32\""}
+requests = ">=2.26.0"
+urllib3 = ">=1.26.0"
+
+[package.extras]
+dev = ["coverage (==7.2.7)", "pytest (==7.4.2)", "pytest-cov (==4.1.0)", "pytest-timeout (==2.1.0)", "ruff (==0.1.8)"]
+docs = ["myst-parser (==0.18.0)", "sphinx (==5.1.1)"]
+ssh = ["paramiko (>=2.4.3)"]
+websockets = ["websocket-client (>=1.3.0)"]
+
+[[package]]
 name = "docutils"
 version = "0.22"
 description = "Docutils -- Python Documentation Utilities"
@@ -2061,6 +2084,26 @@ pytest = ">=6.2.5"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
+name = "pytest-docker"
+version = "3.2.3"
+description = "Simple pytest fixtures for Docker and Docker Compose based tests"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "pytest_docker-3.2.3-py3-none-any.whl", hash = "sha256:f973c35e6f2b674c8fc87e8b3354b02c15866a21994c0841a338c240a05de1eb"},
+    {file = "pytest_docker-3.2.3.tar.gz", hash = "sha256:26a1c711d99ef01e86e7c9c007f69641552c1554df4fccb065b35581cca24206"},
+]
+
+[package.dependencies]
+attrs = ">=19.2.0"
+pytest = ">=4.0,<9.0"
+
+[package.extras]
+docker-compose-v1 = ["docker-compose (>=1.27.3,<2.0)"]
+tests = ["mypy (>=0.500,<2.000)", "pytest-mypy (>=0.10,<1.0)", "pytest-pycodestyle (>=2.0.0,<3.0)", "pytest-pylint (>=0.14.1,<1.0)", "requests (>=2.22.0,<3.0)", "types-requests (>=2.31,<3.0)", "types-setuptools (>=69.0,<70.0)"]
+
+[[package]]
 name = "python-dotenv"
 version = "1.1.1"
 description = "Read key-value pairs from a .env file and set them as environment variables"
@@ -2093,7 +2136,7 @@ version = "311"
 description = "Python for Window Extensions"
 optional = false
 python-versions = "*"
-groups = ["mcp"]
+groups = ["dev", "mcp"]
 markers = "sys_platform == \"win32\""
 files = [
     {file = "pywin32-311-cp310-cp310-win32.whl", hash = "sha256:d03ff496d2a0cd4a5893504789d4a15399133fe82517455e78bad62efbb7f0a3"},
@@ -2899,4 +2942,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "7fe623321459d4183e935f68fd50ee4846c068081ed5b61f89b1924476225670"
+content-hash = "597f571e3a75005fff9af485389d8a610b0e24f5931c5a05160fe21d47e89f12"

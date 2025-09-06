@@ -55,6 +55,9 @@ hypothesis = "^6.131.30"
 coverage = "^7.9.2"
 pytest-cov = "^6.2.1"
 twine = "^6.1.0"
+pytest-docker = "^3.2.0"
+docker = "^7.1.0"
+requests = "^2.32.0"
 
 [tool.poetry.group.mcp.dependencies]
 mcp = "^1.9.1"

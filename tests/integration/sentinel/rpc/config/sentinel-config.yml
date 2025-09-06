@@ -1,0 +1,21 @@
+# Sentinel Configuration for RPC Integration Testing
+node:
+  type: "Sentinel"
+  id: "test-sentinel"
+  public_url: "http://localhost:8000"
+  listeners:
+    - type: "HttpListener"
+      port: 8000
+    - type: "WebSocketListener"
+      port: 8000
+  requested_logicals:
+    - "fame.fabric"
+  security:
+    type: "SecurityProfile" 
+    profile: "open"
+  admission:
+    type: "AdmissionProfile"
+    profile: "none"
+  storage:
+    type: "StorageProfile"
+    profile: "memory"

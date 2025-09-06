@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
-from naylence.fame.core import FameDeliveryContext, FameEnvelope
+from naylence.fame.core import FameAddress, FameDeliveryContext, FameEnvelope
 from naylence.fame.node.node_event_listener import NodeEventListener
 from naylence.fame.node.node_like import NodeLike
 from naylence.fame.telemetry.trace_emitter import Span, TraceEmitter
@@ -39,7 +39,7 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
     def _key(self, env: FameEnvelope, operation_key: str) -> Tuple[str, str]:
         return (env.id, operation_key)
 
-    def _start_operation_span(
+    def _start_envelope_operation_span(
         self,
         operation_name: str,
         envelope: FameEnvelope,
@@ -75,7 +75,7 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
         self._inflight[key] = _ActiveSpan(mgr=mgr, span=span)
         return envelope  # important: do not swallow the envelope
 
-    def _complete_operation_span(
+    def _complete_envelope_operation_span(
         self,
         operation_name: str,
         envelope: FameEnvelope,
@@ -127,7 +127,7 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
         envelope: FameEnvelope,
         context: Optional[FameDeliveryContext] = None,
     ):
-        return self._start_operation_span(
+        return self._start_envelope_operation_span(
             operation_name="fwd.to_route",
             envelope=envelope,
             operation_key=next_segment,
@@ -143,7 +143,7 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
         error: Optional[Exception] = None,
         context: Optional[FameDeliveryContext] = None,
     ) -> None:
-        self._complete_operation_span(
+        self._complete_envelope_operation_span(
             operation_name="fwd.to_route",
             envelope=envelope,
             operation_key=next_segment,
@@ -158,7 +158,7 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
         envelope: FameEnvelope,
         context: Optional[FameDeliveryContext] = None,
     ):
-        return self._start_operation_span(
+        return self._start_envelope_operation_span(
             operation_name="fwd.upstream",
             envelope=envelope,
             operation_key="upstream",
@@ -173,7 +173,7 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
         error: Optional[Exception] = None,
         context: Optional[FameDeliveryContext] = None,
     ) -> None:
-        self._complete_operation_span(
+        self._complete_envelope_operation_span(
             operation_name="fwd.upstream",
             envelope=envelope,
             operation_key="upstream",
@@ -189,7 +189,7 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
         envelope: FameEnvelope,
         context: Optional[FameDeliveryContext] = None,
     ):
-        return self._start_operation_span(
+        return self._start_envelope_operation_span(
             operation_name="fwd.to_peer",
             envelope=envelope,
             operation_key=peer_segment,
@@ -205,7 +205,7 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
         error: Optional[Exception] = None,
         context: Optional[FameDeliveryContext] = None,
     ) -> None:
-        self._complete_operation_span(
+        self._complete_envelope_operation_span(
             operation_name="fwd.to_peer",
             envelope=envelope,
             operation_key=peer_segment,
@@ -213,3 +213,74 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
             error=error,
             additional_attributes={"peer.segment": peer_segment},
         )
+
+    async def on_deliver_local(
+        self,
+        node: NodeLike,
+        address: FameAddress,
+        envelope: FameEnvelope,
+        context: Optional[FameDeliveryContext] = None,
+    ):
+        """Track local delivery operations."""
+        return self._start_envelope_operation_span(
+            operation_name="deliver.local",
+            envelope=envelope,
+            operation_key=str(address),
+            additional_attributes={
+                "delivery.address": str(address),
+                "delivery.type": "local",
+            },
+        )
+
+    async def on_deliver_local_complete(
+        self,
+        node: NodeLike,
+        address: FameAddress,
+        envelope: FameEnvelope,
+        context: Optional[FameDeliveryContext] = None,
+    ) -> None:
+        """Complete local delivery span tracking."""
+        self._complete_envelope_operation_span(
+            operation_name="deliver.local",
+            envelope=envelope,
+            operation_key=str(address),
+            additional_attributes={
+                "delivery.address": str(address),
+                "delivery.type": "local",
+            },
+        )
+
+    async def on_node_stopped(self, node: NodeLike) -> None:
+        """
+        Handle node shutdown - clean up telemetry resources.
+
+        This method implements the NodeEventListener interface and ensures
+        proper telemetry shutdown when the node stops.
+
+        Args:
+            node: The node that is being stopped
+        """
+        try:
+            await self.flush()
+            await self.shutdown()
+        except Exception:
+            # Never let telemetry errors affect node shutdown
+            pass
+
+    async def flush(self) -> None:
+        """
+        Flush any pending telemetry data.
+
+        Override in subclasses to implement specific flushing logic.
+        Base implementation does nothing.
+        """
+        pass
+
+    async def shutdown(self) -> None:
+        """
+        Shutdown telemetry and clean up resources.
+
+        Override in subclasses to implement specific shutdown logic.
+        Base implementation does nothing.
+        """
+        pass

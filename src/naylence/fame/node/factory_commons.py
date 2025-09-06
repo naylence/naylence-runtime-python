@@ -182,7 +182,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     if telemetry_config is not None:
         trace_emitter = await create_resource(telemetry.TraceEmitterFactory, telemetry_config)
     else:
-        trace_emitter = create_default_resource(telemetry.TraceEmitterFactory)
+        trace_emitter = await create_default_resource(telemetry.TraceEmitterFactory)
 
     from naylence.fame.node.node_event_listener import NodeEventListener
 
