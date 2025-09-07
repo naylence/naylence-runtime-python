@@ -426,7 +426,24 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
                 hb_corr_id=hb_env.corr_id,
                 hb_env_id=hb_env.id,
             )
-            await c.send(hb_env)
+            context = FameDeliveryContext(
+                origin_type=DeliveryOriginType.LOCAL,
+            )
+            try:
+                await self._node._dispatch_envelope_event(
+                    "on_forward_upstream", self._node, hb_env, context=context
+                )
+                await c.send(hb_env)
+            except Exception as e:
+                await self._node._dispatch_envelope_event(
+                    "on_forward_upstream_complete", self._node, hb_env, error=e, context=context
+                )
+                raise
+            else:
+                await self._node._dispatch_envelope_event(
+                    "on_forward_upstream_complete", self._node, hb_env, context=context
+                )
+
             await self._node._dispatch_event("on_heartbeat_sent", hb_env)
 
             # Check for missed heartbeat acknowledgements
@@ -579,6 +596,8 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
                     context.security = SecurityContext()
                 if context.security.authorization is None:
                     context.security.authorization = authorization_context
+
+            await self._node._dispatch_envelope_event("on_envelope_received", self._node, env, context)
 
             # (1) normal heartbeat
             if isinstance(env.frame, NodeHeartbeatAckFrame):

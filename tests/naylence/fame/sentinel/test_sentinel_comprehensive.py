@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Comprehensive test suite for Sentinel to improve coverage to 85%+.
 
@@ -226,6 +225,18 @@ class TestSentinelComprehensive:
 
         mock_connector.start = capture_start
 
+        # Mock _dispatch_envelope_event to return the envelope unchanged for this test
+        async def mock_dispatch_envelope_event(event, *args, **kwargs):
+            # Find the envelope in the arguments - look for object with .frame attribute
+            if "envelope" in kwargs:
+                return kwargs["envelope"]
+            for arg in args:
+                if hasattr(arg, "frame"):
+                    return arg
+            return args[0] if args else None
+
+        sentinel._dispatch_envelope_event = AsyncMock(side_effect=mock_dispatch_envelope_event)
+
         with patch(
             "naylence.fame.sentinel.sentinel.create_resource",
             return_value=mock_connector,
@@ -268,6 +279,18 @@ class TestSentinelComprehensive:
             captured_handler = handler
 
         mock_connector.start = capture_start
+
+        # Mock _dispatch_envelope_event to return the envelope unchanged for this test
+        async def mock_dispatch_envelope_event(event, *args, **kwargs):
+            # Find the envelope in the arguments - look for object with .frame attribute
+            if "envelope" in kwargs:
+                return kwargs["envelope"]
+            for arg in args:
+                if hasattr(arg, "frame"):
+                    return arg
+            return args[0] if args else None
+
+        sentinel._dispatch_envelope_event = AsyncMock(side_effect=mock_dispatch_envelope_event)
 
         with patch(
             "naylence.fame.sentinel.sentinel.create_resource",

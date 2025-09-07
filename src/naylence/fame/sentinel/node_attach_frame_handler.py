@@ -5,6 +5,7 @@ from typing import Optional
 
 from naylence.fame.core import (
     DeliveryOriginType,
+    FameConnector,
     FameDeliveryContext,
     FameEnvelope,
     NodeAttachAckFrame,
@@ -124,12 +125,16 @@ class NodeAttachFrameHandler(TaskSpawner):
 
             except KeyValidationError as e:
                 # Send negative acknowledgment to client
-                await connector.send(
+                await self._send_and_notify(
+                    connector,
                     self._create_node_attach_ack_env(
                         ok=False,
                         reason=f"Certificate validation failed: {e}",
                         correlation_id=envelope.corr_id,
-                    )
+                        trace_id=envelope.trace_id,
+                    ),
+                    forward_route=attached_system_id,
+                    context=context,
                 )
 
                 # Log the key validation failure
@@ -282,12 +287,13 @@ class NodeAttachFrameHandler(TaskSpawner):
             expires_at=attach_expires_at,
             assigned_path=assigned_path,
             correlation_id=envelope.corr_id,
+            trace_id=envelope.trace_id,
             stickiness=negotiated_stickiness,
         )
 
         logger.debug("sending_node_attach_ack", env_id=node_attach_ack_env.id)
 
-        await connector.send(node_attach_ack_env)
+        await self._send_and_notify(connector, node_attach_ack_env, attached_system_id, context)
 
         # persist durable routes (so we can restore them later)
         if connector_config.durable:
@@ -312,6 +318,37 @@ class NodeAttachFrameHandler(TaskSpawner):
                 ),
             )
 
+    async def _send_and_notify(
+        self,
+        connector: FameConnector,
+        envelope: FameEnvelope,
+        forward_route: str,
+        context: Optional[FameDeliveryContext] = None,
+    ):
+        try:
+            await self._routing_node_like._dispatch_envelope_event(
+                "on_forward_to_route", self._routing_node_like, forward_route, envelope, context=context
+            )
+            await connector.send(envelope)
+        except Exception as e:
+            await self._routing_node_like._dispatch_envelope_event(
+                "on_forward_to_route_complete",
+                self._routing_node_like,
+                forward_route,
+                envelope,
+                error=e,
+                context=context,
+            )
+            raise
+        else:
+            await self._routing_node_like._dispatch_envelope_event(
+                "on_forward_to_route_complete",
+                self._routing_node_like,
+                forward_route,
+                envelope,
+                context=context,
+            )
+
     async def _close_connection_after_delay(self, connector, delay_seconds: float) -> None:
         """Close the connection after a brief delay to allow message delivery."""
         await asyncio.sleep(delay_seconds)
@@ -332,6 +369,7 @@ class NodeAttachFrameHandler(TaskSpawner):
         expires_at: Optional[datetime] = None,
         assigned_path: Optional[str] = None,
         correlation_id: Optional[str] = None,
+        trace_id: Optional[str] = None,
         stickiness: Optional["Stickiness"] = None,
     ) -> FameEnvelope:
         # include real expiry so downstream can warn clients before detaching
@@ -354,4 +392,4 @@ class NodeAttachFrameHandler(TaskSpawner):
         )
         if stickiness is not None:
             ack.stickiness = stickiness
-        return FameEnvelope(frame=ack, corr_id=correlation_id)
+        return FameEnvelope(frame=ack, corr_id=correlation_id, trace_id=trace_id)

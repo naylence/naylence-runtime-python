@@ -33,7 +33,10 @@ async def test_node_attach_frame_handler_with_real_connector():
     mock_routing_node.id = "test-sentinel"
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
-    mock_routing_node._dispatch_event = AsyncMock()  # Make this async
+    mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = (
+        AsyncMock()
+    )  # Add envelope event dispatch mock  # Make this async
 
     # Mock security manager
     mock_security_manager = MagicMock()

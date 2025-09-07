@@ -155,6 +155,21 @@ class NodeEventListener(Protocol):
         # Default implementation does nothing - this is an optional lifecycle event
         pass
 
+    async def on_envelope_received(
+        self, node: NodeLike, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
+    ) -> Optional[FameEnvelope]:
+        """
+        Called when a heartbeat acknowledgment is received from upstream.
+
+        This event allows components to perform processing on heartbeat frames
+        as needed by their specific requirements.
+
+        Args:
+            envelope: The heartbeat envelope to process
+            context: The delivery context (if any)
+        """
+        return envelope
+
     async def on_deliver_local(
         self,
         node: NodeLike,
@@ -313,7 +328,7 @@ class NodeEventListener(Protocol):
         result: Optional[Any] = None,
         error: Optional[Exception] = None,
         context: Optional[FameDeliveryContext] = None,
-    ) -> None:
+    ) -> Optional[FameEnvelope]:
         """
         Called after a node completes forwarding an envelope upstream.
 
@@ -334,7 +349,7 @@ class NodeEventListener(Protocol):
             context: The delivery context
         """
         # Default implementation does nothing
-        pass
+        return envelope
 
     async def on_forward_to_route_complete(
         self,
@@ -344,7 +359,7 @@ class NodeEventListener(Protocol):
         result: Optional[Any] = None,
         error: Optional[Exception] = None,
         context: Optional[FameDeliveryContext] = None,
-    ) -> None:
+    ) -> Optional[FameEnvelope]:
         """
         Called after a sentinel completes forwarding an envelope to a downstream route.
 
@@ -366,7 +381,7 @@ class NodeEventListener(Protocol):
             context: The delivery context
         """
         # Default implementation does nothing
-        pass
+        return envelope
 
     async def on_forward_to_peer_complete(
         self,
@@ -376,7 +391,7 @@ class NodeEventListener(Protocol):
         result: Optional[Any] = None,
         error: Optional[Exception] = None,
         context: Optional[FameDeliveryContext] = None,
-    ) -> None:
+    ) -> Optional[FameEnvelope]:
         """
         Called after a sentinel completes forwarding an envelope to a peer.
 
@@ -398,7 +413,7 @@ class NodeEventListener(Protocol):
             context: The delivery context
         """
         # Default implementation does nothing
-        pass
+        return envelope
 
     async def on_forward_to_peers(
         self,
@@ -443,7 +458,7 @@ class NodeEventListener(Protocol):
         result: Optional[Any] = None,
         error: Optional[Exception] = None,
         context: Optional[FameDeliveryContext] = None,
-    ) -> None:
+    ) -> Optional[FameEnvelope]:
         """
         Called after a sentinel completes forwarding an envelope to multiple peers.
 
@@ -466,7 +481,7 @@ class NodeEventListener(Protocol):
             context: The delivery context
         """
         # Default implementation does nothing
-        pass
+        return envelope
 
     async def on_child_attach(
         self,

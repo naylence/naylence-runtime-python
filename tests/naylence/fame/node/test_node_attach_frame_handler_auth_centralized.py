@@ -27,6 +27,7 @@ async def test_node_attach_frame_handler_no_authorization_checks():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
 
     mock_security_manager = MagicMock()
     mock_security_manager.on_child_attach = AsyncMock()
@@ -110,6 +111,7 @@ async def test_node_attach_frame_handler_certificate_validation_still_works():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
 
     mock_security_manager = MagicMock()
     mock_security_manager.on_child_attach = AsyncMock()

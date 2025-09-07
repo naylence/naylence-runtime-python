@@ -93,13 +93,14 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         result: Optional[Any] = None,
         error: Optional[Exception] = None,
         context: FameDeliveryContext | None = None,
-    ) -> None:
+    ) -> Optional[FameEnvelope]:
         if show_envelopes:
             print(
                 f"\n{_timestamp()} - {color('Forwarded envelope to upstream', AnsiColor.BLUE)} 🚀\n{
                     pretty_model(envelope)
                 }"
             )
+        return envelope
 
     async def on_forward_to_route_complete(
         self,
@@ -109,13 +110,14 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         result: Optional[Any] = None,
         error: Optional[Exception] = None,
         context: FameDeliveryContext | None = None,
-    ) -> None:
+    ) -> Optional[FameEnvelope]:
         if show_envelopes:
             print(
                 f"\n{_timestamp()} - {
                     color('Forwarded envelope to route "' + next_segment + '"', AnsiColor.BLUE)
                 } 🚀\n{pretty_model(envelope)}"
             )
+        return envelope
 
     async def on_forward_to_peer_complete(
         self,
@@ -125,13 +127,14 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker):
         result: Optional[Any] = None,
         error: Optional[Exception] = None,
         context: FameDeliveryContext | None = None,
-    ) -> None:
+    ) -> Optional[FameEnvelope]:
         if show_envelopes:
             print(
                 f"\n{_timestamp()} - '{
                     color('Forwarded envelope to peer "' + peer_segment + '"', AnsiColor.BLUE)
                 }' 🚀\n{pretty_model(envelope)}"
             )
+        return envelope
 
     # async def on_heartbeat_received(self, envelope: FameEnvelope) -> None:
     #     if show_envelopes:

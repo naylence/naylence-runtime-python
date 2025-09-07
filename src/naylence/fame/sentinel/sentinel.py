@@ -260,6 +260,8 @@ class Sentinel(FameNode, RoutingNodeLike):
                 security=security_context,
             )
 
+            await self._dispatch_envelope_event("on_envelope_received", self, env, context)
+
             if not attached.is_set():
                 if env.frame.type in self._ALLOWED_BEFORE_ATTACH:
                     await self.deliver(env, context_override)

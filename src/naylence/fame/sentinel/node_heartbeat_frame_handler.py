@@ -57,4 +57,42 @@ class NodeHeartbeatFrameHandler:
             hb_ack_corr_id=envelope.corr_id,
         )
 
-        await cast(FameConnector, context.from_connector).send(ack_env)
+        # await cast(FameConnector, context.from_connector).send(ack_env)
+
+        await self._send_and_notify(
+            connector=cast(FameConnector, context.from_connector),
+            envelope=ack_env,
+            forward_route=envelope.frame.system_id or "unknown",
+            context=context,
+        )
+
+    async def _send_and_notify(
+        self,
+        connector: FameConnector,
+        envelope: FameEnvelope,
+        forward_route: str,
+        context: Optional[FameDeliveryContext] = None,
+    ):
+        try:
+            await self._routing_node_like._dispatch_envelope_event(
+                "on_forward_to_route", self._routing_node_like, forward_route, envelope, context=context
+            )
+            await connector.send(envelope)
+        except Exception as e:
+            await self._routing_node_like._dispatch_envelope_event(
+                "on_forward_to_route_complete",
+                self._routing_node_like,
+                forward_route,
+                envelope,
+                error=e,
+                context=context,
+            )
+            raise
+        else:
+            await self._routing_node_like._dispatch_envelope_event(
+                "on_forward_to_route_complete",
+                self._routing_node_like,
+                forward_route,
+                envelope,
+                context=context,
+            )

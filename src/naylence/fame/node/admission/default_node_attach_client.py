@@ -80,7 +80,7 @@ class DefaultNodeAttachClient(NodeAttachClient):
             keys=keys,
             callback_grants=callback_grants,
         )
-        corr_id = generate_id()
+
         # Opaque stickiness offer via explicitly provided ReplicaStickinessManager, if any
         try:
             if self._replica_stickiness_manager is not None:
@@ -90,14 +90,16 @@ class DefaultNodeAttachClient(NodeAttachClient):
         except Exception as e:
             logger.debug("stickiness_offer_skipped", error=str(e))
 
-        env = FameEnvelope(frame=attach_req, corr_id=corr_id)
+        corr_id = generate_id()
+        trace_id = generate_id()
+        env = FameEnvelope(frame=attach_req, corr_id=corr_id, trace_id=trace_id)
 
         local_context = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL)
 
         processed_env: Optional[FameEnvelope] = None
         try:
             processed_env = await node._dispatch_envelope_event(
-                "on_forward_upstream", self, env, context=local_context
+                "on_forward_upstream", node, env, context=local_context
             )
             if processed_env is not None:
                 await connector.send(processed_env)
@@ -106,19 +108,29 @@ class DefaultNodeAttachClient(NodeAttachClient):
         except Exception as e:
             # Capture the exception for the completion event
             await node._dispatch_envelope_event(
-                "on_forward_upstream_complete", self, processed_env or env, error=e, context=local_context
+                "on_forward_upstream_complete", node, processed_env or env, error=e, context=local_context
             )
             # Re-rasie the original exception
             raise
         else:
             # No exception occurred - call completion event without error
             await node._dispatch_envelope_event(
-                "on_forward_upstream_complete", self, processed_env or env, context=local_context
+                "on_forward_upstream_complete", node, processed_env or env, context=local_context
             )
 
         # 3) wait for ACK
         ack_env = await self._await_ack(connector)
+
         node_attach_ack_frame = ack_env.frame
+
+        context = FameDeliveryContext(
+            from_connector=connector,
+            from_system_id=getattr(node_attach_ack_frame, "target_system_id", "unknown"),
+            origin_type=DeliveryOriginType.UPSTREAM,
+        )
+
+        await node._dispatch_envelope_event("on_envelope_received", node, ack_env, context)
+
         assert isinstance(node_attach_ack_frame, NodeAttachAckFrame)
 
         if corr_id != ack_env.corr_id:

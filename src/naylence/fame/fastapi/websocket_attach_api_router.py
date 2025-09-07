@@ -113,36 +113,7 @@ def create_websocket_attach_router(
         if token == "":
             logger.warning("websocket_attach_without_token")
 
-        query_system_id = system_id  # websocket.query_params.get("system_id")
-
-        # origin_type = websocket.query_params.get("origin")
-        # if not origin_type:
-        #     origin_type = DeliveryOriginType.DOWNSTREAM
-        # elif origin_type not in [DeliveryOriginType.DOWNSTREAM, DeliveryOriginType.PEER]:
-        #     logger.error(f"Invalid origin type: {origin_type}")
-        #     await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        #     return
-        # else:
-        #     origin_type = DeliveryOriginType(origin_type)
-
-        # try:
-        #     # Get the node's physical path for token verification
-        #     physical_path = getattr(node, 'physical_path', 'unknown')
-        #     claims = await token_verifier.verify(token, expected_audience=physical_path)
-        #     jwt_system_id = claims.get("system_id")
-        #     # If both sources are present they must agree
-        #     if jwt_system_id and query_system_id and query_system_id != jwt_system_id:
-        #         raise PyJWTError("system_id param does not match token system_id")
-        # except PyJWTError as e:
-        #     logger.warning("websocket_attach_token_error", error=str(e), exc_info=True)
-        #     await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        #     return
-
-        # system_id = jwt_system_id or query_system_id
-        # if not system_id:
-        #     logger.warning("websocket_attach_no_system_id")
-        #     await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        #     return
+        query_system_id = system_id
 
         system_id = query_system_id
         if not system_id:

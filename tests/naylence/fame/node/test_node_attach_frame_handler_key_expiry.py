@@ -87,6 +87,7 @@ async def test_attachment_ttl_limited_by_earliest_key_expiry():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
     mock_routing_node.security_manager = None
 
     mock_route_manager = MagicMock()
@@ -175,6 +176,7 @@ async def test_attachment_ttl_not_limited_when_keys_expire_later():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
     mock_routing_node.security_manager = None
 
     mock_route_manager = MagicMock()
@@ -258,6 +260,7 @@ async def test_attachment_ttl_with_no_max_ttl_but_keys_have_expiry():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
     mock_routing_node.security_manager = None
 
     mock_route_manager = MagicMock()
@@ -337,6 +340,7 @@ async def test_attachment_ttl_with_no_max_ttl_and_no_key_expiry():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
     mock_routing_node.security_manager = None
 
     mock_route_manager = MagicMock()
@@ -417,6 +421,7 @@ async def test_attachment_ttl_with_keys_without_expiry():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
     mock_routing_node.security_manager = None
 
     mock_route_manager = MagicMock()
@@ -498,6 +503,7 @@ async def test_attachment_ttl_with_no_keys():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
     mock_routing_node.security_manager = None
 
     mock_route_manager = MagicMock()
@@ -576,6 +582,7 @@ async def test_attachment_ttl_with_no_validator():
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
     mock_routing_node._dispatch_event = AsyncMock()
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
     mock_routing_node.security_manager = None
 
     mock_route_manager = MagicMock()
@@ -647,6 +654,7 @@ async def test_key_validation_failure_still_rejects_attachment():
     mock_routing_node.id = "test-sentinel"
     mock_routing_node.physical_path = "/test/sentinel"
     mock_routing_node.routing_epoch = "1"
+    mock_routing_node._dispatch_envelope_event = AsyncMock()  # Add envelope event dispatch mock
 
     mock_route_manager = MagicMock()
     mock_route_manager._pending_route_metadata = {}

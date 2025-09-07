@@ -1,0 +1,61 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Testing artifacts (but keep test source code)
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+.tox/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation (keep README.md for poetry)
+docs/
+LICENSE
+NOTICE
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker files (will be copied specifically when needed)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Environment and logs
+.env
+.env.*
+*.log
+.DS_Store
+
+# Keep these important files
+!pyproject.toml
+!poetry.lock
+!README.md
+!src/
+!tests/integration/docker/
