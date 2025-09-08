@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI
 from naylence.fame.fastapi.jwks_api_router import create_jwks_router
 from naylence.fame.fastapi.oauth2_token_router import create_oauth2_token_router
+from naylence.fame.fastapi.openid_configuration_router import create_openid_configuration_router
 from naylence.fame.util.logging import enable_logging
 
 ENV_VAR_LOG_LEVEL = "FAME_LOG_LEVEL"
@@ -16,6 +17,7 @@ def create_app() -> FastAPI:
     app = FastAPI()
     app.include_router(create_oauth2_token_router())
     app.include_router(create_jwks_router())
+    app.include_router(create_openid_configuration_router())
     return app
 
 

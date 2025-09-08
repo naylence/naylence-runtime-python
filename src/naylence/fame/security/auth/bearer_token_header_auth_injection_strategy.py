@@ -46,7 +46,7 @@ class BearerTokenHeaderAuthInjectionStrategy(AuthInjectionStrategy):
         # Use the connector's set_auth_header method if available
         if hasattr(connector, "set_auth_header"):
             getattr(connector, "set_auth_header")(auth_header)
-        if isinstance(connector, dict):
+        elif isinstance(connector, dict):
             connector["Authorization"] = auth_header
         else:
             logger.warning(f"Connector {type(connector)} doesn't support set_auth_header")

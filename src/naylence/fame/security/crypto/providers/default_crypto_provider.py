@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import os
 import secrets
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -15,6 +16,10 @@ from naylence.fame.util.crypto_util import detect_alg, jwk_from_pem
 from naylence.fame.util.logging import getLogger
 
 logger = getLogger(__name__)
+
+ENV_VAR_CRYPTO_ALGORITHM = "FAME_CRYPTO_ALGORITHM"
+
+DEFAULT_CRYPTO_ALGORITHM = "EdDSA"
 
 
 class DefaultCryptoProvider(CryptoProvider):
@@ -38,11 +43,12 @@ class DefaultCryptoProvider(CryptoProvider):
         hmac_secret: Optional[str] = None,
         issuer: str = "dev.naylence.ai",
         audience: str = "router-dev",
-        algorithm: str = "EdDSA",
+        algorithm: Optional[str] = None,
         ttl_sec: int = 3600,
     ):
         self._signature_key_id = signature_key_id or generate_id()
         self._encryption_key_id = encryption_key_id or generate_id()
+        algorithm = algorithm or os.getenv(ENV_VAR_CRYPTO_ALGORITHM, DEFAULT_CRYPTO_ALGORITHM)
         if not (signature_private_pem and signature_public_pem):
             if not algorithm or algorithm == "EdDSA":
                 from naylence.fame.security.crypto.key_factories.ed25519_key_factory import (

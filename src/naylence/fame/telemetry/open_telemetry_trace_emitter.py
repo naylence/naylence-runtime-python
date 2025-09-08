@@ -1,9 +1,9 @@
-import random
 from contextlib import contextmanager
 from typing import Any, Mapping, Optional
 
 from opentelemetry import trace
-from opentelemetry.trace import SpanContext, Status, StatusCode, TraceFlags
+from opentelemetry.sdk.trace import Span as SDKSpan
+from opentelemetry.trace import Status, StatusCode
 from opentelemetry.util import types
 
 from naylence.fame.telemetry.base_trace_emitter import BaseTraceEmitter
@@ -50,28 +50,29 @@ class OpenTelemetryTraceEmitter(BaseTraceEmitter):
 
     @contextmanager
     def start_span(self, name: str, attributes: Optional[Mapping[str, Any]] = None, links=None):
-        span_context = None
-        ctx = None
-
-        # Check if env.trace_id is in attributes and use it for trace correlation
-        env_trace_id = attributes.get("env.trace_id") if attributes else None
-        if env_trace_id is not None:
-            # Create custom span context with converted trace ID
-            otel_trace_id = self._convert_env_trace_id_to_otel(env_trace_id)
-            span_context = SpanContext(
-                trace_id=otel_trace_id,
-                span_id=random.getrandbits(64),  # Generate random 64-bit span ID
-                is_remote=False,
-                trace_flags=TraceFlags(0x01),  # Sampled
-            )
-            ctx = trace.set_span_in_context(trace.NonRecordingSpan(span_context))
-
         # Store tokens for cleanup
         t_tok = s_tok = None
         span = None
         try:
-            # Create span without automatically setting it as current to avoid context issues
-            span = self._tracer.start_span(name, context=ctx, links=links or [])
+            # Create span as root (no parent, no context)
+            span = self._tracer.start_span(name, links=links or [])
+
+            # Force the trace_id if env.trace_id is present
+            env_trace_id = attributes.get("env.trace_id") if attributes else None
+            if env_trace_id is not None and isinstance(span, SDKSpan):
+                otel_trace_id = self._convert_env_trace_id_to_otel(env_trace_id)
+                # Directly modify the span's context (this is hacky but works)
+                from opentelemetry.trace import SpanContext
+
+                original_ctx = span.get_span_context()
+                if original_ctx is not None:
+                    span._context = SpanContext(
+                        trace_id=otel_trace_id,
+                        span_id=original_ctx.span_id,
+                        is_remote=original_ctx.is_remote,
+                        trace_flags=original_ctx.trace_flags,
+                        trace_state=original_ctx.trace_state,
+                    )
 
             if attributes:
                 for k, v in attributes.items():
@@ -87,12 +88,12 @@ class OpenTelemetryTraceEmitter(BaseTraceEmitter):
             except GeneratorExit:
                 # Handle forced generator closure gracefully
                 if span:
-                    span.set_status(trace.Status(trace.StatusCode.ERROR, "Span closed by GeneratorExit"))
+                    span.set_status(Status(StatusCode.ERROR, "Span closed by GeneratorExit"))
                 raise
             except Exception as e:
                 # Set error status for any other exceptions
                 if span:
-                    span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
         finally:
             # End the span manually

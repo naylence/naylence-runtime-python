@@ -22,7 +22,11 @@ ENV_VAR_ALLOWED_SCOPES = "FAME_JWT_ALLOWED_SCOPES"
 # NOTE: this variable is not the same as FAME_JWT_TRUSTED_ISSUER
 ENV_VAR_JWT_ISSUER = "FAME_JWT_ISSUER"
 
+ENV_VAR_JWT_ALGORITHM = "FAME_JWT_ALGORITHM"
+
 ENV_VAR_JWT_AUDIENCE = "FAME_JWT_AUDIENCE"
+
+DEFAULT_JWT_ALGORITHM = "EdDSA"
 
 
 class TokenResponse(BaseModel):
@@ -41,6 +45,7 @@ def create_oauth2_token_router(
     audience: Optional[str] = None,
     token_ttl_sec: int = 3600,
     allowed_scopes: Optional[list[str]] = None,
+    algorithm: Optional[str] = None,
 ) -> APIRouter:
     """
     Create an OAuth2 token server router for local testing.
@@ -56,6 +61,7 @@ def create_oauth2_token_router(
         audience: JWT audience claim (defaults to "fame-api")
         token_ttl_sec: Token time-to-live in seconds (default: 3600)
         allowed_scopes: List of allowed scopes (defaults to ["read", "write"])
+        algorithm: JWT signing algorithm (default: EdDSA)
 
     Returns:
         APIRouter configured with OAuth2 endpoints
@@ -72,6 +78,8 @@ def create_oauth2_token_router(
     # Default values
     default_issuer = os.getenv(ENV_VAR_JWT_ISSUER) or issuer or "https://auth.fame.fabric"
     default_audience = os.getenv(ENV_VAR_JWT_AUDIENCE) or audience or "fame-fabric"
+
+    algorithm = algorithm or os.getenv(ENV_VAR_JWT_ALGORITHM, DEFAULT_JWT_ALGORITHM)
 
     env_allowed_scopes = os.getenv(ENV_VAR_ALLOWED_SCOPES)
     if env_allowed_scopes:
@@ -122,7 +130,7 @@ def create_oauth2_token_router(
                 signing_key_pem=crypto_provider.signing_private_pem,
                 kid=crypto_provider.signature_key_id,
                 issuer=default_issuer,
-                algorithm="EdDSA",
+                algorithm=algorithm,
                 ttl_sec=token_ttl_sec,
                 audience=default_audience,
             )
