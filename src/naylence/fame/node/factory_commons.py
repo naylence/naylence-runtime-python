@@ -60,7 +60,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
 
     assert storage_provider is not None, "Storage provider must be created"
 
-    node_meta_store = await storage_provider.get_kv_store(NodeMeta, namespace="node_meta")
+    node_meta_store = await storage_provider.get_kv_store(NodeMeta, namespace="__node_meta")
 
     admission_client: AdmissionClient = await create_resource(AdmissionClientFactory, cfg.admission)
 
@@ -142,14 +142,14 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
             StorageBackedKeyStoreConfig,
         )
 
-        key_store_config = StorageBackedKeyStoreConfig(namespace="keystore")
+        key_store_config = StorageBackedKeyStoreConfig(namespace="__keystore")
         key_store = await KeyStoreFactory.create_key_store(
             key_store_config, storage_provider=storage_provider
         )
 
     from naylence.fame.node.binding_manager import BindingStoreEntry
 
-    binding_store = await storage_provider.get_kv_store(BindingStoreEntry, namespace="binding_store")
+    binding_store = await storage_provider.get_kv_store(BindingStoreEntry, namespace="__binding_store")
 
     key_validator = None
     # Create attachment key validator

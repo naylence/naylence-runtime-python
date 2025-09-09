@@ -201,6 +201,14 @@ class FameNode(TaskSpawner, NodeLike):
 
         self._session_manager: Optional[SessionManager] = None
 
+        # ------------------------------------------------------------------ #
+        # Sort event listeners by priority                                   #
+        # ------------------------------------------------------------------ #
+        # Sort by priority (lower values = higher priority), with original
+        # index as secondary sort key to maintain stable ordering for listeners
+        # with the same priority
+        self._sort_event_listeners()
+
         self._is_started = False
 
     @property
@@ -261,14 +269,22 @@ class FameNode(TaskSpawner, NodeLike):
         return self._storage_provider
 
     def add_event_listener(self, listener: NodeEventListener) -> None:
-        """Add an event listener to this node."""
+        """Add an event listener to this node and maintain priority ordering."""
         if listener not in self._event_listeners:
             self._event_listeners.append(listener)
+            # Re-sort to maintain priority ordering
+            self._sort_event_listeners()
 
     def remove_event_listener(self, listener: NodeEventListener) -> None:
         """Remove an event listener from this node."""
         if listener in self._event_listeners:
             self._event_listeners.remove(listener)
+
+    def _sort_event_listeners(self) -> None:
+        """Sort event listeners by priority, maintaining stable ordering for equal priorities."""
+        listeners_with_indices = list(enumerate(self._event_listeners))
+        listeners_with_indices.sort(key=lambda item: (item[1].priority, item[0]))
+        self._event_listeners = [listener for _, listener in listeners_with_indices]
 
     def gather_supported_callback_grants(self) -> list[dict[str, Any]]:
         """

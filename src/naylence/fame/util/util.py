@@ -119,3 +119,12 @@ def deserialize_model(
         config,
         context={"expression_evaluation_policy": expression_evaluation_policy},
     )
+
+
+def camel_to_snake_case(name: str) -> str:
+    """Convert CamelCase string to snake_case."""
+    # Insert underscore before uppercase letters that follow lowercase letters or digits
+    s1 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", name)
+    # Insert underscore before uppercase letters that are followed by lowercase letters
+    s2 = re.sub("([A-Z])([A-Z][a-z])", r"\1_\2", s1)
+    return s2.lower()

@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.2.2"
+version = "0.2.4"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}

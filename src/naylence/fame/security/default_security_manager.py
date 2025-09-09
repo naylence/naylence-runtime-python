@@ -85,6 +85,10 @@ class DefaultSecurityManager(SecurityManager):
 
         self._key_frame_handler: Optional[KeyFrameHandler] = None
 
+    @property
+    def priority(self) -> int:
+        return 2000
+
     # Property implementations
     @property
     def policy(self) -> SecurityPolicy:

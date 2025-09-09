@@ -36,6 +36,23 @@ class NodeEventListener(Protocol):
     classes only need to override the events they care about.
     """
 
+    @property
+    def priority(self) -> int:
+        """
+        The priority of this event listener for ordering during event dispatch.
+
+        Lower values mean higher priority (executed first). Event listeners with
+        the same priority are ordered according to their original placement in
+        the event_listeners list.
+
+        Default priority is 1000 to allow both higher priority (< 1000) and
+        lower priority (> 1000) listeners to be easily added.
+
+        Returns:
+            Priority value (default: 1000)
+        """
+        return 1000
+
     async def on_node_started(self, node: NodeLike) -> None:
         """
         Called when a node has been started and is ready for operation.

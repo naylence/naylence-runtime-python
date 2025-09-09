@@ -27,8 +27,6 @@ ENV_VAR_STORAGE_ENCRYPTED = "FAME_STORAGE_ENCRYPTED"
 PROFILE_NAME_MEMORY = "memory"
 PROFILE_NAME_SQLITE = "sqlite"
 PROFILE_NAME_ENCRYPTED_SQLITE = "encrypted-sqlite"
-PROFILE_NAME_DEVELOPMENT = "development"
-PROFILE_NAME_PRODUCTION = "production"
 
 
 MEMORY_PROFILE = {
@@ -73,9 +71,9 @@ class StorageProfileFactory(StorageProviderFactory):
         if isinstance(config, dict):
             config = StorageProfileConfig(**config)
         elif config is None:
-            config = StorageProfileConfig(profile=PROFILE_NAME_DEVELOPMENT)
+            config = StorageProfileConfig(profile=PROFILE_NAME_MEMORY)
 
-        profile = config.profile or PROFILE_NAME_DEVELOPMENT
+        profile = config.profile or PROFILE_NAME_MEMORY
 
         logger.debug("enabling_storage_profile", profile=profile)  # type: ignore
 
@@ -83,8 +81,6 @@ class StorageProfileFactory(StorageProviderFactory):
             storage_config = MEMORY_PROFILE
         elif profile == PROFILE_NAME_SQLITE:
             storage_config = SQLITE_PROFILE
-        elif profile == PROFILE_NAME_DEVELOPMENT:
-            storage_config = DEVELOPMENT_PROFILE
         elif profile == PROFILE_NAME_ENCRYPTED_SQLITE:
             storage_config = ENCRYPTED_SQLITE_PROFILE
         else:

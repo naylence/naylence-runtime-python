@@ -124,7 +124,7 @@ class SentinelFactory(NodeLikeFactory):
                 event_listeners.append(transport_listener)
 
         storage_provider: StorageProvider = opts["storage_provider"]
-        route_store = await storage_provider.get_kv_store(RouteEntry, namespace="route_store")
+        route_store = await storage_provider.get_kv_store(RouteEntry, namespace="__route_store")
 
         stickiness_manager: Optional[LoadBalancerStickinessManager] = None
         if cfg.stickiness:

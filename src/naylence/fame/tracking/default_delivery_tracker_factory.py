@@ -59,14 +59,14 @@ class DefaultDeliveryTrackerFactory(DeliveryTrackerFactory):
         elif storage_provider:
             kv = await storage_provider.get_kv_store(
                 model_cls=TrackedEnvelope,
-                namespace="delivery_tracker",
+                namespace="__delivery_tracker",
             )
         else:
             # Default to in-memory provider
             in_memory_provider = InMemoryStorageProvider()
             kv = await in_memory_provider.get_kv_store(
                 model_cls=TrackedEnvelope,
-                namespace="delivery_tracker",
+                namespace="__delivery_tracker",
             )
 
         tracker = DefaultDeliveryTracker(

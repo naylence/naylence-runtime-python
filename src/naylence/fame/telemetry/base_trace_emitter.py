@@ -49,6 +49,10 @@ class BaseTraceEmitter(NodeEventListener, TraceEmitter):
         # Map of (envelope.id, operation_key) -> _ActiveSpan
         self._inflight: dict[Tuple[str, str], _ActiveSpan] = {}
 
+    @property
+    def priority(self) -> int:
+        return 10000
+
     def _key(self, env: FameEnvelope, operation_key: str) -> Tuple[str, str]:
         return (env.id, operation_key)
 

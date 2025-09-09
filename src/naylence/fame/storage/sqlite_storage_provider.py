@@ -1,22 +1,7 @@
 """
 SQLite storage provider implementation based on EncryptedStorageProviderBase.
 
-This provider stores data in SQLite da    def __init__(
-        self,
-        db_directory: str,
-        is_encrypted: bool = False,
-        master_key_provider: Optional[MasterKeyProvider] = None,
-        enable_caching: bool = False,
-    ):
-
-        Initialize the SQLite storage provider.
-
-        Args:
-            db_directory: Directory where SQLite database files will be stored
-            is_encrypted: Whether to encrypt stored data
-            master_key_provider: Provider for encryption keys (required if is_encrypted=True)
-            enable_caching: Whether to enable in-memory caching of decrypted values
-
+This provider stores data in SQLite databases with optional encryption support.
 """
 
 from __future__ import annotations
@@ -33,6 +18,7 @@ from naylence.fame.storage.encrypted_storage_provider_base import (
     EncryptedStorageProviderBase,
 )
 from naylence.fame.storage.key_value_store import KeyValueStore
+from naylence.fame.util.util import camel_to_snake_case
 
 V = TypeVar("V", bound=BaseModel)
 
@@ -173,20 +159,23 @@ class SQLiteStorageProvider(EncryptedStorageProviderBase):
         """
         Get the underlying SQLite key-value store for the given model class and namespace.
         """
+        # Convert class name to snake_case
+        snake_case_name = camel_to_snake_case(model_cls.__name__)
+
         # Create a unique cache key
-        cache_key = (model_cls.__name__, namespace)
+        cache_key = (snake_case_name, namespace)
 
         if cache_key not in self._stores:
             # Generate database file name based on namespace and model class
             if namespace:
-                db_name = f"{namespace}_{model_cls.__name__}.db"
+                db_name = f"{namespace}_{snake_case_name}.db"
             else:
-                db_name = f"{model_cls.__name__}.db"
+                db_name = f"{snake_case_name}.db"
 
             db_path = str(self._db_directory / db_name)
 
-            # Generate table name (sanitize for SQL)
-            table_name = f"kv_{model_cls.__name__}".lower()
+            # Generate table name (already in snake_case)
+            table_name = f"kv_{snake_case_name}"
 
             # Create the store
             self._stores[cache_key] = SQLiteKeyValueStore(

@@ -44,6 +44,8 @@ class TestSentinelComprehensive:
         security_manager = MagicMock()
         security_manager.authorizer = MagicMock()
         security_manager.key_manager = MagicMock()
+        # Add priority property for event listener sorting
+        security_manager.priority = 1000
         # Add all the event listener methods as AsyncMocks
         security_manager.on_node_initialized = AsyncMock()
         security_manager.on_node_started = AsyncMock()
@@ -108,6 +110,8 @@ class TestSentinelComprehensive:
         # Create security manager without authorizer
         security_manager = MagicMock()
         security_manager.authorizer = None
+        # Add priority property for event listener sorting
+        security_manager.priority = 1000
 
         # Should fail on AssertionError (the assert comes before the if check)
         with pytest.raises(AssertionError):
