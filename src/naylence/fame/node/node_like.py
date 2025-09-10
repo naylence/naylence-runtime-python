@@ -5,11 +5,14 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AsyncIterator,
+    Awaitable,
+    Callable,
     Optional,
     Protocol,
     runtime_checkable,
 )
 
+from naylence.fame.delivery.delivery_policy import DeliveryPolicy
 from naylence.fame.node.admission.admission_client import AdmissionClient
 
 if TYPE_CHECKING:
@@ -18,6 +21,7 @@ if TYPE_CHECKING:
 
 from naylence.fame.core import (
     Binding,
+    DeliveryAckFrame,
     EnvelopeFactory,
     FameAddress,
     FameConnector,
@@ -77,6 +81,17 @@ class NodeLike(AbstractAsyncContextManager, Protocol):
     async def bind(self, participant: str) -> Binding: ...
 
     async def unbind(self, participant: str) -> None: ...
+
+    async def send(
+        self,
+        envelope: FameEnvelope,
+        context: Optional[FameDeliveryContext] = None,
+        delivery_policy: Optional[DeliveryPolicy] = None,
+        delivery_fn: Optional[
+            Callable[[FameEnvelope, Optional[FameDeliveryContext]], Awaitable[Any]]
+        ] = None,
+        timeout_ms: Optional[int] = None,
+    ) -> Optional[DeliveryAckFrame]: ...
 
     async def listen(
         self,

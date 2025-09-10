@@ -49,6 +49,7 @@ class TestSentinelComprehensive:
         # Add all the event listener methods as AsyncMocks
         security_manager.on_node_initialized = AsyncMock()
         security_manager.on_node_started = AsyncMock()
+        security_manager.on_node_preparing_to_stop = AsyncMock()
         security_manager.on_node_stopped = AsyncMock()
         security_manager.on_welcome = AsyncMock()
         return security_manager

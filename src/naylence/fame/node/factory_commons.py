@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
 from naylence.fame.core import generate_id
+from naylence.fame.delivery.delivery_policy import DeliveryPolicy
+from naylence.fame.delivery.delivery_policy_factory import DeliveryPolicyConfig, DeliveryPolicyFactory
+from naylence.fame.delivery.delivery_tracker import DeliveryTracker
+from naylence.fame.delivery.delivery_tracker_factory import DeliveryTrackerFactory
 from naylence.fame.factory import create_default_resource, create_resource
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.admission_client_factory import AdmissionClientFactory
@@ -21,8 +25,6 @@ from naylence.fame.security.keys.key_store_factory import KeyStoreFactory
 from naylence.fame.storage.storage_provider import StorageProvider
 from naylence.fame.storage.storage_provider_factory import StorageProviderFactory
 from naylence.fame.telemetry.trace_emitter_factory import TraceEmitterFactory
-from naylence.fame.tracking.delivery_tracker import DeliveryTracker
-from naylence.fame.tracking.delivery_tracker_factory import DeliveryTrackerFactory
 from naylence.fame.util.logging import getLogger
 
 if TYPE_CHECKING:
@@ -74,6 +76,8 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     node_id = cfg.id or (node_meta.id if node_meta else None) or generate_id(mode="fingerprint")
 
     event_listeners = []
+
+    delivery_policy = await create_delivery_policy(cfg.delivery)
 
     delivery_tracker = await create_delivery_tracker(cfg)
 
@@ -207,11 +211,21 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
         "node_meta_store": node_meta_store,
         "security_manager": security_manager,
         "transport_listeners": transport_listeners,
+        "delivery_policy": delivery_policy,
     }
 
 
 async def create_delivery_tracker(cfg: FameNodeConfig) -> Optional[DeliveryTracker]:
     return await create_default_resource(DeliveryTrackerFactory)
+
+
+async def create_delivery_policy(
+    cfg: DeliveryPolicyConfig | dict[str, Any] | None = None,
+) -> Optional[DeliveryPolicy]:
+    if cfg:
+        return await create_resource(DeliveryPolicyFactory, cfg)
+
+    return await create_default_resource(DeliveryPolicyFactory)
 
 
 async def create_security_manager(

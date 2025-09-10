@@ -9,10 +9,10 @@ import pytest
 
 # Add the src directory to Python path
 from naylence.fame.core import FameAddress
+from naylence.fame.delivery.delivery_tracker import DeliveryTracker
 from naylence.fame.node.binding_manager import BindingManager, BindingStoreEntry
 from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
 from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
-from naylence.fame.tracking.delivery_tracker import DeliveryTracker
 
 
 @pytest.mark.asyncio

@@ -548,6 +548,22 @@ class NodeEventListener(Protocol):
         # Default implementation does nothing - this is an optional lifecycle event
         pass
 
+    async def on_node_preparing_to_stop(self, node: NodeLike) -> None:
+        """
+        Called when a node is preparing to stop but has not yet fully shut down.
+
+        This event is dispatched before the node begins its shutdown sequence,
+        allowing components to perform pre-shutdown tasks such as:
+        - Flushing caches or buffers
+        - Notifying dependent services
+        - Preparing for resource cleanup
+
+        Args:
+            node: The node that is preparing to stop
+        """
+        # Default implementation does nothing - this is an optional lifecycle event
+        pass
+
     async def on_node_stopped(self, node: NodeLike) -> None:
         """
         Called when a node is being stopped and should clean up resources.

@@ -14,9 +14,9 @@ from naylence.fame.channel.in_memory.in_memory_binding import InMemoryBinding
 from naylence.fame.core import (
     FameAddress,
 )
+from naylence.fame.delivery.delivery_tracker import DeliveryTracker
 from naylence.fame.node.binding_manager import BindingManager, BindingStoreEntry
 from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
-from naylence.fame.tracking.delivery_tracker import DeliveryTracker
 
 
 class TestBindingManagerHostNotation:

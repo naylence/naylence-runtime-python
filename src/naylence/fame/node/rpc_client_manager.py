@@ -29,7 +29,7 @@ from naylence.fame.core import (
     make_request,
     parse_response,
 )
-from naylence.fame.tracking.delivery_tracker import (
+from naylence.fame.delivery.delivery_tracker import (
     DeliveryTracker,
     DeliveryTrackerEventHandler,
     TrackedEnvelope,

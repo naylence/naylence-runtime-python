@@ -16,10 +16,10 @@ from naylence.fame.core import (
     generate_id,
 )
 from naylence.fame.core.protocol.security_header import EncryptionHeader, SecurityHeader
+from naylence.fame.delivery.delivery_tracker import DeliveryTracker
 from naylence.fame.node.envelope_listener_manager import EnvelopeListenerManager
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
 from naylence.fame.security.policy.security_policy import CryptoLevel
-from naylence.fame.tracking.delivery_tracker import DeliveryTracker
 
 
 @pytest.mark.asyncio

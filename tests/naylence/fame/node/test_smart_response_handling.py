@@ -47,10 +47,10 @@ async def test_smart_response_context_creation():
         return FameMessageResponse(envelope=response_envelope, context=None)
 
     # Create a node
-    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import (
+    from naylence.fame.delivery.default_delivery_tracker_factory import (
         DefaultDeliveryTrackerFactory,
     )
+    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
@@ -177,10 +177,10 @@ async def test_smart_response_preserves_existing_context():
         return FameMessageResponse(envelope=response_envelope, context=response_context)
 
     # Create a node
-    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import (
+    from naylence.fame.delivery.default_delivery_tracker_factory import (
         DefaultDeliveryTrackerFactory,
     )
+    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)

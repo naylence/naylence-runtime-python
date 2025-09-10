@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import Field
 
 from naylence.fame.connector.transport_listener_config import TransportListenerConfig
+from naylence.fame.delivery.delivery_policy_factory import DeliveryPolicyConfig
 from naylence.fame.node.admission.admission_client_factory import AdmissionConfig
 from naylence.fame.node.node_like_factory import NodeLikeConfig
 from naylence.fame.security.keys.attachment_key_validator_factory import (
@@ -31,6 +32,11 @@ class FameNodeConfig(NodeLikeConfig):
     requested_logicals: Optional[List[str]] = Field(
         default_factory=list,
         description="List of logicals the node requests",
+    )
+
+    delivery: Optional[DeliveryPolicyConfig] = Field(
+        default=None,
+        description="Message delivery policy configuration",
     )
 
     env_context: Optional[Dict[str, Any]] = Field(

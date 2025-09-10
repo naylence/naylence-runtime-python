@@ -3,10 +3,12 @@ from __future__ import annotations
 import asyncio
 from contextvars import ContextVar
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, AsyncIterator, Awaitable, Callable, List, Optional
 
+from naylence.fame.delivery.delivery_policy import DeliveryPolicy
+from naylence.fame.delivery.delivery_tracker import DeliveryTracker
+from naylence.fame.delivery.retry_event_handler import RetryEventHandler
 from naylence.fame.node.node_meta import NodeMeta
-from naylence.fame.tracking.delivery_tracker import DeliveryTracker
 
 if TYPE_CHECKING:
     from naylence.fame.security.security_manager import SecurityManager
@@ -23,9 +25,12 @@ from naylence.fame.core import (
     FameDeliveryContext,
     FameEnvelope,
     FameEnvelopeHandler,
+    FameResponseType,
     FameRPCHandler,
     NodeWelcomeFrame,
     create_channel_message,
+    format_address,
+    generate_id,
 )
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.node.admission.node_attach_client import (
@@ -94,6 +99,7 @@ class FameNode(TaskSpawner, NodeLike):
         public_url: Optional[str] = None,
         storage_provider: StorageProvider,
         delivery_tracker: DeliveryTracker,
+        delivery_policy: Optional[DeliveryPolicy] = None,
         **kwargs: Any,
     ):
         TaskSpawner.__init__(self)
@@ -167,6 +173,8 @@ class FameNode(TaskSpawner, NodeLike):
         self._welcome_expires_at: Optional[datetime] = None
 
         self._delivery_tracker = delivery_tracker
+
+        self._delivery_policy = delivery_policy
 
         self._binding_manager = BindingManager(
             has_upstream=self._has_parent,
@@ -506,17 +514,21 @@ class FameNode(TaskSpawner, NodeLike):
         await self._dispatch_event("on_epoch_change", self, epoch)
 
     async def stop(self) -> None:
+        await self._dispatch_event("on_node_preparing_to_stop", self)
         await self.shutdown_tasks(grace_period=0.01)
         await self._envelope_listener_manager.stop()
 
-        if self._upstream_connector:
-            await self._upstream_connector.stop()
-            self._upstream_connector = None
-
-        await self._service_manager.stop()
+        # if self._upstream_connector:
+        #     await self._upstream_connector.stop()
+        #     self._upstream_connector = None
 
         if self._session_manager:
             await self._session_manager.stop()
+
+        await self._service_manager.stop()
+
+        # if self._session_manager:
+        #     await self._session_manager.stop()
 
         # Dispatch node stopped event to all listeners for clean shutdown
         await self._dispatch_event("on_node_stopped", self)
@@ -553,21 +565,16 @@ class FameNode(TaskSpawner, NodeLike):
     async def handle_system_frame(self, envelope: FameEnvelope, context: Optional[Any] = None):
         frame = envelope.frame
 
-        logger.debug(
-            f"[FameNode] Processing system frame: type='{frame.type}', frame_class={type(frame).__name__}"
-        )
+        logger.debug("processing_system_frame", frame_type=repr(frame.type))
 
         if frame.type == "NodeHeartbeat":
             self._last_heartbeat_at = asyncio.get_event_loop().time()
         elif frame.type == "DeliveryAck":
             # Handle NACK responses from policy violations
-            logger.debug(f"[FameNode] Handling DeliveryAck frame: {frame}")
+            logger.debug("handling_delivery_ack", **summarize_env(envelope, prefix=""))
             await self._handle_delivery_ack(envelope, context)
         else:
-            logger.warning(
-                f"[FameNode] Unknown system frame type: {frame} (type='{frame.type}', "
-                f"repr={repr(frame.type)})"
-            )
+            logger.warning("handling_unknown_system_frame_type", frame_type=repr(frame.type))
 
     @property
     def binding_manager(self) -> BindingManager:
@@ -729,6 +736,94 @@ class FameNode(TaskSpawner, NodeLike):
             await self._dispatch_envelope_event(
                 "on_forward_upstream_complete", self, processed_envelope or envelope, context=context
             )
+
+    async def send(
+        self,
+        envelope: FameEnvelope,
+        context: Optional[FameDeliveryContext] = None,
+        delivery_policy: Optional[DeliveryPolicy] = None,
+        delivery_fn: Optional[
+            Callable[[FameEnvelope, Optional[FameDeliveryContext]], Awaitable[Any]]
+        ] = None,
+        timeout_ms: Optional[int] = None,
+    ) -> Optional[DeliveryAckFrame]:
+        if context is None:
+            context = FameDeliveryContext(
+                origin_type=DeliveryOriginType.LOCAL,
+                from_system_id=self.id,
+                from_connector=None,
+            )
+        else:
+            assert context.origin_type is None or context.origin_type == DeliveryOriginType.LOCAL, (
+                "Can only send with LOCAL origin context"
+            )
+            assert context.from_system_id is None or context.from_system_id == self.id, (
+                "from_system_id must match this node's id in LOCAL context"
+            )
+            assert context.from_connector is None, "from_connector must be None in LOCAL context"
+
+            context.origin_type = DeliveryOriginType.LOCAL
+            context.from_system_id = self.id
+            context.from_connector = None
+
+        if not delivery_fn:
+            delivery_fn = self.deliver
+
+        delivery_policy = delivery_policy or self._delivery_policy
+
+        is_ack_required = bool(delivery_policy and delivery_policy.is_ack_required(envelope))
+
+        if not is_ack_required:
+            await delivery_fn(envelope, context)
+            return None
+
+        retry_policy = delivery_policy.retry_policy if delivery_policy else None
+
+        if not envelope.corr_id:
+            envelope.corr_id = generate_id()
+
+        if not envelope.trace_id:
+            envelope.trace_id = generate_id()
+
+        envelope.rtype = FameResponseType.ACK
+
+        from naylence.fame.node.node import SYSTEM_INBOX
+
+        envelope.reply_to = format_address(SYSTEM_INBOX, self.physical_path)
+
+        retry_handler = None
+        if retry_policy:
+
+            class _DefaultRetryHandler(RetryEventHandler):
+                async def on_retry_needed(self, envelope: FameEnvelope, attempt: int, next_delay_ms: int):
+                    logger.debug(
+                        "retrying_sending_envelope",
+                        envp_id=envelope.id,
+                        attempt=attempt,
+                        delay_ms=next_delay_ms,
+                    )
+                    await delivery_fn(envelope, context)
+
+            retry_handler = _DefaultRetryHandler()
+
+        await self._delivery_tracker.track(
+            envelope=envelope,
+            expected_response_type=FameResponseType.ACK,
+            timeout_ms=timeout_ms or DEFAULT_INVOKE_TIMEOUT_MILLIS,
+            retry_policy=retry_policy,
+            retry_handler=retry_handler,
+        )
+
+        await delivery_fn(envelope, context)
+
+        ack_env = await self._delivery_tracker.await_ack(
+            envelope_id=envelope.id,
+            timeout_ms=timeout_ms,
+        )
+
+        assert isinstance(ack_env.frame, DeliveryAckFrame), "Expected DeliveryAckFrame in response"
+
+        return ack_env.frame
 
     async def deliver(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
         # Dispatch to all event listeners for security processing

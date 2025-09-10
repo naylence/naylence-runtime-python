@@ -89,14 +89,14 @@ class Sentinel(FameNode, RoutingNodeLike):
         # Ensure delivery_tracker is included in kwargs if not already present
         if "delivery_tracker" not in kwargs:
             # Create a default envelope tracker without async factory for simplicity
-            from naylence.fame.tracking.default_delivery_tracker import (
+            from naylence.fame.delivery.default_delivery_tracker import (
                 DefaultDeliveryTracker,
             )
-            from naylence.fame.tracking.delivery_tracker import TrackedEnvelope
+            from naylence.fame.delivery.delivery_tracker import TrackedEnvelope
 
             # Create a simple in-memory KV store for the envelope tracker
-            envelope_kv_store = InMemoryKVStore[TrackedEnvelope](TrackedEnvelope)
-            kwargs["delivery_tracker"] = DefaultDeliveryTracker(kv_store=envelope_kv_store)
+            tracker_store = InMemoryKVStore[TrackedEnvelope](TrackedEnvelope)
+            kwargs["delivery_tracker"] = DefaultDeliveryTracker(tracker_store=tracker_store)
 
         # Provide default route store if none is provided
         if route_store is None:

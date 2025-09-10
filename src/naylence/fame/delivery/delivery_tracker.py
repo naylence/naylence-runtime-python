@@ -1,7 +1,3 @@
-"""
-Envelope tracking interfaces and base types.
-"""
-
 from __future__ import annotations
 
 import enum
@@ -18,6 +14,8 @@ from naylence.fame.core import (
     FameEnvelope,
     FameResponseType,
 )
+from naylence.fame.delivery.retry_event_handler import RetryEventHandler
+from naylence.fame.delivery.retry_policy import RetryPolicy
 from naylence.fame.util.logging import getLogger
 
 logger = getLogger(__name__)
@@ -33,28 +31,6 @@ class EnvelopeStatus(str, enum.Enum):
     FAILED = "failed"
 
 
-class RetryPolicy(BaseModel):
-    """Configuration for retry behavior."""
-
-    max_retries: int = 0
-    base_delay_ms: int = 200
-    max_delay_ms: int = 10_000
-    jitter_ms: int = 50
-    backoff_factor: float = 2.0
-
-    def next_delay_ms(self, attempt: int) -> int:
-        """Calculate the next retry delay based on attempt number."""
-        if attempt <= 0:
-            delay = self.base_delay_ms
-        else:
-            delay = int(self.base_delay_ms * (self.backoff_factor**attempt))
-        delay = min(delay, self.max_delay_ms)
-        # Simple jitter
-        if self.jitter_ms:
-            delay += int(self.jitter_ms / 2)
-        return delay
-
-
 class TrackedEnvelope(BaseModel):
     """Information about a tracked envelope."""
 
@@ -63,7 +39,8 @@ class TrackedEnvelope(BaseModel):
     envelope_id: str
     corr_id: Optional[str] = None
     target: Optional[FameAddress] = None
-    timeout_at_ms: int
+    timeout_at_ms: int  # When the next timer event should fire (retry or final timeout)
+    overall_timeout_at_ms: int  # The absolute deadline - never changes
     expected_response_type: FameResponseType
     created_at_ms: int
     attempt: int = 0
@@ -102,6 +79,7 @@ class DeliveryTracker(ABC):
         timeout_ms: int,
         expected_response_type: FameResponseType,
         retry_policy: Optional[RetryPolicy] = None,
+        retry_handler: Optional[RetryEventHandler] = None,
         meta: Optional[Dict[str, Any]] = None,
     ) -> Optional[TrackedEnvelope]: ...
 
@@ -147,12 +125,6 @@ class DeliveryTracker(ABC):
 
     def add_event_handler(self, event_handler: DeliveryTrackerEventHandler) -> None:
         self._event_handlers.append(event_handler)
-
-
-class RetryEventHandler(Protocol):
-    async def on_retry_needed(
-        self, envelope: TrackedEnvelope, attempt: int, next_delay_ms: int
-    ) -> None: ...
 
 
 class DeliveryTrackerEventHandler(Protocol):

@@ -30,10 +30,10 @@ async def test_encrypted_request_encrypted_response():
         return {"result": f"processed {method}"}
 
     # Create a node
-    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import (
+    from naylence.fame.delivery.default_delivery_tracker_factory import (
         DefaultDeliveryTrackerFactory,
     )
+    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
@@ -196,10 +196,10 @@ async def test_plaintext_request_plaintext_response():
     async def test_rpc_handler(method: str, params: dict[str, Any] | None):
         return {"result": "processed"}
 
-    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import (
+    from naylence.fame.delivery.default_delivery_tracker_factory import (
         DefaultDeliveryTrackerFactory,
     )
+    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)

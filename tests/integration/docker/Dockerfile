@@ -23,6 +23,10 @@ RUN pip install poetry
 # Copy dependency files first for better Docker layer caching
 COPY pyproject.toml poetry.lock ./
 
+# Work around cffi 2.0.0 Docker installation issues
+# Fix permissions in the virtual environment first as root
+RUN chown -R runtime:runtime /home/runtime/venv
+
 # Switch to non-root user for dependency installation
 USER runtime
 

@@ -10,17 +10,17 @@ from naylence.fame.core import (
     FameResponseType,
     create_fame_envelope,
 )
-from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-from naylence.fame.tracking.default_delivery_tracker import DefaultDeliveryTracker
-from naylence.fame.tracking.default_delivery_tracker_factory import (
+from naylence.fame.delivery.default_delivery_tracker import DefaultDeliveryTracker
+from naylence.fame.delivery.default_delivery_tracker_factory import (
     DefaultDeliveryTrackerConfig,
     DefaultDeliveryTrackerFactory,
 )
-from naylence.fame.tracking.delivery_tracker import (
+from naylence.fame.delivery.delivery_tracker import (
     EnvelopeStatus,
     RetryPolicy,
     TrackedEnvelope,
 )
+from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 
 
 @pytest.fixture
@@ -493,6 +493,7 @@ class TestTrackedEnvelope:
             corr_id="test-corr",
             target=FameAddress("service@/test"),
             timeout_at_ms=1234567890000,
+            overall_timeout_at_ms=1234567890000,
             expected_response_type=FameResponseType.NONE,
             created_at_ms=1234567889000,
             attempt=1,
@@ -528,6 +529,7 @@ class TestTrackedEnvelope:
         tracked = TrackedEnvelope(
             envelope_id=original.id,
             timeout_at_ms=1234567890000,
+            overall_timeout_at_ms=1234567890000,
             expected_response_type=FameResponseType.ACK,
             created_at_ms=1234567889000,
             original_envelope=original,  # Store the original envelope

@@ -31,13 +31,13 @@ from naylence.fame.core import (
     format_address,
     make_response,
 )
+from naylence.fame.delivery.default_delivery_tracker_factory import (
+    DefaultDeliveryTrackerFactory,
+)
+from naylence.fame.delivery.delivery_tracker import TrackedEnvelope
 from naylence.fame.node.node_envelope_factory import NodeEnvelopeFactory
 from naylence.fame.node.rpc_client_manager import RPCClientManager
 from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-from naylence.fame.tracking.default_delivery_tracker_factory import (
-    DefaultDeliveryTrackerFactory,
-)
-from naylence.fame.tracking.delivery_tracker import TrackedEnvelope
 
 
 class TestRPCClientManager:
@@ -407,6 +407,7 @@ class TestRPCClientManager:
         tracked_envelope = TrackedEnvelope(
             envelope_id="test-envelope-id",
             timeout_at_ms=1000000,
+            overall_timeout_at_ms=1000000,
             expected_response_type=FameResponseType.REPLY,
             created_at_ms=1000000,
         )

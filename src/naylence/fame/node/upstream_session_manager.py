@@ -158,6 +158,10 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
                 await self._fsm_task
             self._fsm_task = None
 
+        if self._connector:
+            await self._connector.stop()
+            self._connector = None
+
         logger.debug("upstream_session_manager_stopped")
 
     @property

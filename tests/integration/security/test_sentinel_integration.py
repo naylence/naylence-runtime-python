@@ -29,13 +29,13 @@ from naylence.fame.core import (
     generate_id,
     local_delivery_context,
 )
+from naylence.fame.delivery.default_delivery_tracker_factory import (
+    DefaultDeliveryTrackerFactory,
+)
 from naylence.fame.security.no_security_manager import NoSecurityManager
 from naylence.fame.sentinel.hybrid_path_routing_policy import HybridPathRoutingPolicy
 from naylence.fame.sentinel.sentinel import Sentinel
 from naylence.fame.sentinel.store.route_store import RouteStore
-from naylence.fame.tracking.default_delivery_tracker_factory import (
-    DefaultDeliveryTrackerFactory,
-)
 
 
 class TestSentinelIntegration:

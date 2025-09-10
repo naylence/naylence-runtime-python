@@ -42,7 +42,7 @@ async def test_envelope_listener_manager_delivery_context():
     test_sid = "test-system-id"
 
     # Create EnvelopeListenerManager
-    from naylence.fame.tracking.delivery_tracker import DeliveryTracker
+    from naylence.fame.delivery.delivery_tracker import DeliveryTracker
 
     mock_delivery_tracker = Mock(spec=DeliveryTracker)
     listener_manager = EnvelopeListenerManager(

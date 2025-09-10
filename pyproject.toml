@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.2.4"
+version = "0.3.0"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -39,7 +39,7 @@ httpx = "^0.28.1"
 structlog = "^25.3.0"
 cryptography = "^45.0.6"
 pyjwt = "^2.10.1"
-naylence-core = "^0.1.18"
+naylence-core = "^0.2.0"
 fastapi = "^0.116.1"
 uvicorn = "^0.35.0"
 python-multipart = "^0.0.20"
@@ -273,7 +273,7 @@ StorageProfile = "naylence.fame.storage.storage_profile_factory:StorageProfileFa
 SimpleLoadBalancerStickinessManager = "naylence.fame.stickiness.simple_load_balancer_stickiness_manager_factory:SimpleLoadBalancerStickinessManagerFactory"
 
 [project.entry-points."naylence.DeliveryTrackerFactory"]
-DefaultDeliveryTracker = "naylence.fame.tracking.default_delivery_tracker_factory:DefaultDeliveryTrackerFactory"
+DefaultDeliveryTracker = "naylence.fame.delivery.default_delivery_tracker_factory:DefaultDeliveryTrackerFactory"
 
 [project.entry-points."naylence.AttachmentKeyValidatorFactory"]
 NoopKeyValidator = "naylence.fame.security.keys.noop_key_validator_factory:NoopKeyValidatorFactory"
@@ -282,3 +282,8 @@ NoopKeyValidator = "naylence.fame.security.keys.noop_key_validator_factory:NoopK
 NoopTraceEmitter = "naylence.fame.telemetry.noop_trace_emitter_factory:NoopTraceEmitterFactory"
 OpenTelemetryTraceEmitter = "naylence.fame.telemetry.open_telemetry_trace_emitter_factory:OpenTelemetryTraceEmitterFactory"
 TraceEmitterProfile = "naylence.fame.telemetry.trace_emitter_profile_factory:TraceEmitterProfileFactory"
+
+[project.entry-points."naylence.DeliveryPolicyFactory"]
+AtLeastOnceDeliveryPolicy = "naylence.fame.delivery.at_least_once_delivery_policy_factory:AtLeastOnceDeliveryPolicyFactory"
+AtMostOnceDeliveryPolicy = "naylence.fame.delivery.at_most_once_delivery_policy_factory:AtMostOnceDeliveryPolicyFactory"
+DeliveryProfile = "naylence.fame.delivery.delivery_profile_factory:DeliveryProfileFactory"

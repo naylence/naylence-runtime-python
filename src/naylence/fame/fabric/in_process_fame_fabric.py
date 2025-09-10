@@ -7,10 +7,9 @@ from naylence.fame.core import (
     DEFAULT_INVOKE_TIMEOUT_MILLIS,
     SINK_CAPABILITY,
     DataFrame,
-    DeliveryOriginType,
+    DeliveryAckFrame,
     FameAddress,
     FameConfig,
-    FameDeliveryContext,
     FameEnvelope,
     FameFabric,
     FameMessageHandler,
@@ -65,7 +64,9 @@ class InProcessFameFabric(FameFabric):
     def node(self) -> NodeLike:
         return self._current_node
 
-    async def send(self, envelope: FameEnvelope) -> None:
+    async def send(
+        self, envelope: FameEnvelope, timeout_ms: Optional[int] = None
+    ) -> Optional[DeliveryAckFrame]:
         """
         Send an envelope through the fabric.
 
@@ -74,15 +75,7 @@ class InProcessFameFabric(FameFabric):
         Args:
             envelope: The envelope to send
         """
-        from_system_id = self.node.id if self.node else None
-        return await self._current_node.deliver(
-            envelope,
-            context=FameDeliveryContext(
-                origin_type=DeliveryOriginType.LOCAL,
-                from_system_id=from_system_id,
-                from_connector=None,
-            ),
-        )
+        return await self._current_node.send(envelope, timeout_ms=timeout_ms)
 
     async def invoke(
         self,

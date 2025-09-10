@@ -39,10 +39,10 @@ async def mock_node():
     # Create a node with minimal security setup
     node_security = await SecurityManagerFactory.create_security_manager(policy=DefaultSecurityPolicy())
 
-    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
-    from naylence.fame.tracking.default_delivery_tracker_factory import (
+    from naylence.fame.delivery.default_delivery_tracker_factory import (
         DefaultDeliveryTrackerFactory,
     )
+    from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 
     storage_provider = InMemoryStorageProvider()
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
