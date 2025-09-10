@@ -1,3 +1,5 @@
+[![Join our Discord](https://img.shields.io/badge/Discord-Join%20Chat-blue?logo=discord)](https://discord.gg/nwZAeqdv7y)
+
 # Naylence Runtime
 
 > Message fabric, connectors, listeners, and security primitives that power Naylence agents, nodes and sentinels. This package provides the **runtime substrate**—not the high‑level Agent SDK or tutorials.
