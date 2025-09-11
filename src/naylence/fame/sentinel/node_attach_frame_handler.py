@@ -129,6 +129,7 @@ class NodeAttachFrameHandler(TaskSpawner):
                     connector,
                     self._create_node_attach_ack_env(
                         ok=False,
+                        original_env_id=envelope.id,
                         reason=f"Certificate validation failed: {e}",
                         correlation_id=envelope.corr_id,
                         trace_id=envelope.trace_id,
@@ -284,6 +285,7 @@ class NodeAttachFrameHandler(TaskSpawner):
 
         node_attach_ack_env = self._create_node_attach_ack_env(
             ok=True,
+            original_env_id=envelope.id,
             expires_at=attach_expires_at,
             assigned_path=assigned_path,
             correlation_id=envelope.corr_id,
@@ -365,6 +367,7 @@ class NodeAttachFrameHandler(TaskSpawner):
         self,
         *,
         ok: bool,
+        original_env_id: str,
         reason: Optional[str] = None,
         expires_at: Optional[datetime] = None,
         assigned_path: Optional[str] = None,
@@ -384,6 +387,7 @@ class NodeAttachFrameHandler(TaskSpawner):
             target_system_id=self._routing_node_like.id,
             target_physical_path=self._routing_node_like.physical_path,
             ok=ok,
+            ref_id=original_env_id,
             reason=reason,
             expires_at=expires_at,
             assigned_path=assigned_path,

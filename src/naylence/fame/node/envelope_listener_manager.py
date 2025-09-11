@@ -63,8 +63,10 @@ class EnvelopeListenerManager(TaskSpawner):
 
     def __init__(
         self,
+        *,
         binding_manager: BindingManager,
         get_physical_path: Callable[[], str],
+        get_id: Callable[[], str],
         get_sid: Callable[[], str],
         deliver: Callable[[FameEnvelope, Optional[FameDeliveryContext]], Awaitable[None]],
         envelope_factory: EnvelopeFactory,
@@ -83,12 +85,12 @@ class EnvelopeListenerManager(TaskSpawner):
         self._listeners_lock = asyncio.Lock()
 
         # Initialize the modular components
-        self._response_context_manager = ResponseContextManager(get_sid)
+        self._response_context_manager = ResponseContextManager(get_id, get_sid)
         self._streaming_response_handler = StreamingResponseHandler(
             lambda: self._deliver, envelope_factory, self._response_context_manager
         )
         self._channel_polling_manager = ChannelPollingManager(
-            lambda: self._deliver, get_sid, self._response_context_manager
+            lambda: self._deliver, get_id, get_sid, self._response_context_manager
         )
         self._rpc_server_handler = RPCServerHandler(
             envelope_factory,
@@ -98,6 +100,7 @@ class EnvelopeListenerManager(TaskSpawner):
         )
         self._rpc_client_manager = RPCClientManager(
             get_physical_path,
+            get_id,
             get_sid,
             deliver_wrapper=lambda: self._deliver,
             envelope_factory=envelope_factory,

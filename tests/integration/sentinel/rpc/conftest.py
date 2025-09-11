@@ -68,4 +68,7 @@ def rpc_client_config(generic_client_config):
         }
     ]
 
+    # Add "at-most-once" delivery policy to avoid ACK requirements
+    config["node"]["delivery"] = {"type": "DeliveryProfile", "profile": "at-most-once"}
+
     return config

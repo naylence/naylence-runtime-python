@@ -46,10 +46,12 @@ class ChannelPollingManager:
         deliver_wrapper: Callable[
             [], Callable[[FameEnvelope, Optional[FameDeliveryContext]], Awaitable[None]]
         ],
+        get_id: Callable[[], str],
         get_sid: Callable[[], str],
         response_context_manager: ResponseContextManager,
     ) -> None:
         self._deliver_wrapper = deliver_wrapper
+        self._get_id = get_id
         self._get_sid = get_sid
         self._response_context_manager = response_context_manager
 
@@ -236,7 +238,7 @@ class ChannelPollingManager:
         # Create response context with security info and message-type metadata
         return FameDeliveryContext(
             origin_type=DeliveryOriginType.LOCAL,
-            from_system_id=self._get_sid(),
+            from_system_id=self._get_id(),
             # For responses, security.inbound_crypto_level represents the original request's crypto level
             security=response_security,
             # Mark this as a response for proper policy decision making
@@ -362,8 +364,9 @@ class ChannelPollingManager:
                 try:
                     await asyncio.wait_for(
                         self._deliver_wrapper()(response_envelope, response_context),
-                        timeout=10.0,
+                        timeout=30.0,  # TODO: parameterize
                     )
+
                     logger.debug(
                         "delivered_streaming_fame_message",
                         service_name=env.to,
@@ -378,8 +381,10 @@ class ChannelPollingManager:
                         envelope_id=env.id,
                         item_count=item_count,
                         response_envelope_id=response_envelope.id,
+                        exc_info=True,
                     )
-                    raise Exception(f"Delivery timeout for streaming FameMessageResponse {item_count}")
+                    # TODO: issue: re-raising the exception breaks further state of the system
+                    # raise Exception(f"Delivery timeout for streaming FameMessageResponse {item_count}")
                 except Exception as deliver_error:
                     logger.error(
                         "streaming_fame_message_delivery_error",
@@ -390,7 +395,8 @@ class ChannelPollingManager:
                         error=str(deliver_error),
                         error_type=type(deliver_error).__name__,
                     )
-                    raise
+                    # TODO: issue: re-raising the exception breaks the further state of the system
+                    # raise
 
                 logger.debug(
                     "sent_streaming_fame_message",

@@ -211,6 +211,7 @@ async def emit_delivery_nack(
                 cid=envelope.frame.cid,
                 eph_pub=b"\x00" * 32,  # Dummy key for failed channel
                 ok=False,
+                ref_id=envelope.id,
                 reason=f"Channel handshake failed: {code} - Unroutable to {envelope.to}",
                 alg=envelope.frame.alg,
             )
@@ -219,6 +220,7 @@ async def emit_delivery_nack(
             nack_frame = DeliveryAckFrame(
                 ok=False,
                 code=code,
+                ref_id=envelope.id,
                 reason=f"Unroutable to {envelope.to}",
             )
 

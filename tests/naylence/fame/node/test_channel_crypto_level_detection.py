@@ -143,6 +143,7 @@ async def test_channel_context_preservation_in_responses():
     _ = EnvelopeListenerManager(
         binding_manager=mock_binding_manager,
         get_physical_path=lambda: "/test/path",
+        get_id=lambda: "test-node",
         get_sid=lambda: "test-node",
         deliver=AsyncMock(),
         envelope_factory=mock_envelope_factory,

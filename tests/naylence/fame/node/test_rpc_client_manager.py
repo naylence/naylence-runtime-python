@@ -94,6 +94,7 @@ class TestRPCClientManager:
         """Create RPCClientManager instance for testing."""
         manager = RPCClientManager(
             get_physical_path=mock_get_physical_path,
+            get_id=lambda: "test-node-id",
             get_sid=mock_get_sid,
             deliver_wrapper=mock_deliver_wrapper,
             envelope_factory=envelope_factory,
@@ -393,6 +394,7 @@ class TestRPCClientManager:
         # Create manager and verify it's registered as event handler
         manager = RPCClientManager(
             get_physical_path=mock_get_physical_path,
+            get_id=lambda: "test-node-id",
             get_sid=mock_get_sid,
             deliver_wrapper=mock_deliver_wrapper,
             envelope_factory=envelope_factory,

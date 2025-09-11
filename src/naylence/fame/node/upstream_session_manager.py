@@ -513,6 +513,7 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
                 to=nack_destination,
                 frame=DeliveryAckFrame(
                     ok=False,
+                    ref_id=env.id,
                     code="MESSAGE_TOO_LARGE",
                     reason=reason,
                 ),

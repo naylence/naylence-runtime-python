@@ -38,8 +38,9 @@ async def test_envelope_listener_manager_delivery_context():
         delivered_envelopes.append(envelope)
         delivered_contexts.append(context)
 
-    # Mock system ID
+    # Mock system ID and node ID
     test_sid = "test-system-id"
+    test_node_id = "test-node-id"
 
     # Create EnvelopeListenerManager
     from naylence.fame.delivery.delivery_tracker import DeliveryTracker
@@ -48,6 +49,7 @@ async def test_envelope_listener_manager_delivery_context():
     listener_manager = EnvelopeListenerManager(
         binding_manager=binding_manager,
         get_physical_path=lambda: "/test/node",
+        get_id=lambda: test_node_id,
         get_sid=lambda: test_sid,
         deliver=mock_deliver,
         envelope_factory=envelope_factory,
@@ -85,7 +87,7 @@ async def test_envelope_listener_manager_delivery_context():
     out_env = FameEnvelope(trace_id=incoming_env.trace_id, frame=frame, to=incoming_env.reply_to)
 
     # Manually call the delivery logic that would happen in the RPC handler
-    context = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL, from_system_id=test_sid)
+    context = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL, from_system_id=test_node_id)
     await mock_deliver(out_env, context)
 
     # Verify the context was passed correctly
@@ -93,7 +95,7 @@ async def test_envelope_listener_manager_delivery_context():
     delivered_context = delivered_contexts[0]
     assert delivered_context is not None, "Context should not be None"
     assert delivered_context.origin_type == DeliveryOriginType.LOCAL, "Should be LOCAL origin"
-    assert delivered_context.from_system_id == test_sid, "Should have correct system ID"
+    assert delivered_context.from_system_id == test_node_id, "Should have correct node ID"
 
     print("✅ Test Case 1 passed - RPC response has correct LOCAL context")
 
@@ -153,7 +155,7 @@ async def test_envelope_listener_manager_delivery_context():
         delivered_context = delivered_contexts[-1]  # Get the last context
         assert delivered_context is not None, "Context should not be None"
         assert delivered_context.origin_type == DeliveryOriginType.LOCAL, "Should be LOCAL origin"
-        assert delivered_context.from_system_id == test_sid, "Should have correct system ID"
+        assert delivered_context.from_system_id == test_node_id, "Should have correct node ID"
         print("✅ Test Case 2 passed - RPC request has correct LOCAL context")
     else:
         print("⚠️  Test Case 2 skipped - RPC request delivery not captured")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, Optional
 
 from naylence.fame.security.auth.token_verifier import TokenVerifier
@@ -39,6 +40,29 @@ class JWKSJWTTokenVerifier(TokenVerifier):
 
         logger.debug("created_jwks_jwt_token_verifier", issuer=issuer, jwks_url=jwks_url)
 
+    def _decode_token_without_verification(self, token: str) -> Optional[Dict[str, Any]]:
+        """
+        Decode a JWT token without verification to extract claims for debugging.
+
+        :param token: JWT token to decode
+        :return: Token claims if decodable, None otherwise
+        """
+        jwt, _ = require_jwks_dependencies()
+
+        try:
+            # Decode without verification to get claims for error reporting
+            return jwt.decode(token, verify=False, options={"verify_signature": False})
+        except Exception:
+            # If we can't even decode without verification, return None
+            return None
+
+    def _format_token_claims_for_error(self, token: str) -> str:
+        claims = self._decode_token_without_verification(token)
+        if claims is None:
+            return " [Token claims could not be decoded]"
+
+        return json.dumps(claims)
+
     async def verify(
         self,
         token: str,
@@ -68,14 +92,19 @@ class JWKSJWTTokenVerifier(TokenVerifier):
             return payload
 
         except jwt.ExpiredSignatureError:
-            raise jwt.InvalidTokenError("Token has expired")
+            claims_info = self._format_token_claims_for_error(token)
+            raise jwt.InvalidTokenError(f"Token has expired{claims_info}")
         except jwt.InvalidAudienceError:
-            raise jwt.InvalidTokenError("Invalid audience")
+            claims_info = self._format_token_claims_for_error(token)
+            raise jwt.InvalidTokenError(f"Invalid audience: {claims_info}")
         except jwt.InvalidIssuerError:
-            raise jwt.InvalidTokenError("Invalid issuer")
+            claims_info = self._format_token_claims_for_error(token)
+            raise jwt.InvalidTokenError(f"Invalid issuer: {claims_info}")
         except jwt.InvalidSignatureError:
-            raise jwt.InvalidTokenError("Invalid signature")
-        except jwt.DecodeError:
-            raise jwt.InvalidTokenError("Token decode error")
+            claims_info = self._format_token_claims_for_error(token)
+            raise jwt.InvalidTokenError(f"Invalid signature: {claims_info}")
+        except jwt.DecodeError as e:
+            raise jwt.InvalidTokenError(f"Token decode error: {e}")
         except Exception as e:
-            raise jwt.InvalidTokenError(f"Token validation failed: {e}")
+            claims_info = self._format_token_claims_for_error(token)
+            raise jwt.InvalidTokenError(f"Token validation failed: {e}{claims_info}")

@@ -62,9 +62,7 @@ class CapabilityFrameHandler:
 
         # ACK down
         ack = CapabilityAdvertiseAckFrame(
-            address=frame.address,
-            capabilities=frame.capabilities,
-            ok=True,
+            address=frame.address, capabilities=frame.capabilities, ok=True, ref_id=envelope.id
         )
 
         ack_context = FameDeliveryContext(
@@ -110,9 +108,7 @@ class CapabilityFrameHandler:
 
         # ACK
         ack = CapabilityWithdrawAckFrame(
-            address=frame.address,
-            capabilities=frame.capabilities,
-            ok=True,
+            address=frame.address, capabilities=frame.capabilities, ok=True, ref_id=envelope.id
         )
 
         ack_context = FameDeliveryContext(

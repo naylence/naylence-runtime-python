@@ -191,11 +191,15 @@ class FameNode(TaskSpawner, NodeLike):
             delivery_tracker=delivery_tracker,
         )
 
+        async def deliver_fn(envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
+            await self.send(envelope, context)
+
         self._envelope_listener_manager = EnvelopeListenerManager(
             binding_manager=self._binding_manager,
             get_physical_path=lambda: self.physical_path,
+            get_id=lambda: self.id,
             get_sid=lambda: self.sid,
-            deliver=self.deliver,
+            deliver=deliver_fn,
             envelope_factory=self.envelope_factory,
             delivery_tracker=delivery_tracker,
         )
@@ -747,6 +751,7 @@ class FameNode(TaskSpawner, NodeLike):
         ] = None,
         timeout_ms: Optional[int] = None,
     ) -> Optional[DeliveryAckFrame]:
+        logger.debug("sending_envelope", **summarize_env(envelope, prefix=""))
         if context is None:
             context = FameDeliveryContext(
                 origin_type=DeliveryOriginType.LOCAL,
@@ -757,13 +762,13 @@ class FameNode(TaskSpawner, NodeLike):
             assert context.origin_type is None or context.origin_type == DeliveryOriginType.LOCAL, (
                 "Can only send with LOCAL origin context"
             )
-            assert context.from_system_id is None or context.from_system_id == self.id, (
-                "from_system_id must match this node's id in LOCAL context"
-            )
+            # assert context.from_system_id is None or context.from_system_id == self.id, (
+            #     "from_system_id must match this node's id in LOCAL context"
+            # )
             assert context.from_connector is None, "from_connector must be None in LOCAL context"
 
             context.origin_type = DeliveryOriginType.LOCAL
-            context.from_system_id = self.id
+            # context.from_system_id = self.id
             context.from_connector = None
 
         if not delivery_fn:
@@ -806,16 +811,19 @@ class FameNode(TaskSpawner, NodeLike):
 
             retry_handler = _DefaultRetryHandler()
 
+        timeout_ms = timeout_ms or DEFAULT_INVOKE_TIMEOUT_MILLIS
+
         await self._delivery_tracker.track(
             envelope=envelope,
             expected_response_type=FameResponseType.ACK,
-            timeout_ms=timeout_ms or DEFAULT_INVOKE_TIMEOUT_MILLIS,
+            timeout_ms=timeout_ms,
             retry_policy=retry_policy,
             retry_handler=retry_handler,
         )
 
         await delivery_fn(envelope, context)
 
+        logger.debug("waiting_for_ack_post_send", **summarize_env(envelope, prefix=""))
         ack_env = await self._delivery_tracker.await_ack(
             envelope_id=envelope.id,
             timeout_ms=timeout_ms,

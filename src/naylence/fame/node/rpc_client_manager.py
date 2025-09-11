@@ -54,6 +54,7 @@ class RPCClientManager(DeliveryTrackerEventHandler):
     def __init__(
         self,
         get_physical_path: Callable[[], str],
+        get_id: Callable[[], str],
         get_sid: Callable[[], str],
         deliver_wrapper: Callable[
             [], Callable[[FameEnvelope, Optional[FameDeliveryContext]], Awaitable[None]]
@@ -63,6 +64,7 @@ class RPCClientManager(DeliveryTrackerEventHandler):
         delivery_tracker: DeliveryTracker,
     ) -> None:
         self._get_physical_path = get_physical_path
+        self._get_id = get_id
         self._get_sid = get_sid
         self._deliver_wrapper = deliver_wrapper
         self._envelope_factory = envelope_factory
@@ -289,7 +291,7 @@ class RPCClientManager(DeliveryTrackerEventHandler):
 
         context = FameDeliveryContext(
             origin_type=DeliveryOriginType.LOCAL,
-            from_system_id=self._get_sid(),
+            from_system_id=self._get_id(),
             expected_response_type=expected_response_type,
         )
 

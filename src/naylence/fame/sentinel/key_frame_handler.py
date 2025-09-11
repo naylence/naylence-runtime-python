@@ -127,19 +127,19 @@ class KeyFrameHandler:
 
         frame: KeyRequestFrame = envelope.frame
 
-        origin_sid = self._get_source_system_id(context)
-        if not origin_sid:
+        origin_node_id = self._get_source_system_id(context)
+        if not origin_node_id:
             raise ValueError("Missing origin sid")
 
         # Store correlation mapping for address requests that may be forwarded
         # Since routing decisions now happen in the routing pipeline, we can't predict
         # whether an address will be routed, so we store the correlation for all address requests
         if frame.address and envelope.corr_id:
-            self._corr_map.add(envelope.corr_id, origin_sid)
+            self._corr_map.add(envelope.corr_id, origin_node_id)
             logger.debug(
                 "stored_key_request_correlation",
                 corr_id=envelope.corr_id,
-                origin=origin_sid,
+                origin=origin_node_id,
                 address=str(frame.address),
             )
 
@@ -147,7 +147,7 @@ class KeyFrameHandler:
         if frame.address:
             handled = await self._handle_key_request_by_address(
                 address=frame.address,
-                from_seg=origin_sid,
+                from_seg=origin_node_id,
                 physical_path=frame.physical_path,
                 delivery_context=context,
                 corr_id=envelope.corr_id,
@@ -172,7 +172,7 @@ class KeyFrameHandler:
 
             await self._key_manager.handle_key_request(
                 kid=frame.kid,
-                from_seg=origin_sid,
+                from_seg=origin_node_id,
                 physical_path=frame.physical_path,
                 origin=context.origin_type,
                 corr_id=envelope.corr_id,

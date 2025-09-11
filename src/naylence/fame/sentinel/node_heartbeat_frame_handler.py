@@ -46,7 +46,9 @@ class NodeHeartbeatFrameHandler:
             raise RuntimeError("Connector in context does not match pending connector")
 
         # Create and send heartbeat ACK
-        ack_frame = NodeHeartbeatAckFrame(routing_epoch=self._routing_node_like.routing_epoch, ok=True)
+        ack_frame = NodeHeartbeatAckFrame(
+            routing_epoch=self._routing_node_like.routing_epoch, ok=True, ref_id=envelope.id
+        )
         ack_env = self._routing_node_like.envelope_factory.create_envelope(
             frame=ack_frame, corr_id=envelope.corr_id
         )

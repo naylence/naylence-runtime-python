@@ -13,6 +13,7 @@ from naylence.fame.core import (
     generate_id,
     make_request,
 )
+from naylence.fame.delivery.delivery_profile_factory import DeliveryProfileFactory
 from naylence.fame.node.node import FameNode
 from naylence.fame.node.node_meta import NodeMeta
 from naylence.fame.security.policy.security_policy import CryptoLevel
@@ -39,12 +40,18 @@ async def test_encrypted_request_encrypted_response():
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
     delivery_tracker_factory = DefaultDeliveryTrackerFactory()
     delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
+
+    # Create "at-most-once" delivery policy to avoid ACK requirements
+    delivery_policy_factory = DeliveryProfileFactory()
+    delivery_policy = await delivery_policy_factory.create({"profile": "at-most-once"})
+
     node = FameNode(
         env_context=None,
         requested_logicals=["test.domain"],
         storage_provider=storage_provider,
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
+        delivery_policy=delivery_policy,
     )
     await node.start()
 
@@ -71,35 +78,11 @@ async def test_encrypted_request_encrypted_response():
 
     node.deliver = capturing_deliver
 
-    # Also wrap the listener manager's _deliver method to see what's happening
-    listener_manager = node._envelope_listener_manager
-    original_listener_deliver = listener_manager._deliver
-
-    async def capturing_listener_deliver(
-        envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
-    ):
-        print(
-            f"🎯 EnvelopeListenerManager._deliver called with envelope {envelope.id}, meta: {envelope.meta}"
-        )
-        if context:
-            print(
-                f"🎯 Context: origin={context.origin_type}, "
-                f"crypto_level={context.security.inbound_crypto_level if context.security else None}"
-            )
-            if context.meta and context.meta.get("message-type") == "response":
-                response_contexts.append(context)
-                print(
-                    f"📤 Captured response context from listener manager! "
-                    f"crypto_level: {context.security.inbound_crypto_level if context.security else None}"
-                )
-        else:
-            print("🎯 No context provided to listener manager")
-        return await original_listener_deliver(envelope, context)
-
-    listener_manager._deliver = capturing_listener_deliver
+    # Note: We only instrument node.deliver to avoid double-counting
 
     try:
         # Set up RPC listener
+        listener_manager = node._envelope_listener_manager
         service_address = await listener_manager.listen_rpc("math", test_rpc_handler)
         print(f"📍 RPC service listening at: {service_address}")
 
@@ -205,12 +188,18 @@ async def test_plaintext_request_plaintext_response():
     node_meta_store = InMemoryKVStore[NodeMeta](NodeMeta)
     delivery_tracker_factory = DefaultDeliveryTrackerFactory()
     delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
+
+    # Create "at-most-once" delivery policy to avoid ACK requirements
+    delivery_policy_factory = DeliveryProfileFactory()
+    delivery_policy = await delivery_policy_factory.create({"profile": "at-most-once"})
+
     node = FameNode(
         env_context=None,
         requested_logicals=["test.domain"],
         storage_provider=storage_provider,
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
+        delivery_policy=delivery_policy,
     )
     await node.start()
 
@@ -227,24 +216,10 @@ async def test_plaintext_request_plaintext_response():
 
     node.deliver = capturing_deliver
 
-    # Also wrap the listener manager's _deliver method to see what's happening
-    listener_manager = node._envelope_listener_manager
-    original_listener_deliver = listener_manager._deliver
-
-    async def capturing_listener_deliver(
-        envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
-    ):
-        if context and context.meta and context.meta.get("message-type") == "response":
-            response_contexts.append(context)
-            print(
-                f"📤 Captured plaintext response context from listener manager! "
-                f"crypto_level: {context.security.inbound_crypto_level if context.security else None}"
-            )
-        return await original_listener_deliver(envelope, context)
-
-    listener_manager._deliver = capturing_listener_deliver
+    # Note: We only instrument node.deliver to avoid double-counting
 
     try:
+        listener_manager = node._envelope_listener_manager
         service_address = await listener_manager.listen_rpc("test-service", test_rpc_handler)
 
         await asyncio.sleep(0.1)

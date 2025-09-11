@@ -87,6 +87,10 @@ async def main():
                 "type": "StorageProfile",
                 "profile": "memory",
             },
+            "delivery": {
+                "type": "DeliveryProfile",
+                "profile": "at-most-once",
+            },
         },
     }
 

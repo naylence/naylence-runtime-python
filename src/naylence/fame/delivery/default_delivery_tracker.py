@@ -75,15 +75,17 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         TaskSpawner.__init__(self)
 
         self._tracker_store = tracker_store
-        # self._retry_handler = retry_handler
-        self._correlation_to_envelope: Dict[str, str] = {}
-        self._timers: Dict[str, asyncio.Task] = {}
 
-        self._ack_futures: Dict[str, asyncio.Future[FameEnvelope]] = {}
-        self._reply_futures: Dict[str, asyncio.Future[FameEnvelope]] = {}
+        # corr_id -> envelope_id, use for replies only, not for ACKs
+        self._correlation_to_envelope: dict[str, str] = {}
 
-        self._stream_queues: Dict[str, asyncio.Queue[Any]] = {}
-        self._stream_done: Dict[str, asyncio.Event] = {}
+        self._timers: dict[str, asyncio.Task] = {}
+
+        self._ack_futures: dict[str, asyncio.Future[FameEnvelope]] = {}
+        self._reply_futures: dict[str, asyncio.Future[FameEnvelope]] = {}
+
+        self._stream_queues: dict[str, asyncio.Queue[Any]] = {}
+        self._stream_done: dict[str, asyncio.Event] = {}
 
         self._lock = asyncio.Lock()
         self._node: NodeLike | None = None
@@ -202,14 +204,6 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
             )
         return envelope
 
-    # async def on_heartbeat_received(self, envelope: FameEnvelope) -> None:
-    #     if show_envelopes:
-    #         print(
-    #             f"\n{_timestamp()} - {color('Received envelope', AnsiColor.BLUE)} 📨\n{
-    #                 pretty_model(envelope)
-    #             }"
-    #         )
-
     async def on_heartbeat_sent(self, envelope: FameEnvelope) -> None:
         if show_envelopes:
             print(
@@ -219,28 +213,31 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
     async def on_envelope_delivered(
         self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
     ) -> None:
+        logger.debug(
+            "tracker_envelope_delivered",
+            envp_id=envelope.id,
+            corr_id=envelope.corr_id,
+            rtype=FameResponseType(envelope.rtype) if envelope.rtype else "Unknown",
+            frame_type=type(envelope.frame).__name__,
+        )
+
         if not envelope.corr_id:
             logger.debug("tracker_envelope_delivered_no_corr_id", envelope_id=envelope.id)  # type: ignore
 
         if isinstance(envelope.frame, DeliveryAckFrame):
+            # Ack handling
+            assert envelope.frame.ref_id
             if envelope.frame.ok:
                 await self.on_ack(envelope, context)
             else:
                 await self.on_nack(envelope, context)
 
         elif envelope.corr_id:
-            # Only treat as reply if it has a correlation ID and there's a tracked envelope for it
-            entry = await self.get_tracked_envelope_by_corr_id(envelope.corr_id)
-            if entry:
-                if entry.envelope_id == envelope.id:
-                    # Happens in local-to-local calls as the original envelope is tracked by this tracker
-                    if envelope.rtype and (envelope.rtype & FameResponseType.ACK == FameResponseType.ACK):
-                        await self._send_ack(envelope)
-                else:
-                    await self.on_reply(envelope, context)
-            else:
-                if envelope.rtype and (envelope.rtype & FameResponseType.ACK == FameResponseType.ACK):
-                    await self._send_ack(envelope)
+            await self.on_reply(envelope, context)
+
+            # When reply itself requires an ack, send it
+            if envelope.rtype and bool(envelope.rtype & FameResponseType.ACK):
+                await self._send_ack(envelope)
 
     async def _send_ack(self, envelope: FameEnvelope) -> None:
         assert self._node is not None
@@ -259,7 +256,7 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
 
         ack_env = self._node.envelope_factory.create_envelope(
             to=envelope.reply_to,
-            frame=DeliveryAckFrame(ok=True),
+            frame=DeliveryAckFrame(ok=True, ref_id=envelope.id),
             corr_id=envelope.corr_id,
             trace_id=envelope.trace_id,
         )
@@ -283,12 +280,22 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
             corr_id = envelope.corr_id = generate_id()
 
         async with self._lock:
-            if envelope.id in self._ack_futures or envelope.corr_id in self._correlation_to_envelope:
+            if envelope.id in self._ack_futures:
                 logger.debug("tracker_envelope_already_tracked", envp_id=envelope.id)
                 return None
 
-            # Map correlation ID to envelope ID for reply lookup
-            if envelope.corr_id:
+            existing_env_id = self._correlation_to_envelope.get(envelope.corr_id)
+
+            if expected_response_type & (FameResponseType.REPLY | FameResponseType.STREAM):
+                if existing_env_id:
+                    logger.debug(
+                        "envelope_already_tracked_for_replies",
+                        envp_id=envelope.id,
+                        corr_id=corr_id,
+                        expected_response_type=expected_response_type.name,
+                    )
+                    return None
+
                 self._correlation_to_envelope[envelope.corr_id] = envelope.id
 
             # Create ack future if needed
@@ -370,12 +377,27 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
             timeout_seconds = timeout_ms / 1000.0
 
         result: FameEnvelope
+        start_time = None
         try:
             if timeout_seconds is not None:
                 result = await asyncio.wait_for(future, timeout=timeout_seconds)
             else:
+                logger.debug("await_envelope_no_timeout_wait", envelope_id=envelope_id)
                 result = await future
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as e:
+            end_time = time.time()
+            elapsed = end_time - start_time if start_time is not None else 0
+
+            logger.error(
+                "await_envelope_timeout_error",
+                envelope_id=envelope_id,
+                timeout_seconds=timeout_seconds,
+                elapsed_seconds=elapsed,
+                future_done=future.done(),
+                future_cancelled=future.cancelled(),
+                future_exception=future.exception() if future.done() and not future.cancelled() else None,
+                error=str(e),
+            )
             raise asyncio.TimeoutError(f"Timeout waiting for reply or ACK for envelope {envelope_id}")
 
         return result
@@ -383,128 +405,163 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
     async def on_ack(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
         assert isinstance(envelope.frame, DeliveryAckFrame), "Ack must be from a DeliveryAckFrame"
         assert envelope.corr_id, "Reply envelope must have a correlation ID"
+        assert envelope.frame.ref_id, "Ack frame must have a reference ID"
 
-        entry = await self.get_tracked_envelope_by_corr_id(envelope.corr_id)
-        if not entry:
+        logger.debug(
+            "tracker_on_ack", envp_id=envelope.id, corr_id=envelope.corr_id, ref_id=envelope.frame.ref_id
+        )
+
+        tracked_envelope = await self._tracker_store.get(envelope.frame.ref_id)
+
+        if not tracked_envelope:
             logger.debug("tracker_ack_for_unknown_envelope", envp_id=envelope.id)
             return
 
-        if entry.envelope_id == envelope.id:
+        if tracked_envelope.corr_id != envelope.corr_id:
+            logger.debug(
+                "tracker_ack_corr_id_mismatch",
+                envp_id=envelope.id,
+                expected_corr_id=tracked_envelope.corr_id,
+                actual_corr_id=envelope.corr_id,
+            )
+            return
+
+        if tracked_envelope.envelope_id == envelope.id:
             # Received the original envelope instead of an ack, happens in local-to-local calls
             return
 
         # Update status
-        entry.status = (
+        tracked_envelope.status = (
             EnvelopeStatus.ACKED
-            if not (entry.expected_response_type & FameResponseType.STREAM)
-            else entry.status
+            if not (tracked_envelope.expected_response_type & FameResponseType.STREAM)
+            else tracked_envelope.status
         )
-        await self._tracker_store.set(entry.envelope_id, entry)
+        await self._tracker_store.set(tracked_envelope.envelope_id, tracked_envelope)
 
         # Resolve ack future
         async with self._lock:
-            future = self._ack_futures.pop(entry.envelope_id, None)
+            future = self._ack_futures.pop(tracked_envelope.envelope_id, None)
+            logger.debug(
+                "tracker_popped_ack_future",
+                envp_id=tracked_envelope.envelope_id,
+                future_exists=future is not None,
+            )
 
         if future and not future.done():
             future.set_result(envelope)
 
         # Cancel timer
-        await self._clear_timer(entry.envelope_id)
+        await self._clear_timer(tracked_envelope.envelope_id)
 
         # Notify event handler
         for event_handler in self._event_handlers:
-            await event_handler.on_envelope_acked(entry)
+            await event_handler.on_envelope_acked(tracked_envelope)
 
-        logger.debug("tracker_envelope_acked", envp_id=entry.envelope_id)
+        logger.debug("tracker_envelope_acked", envp_id=tracked_envelope.envelope_id)
 
     async def on_nack(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
         assert isinstance(envelope.frame, DeliveryAckFrame), "Nack must be from a DeliveryAckFrame"
         assert envelope.corr_id, "Reply envelope must have a correlation ID"
+        assert envelope.frame.ref_id, "Ack frame must have a reference ID"
 
-        entry = await self.get_tracked_envelope_by_corr_id(envelope.corr_id)
+        tracked_envelope = await self._tracker_store.get(envelope.frame.ref_id)
 
-        if not entry:
+        if not tracked_envelope:
             logger.debug("tracker_nack_for_unknown_envelope", envp_id=envelope.id)
             return
 
-        if entry.envelope_id == envelope.id:
-            # Received the original envelope instead of a nack, happens in local-to-local calls
+        if tracked_envelope.corr_id != envelope.corr_id:
+            logger.debug(
+                "tracker_nack_corr_id_mismatch",
+                envp_id=envelope.id,
+                expected_corr_id=tracked_envelope.corr_id,
+                actual_corr_id=envelope.corr_id,
+            )
             return
 
         # Update status and metadata
-        entry.status = EnvelopeStatus.NACKED
+        tracked_envelope.status = EnvelopeStatus.NACKED
         if envelope.frame.reason:
-            entry.meta["nack_reason"] = envelope.frame.reason
+            tracked_envelope.meta["nack_reason"] = envelope.frame.reason
 
-        await self._tracker_store.set(entry.envelope_id, entry)
+        await self._tracker_store.set(tracked_envelope.envelope_id, tracked_envelope)
 
         # Resolve ack future with error
         async with self._lock:
-            future = self._ack_futures.pop(entry.envelope_id, None)
+            future = self._ack_futures.pop(tracked_envelope.envelope_id, None)
+            logger.debug(
+                "tracker_popped_ack_future_on_nack",
+                envp_id=tracked_envelope.envelope_id,
+                future_exists=future is not None,
+            )
 
         if future and not future.done():
             future.set_exception(RuntimeError(f"Envelope nacked: {envelope.frame.reason or 'unknown'}"))
 
-        stream_queue = self._stream_queues.get(entry.envelope_id)
+        stream_queue = self._stream_queues.get(tracked_envelope.envelope_id)
         if stream_queue:
             await stream_queue.put(envelope)
             await stream_queue.put(_STREAM_END)
-            ev = self._stream_done.get(entry.envelope_id)
+            ev = self._stream_done.get(tracked_envelope.envelope_id)
             if ev:
                 ev.set()
 
         # Cancel timer
-        await self._clear_timer(entry.envelope_id)
+        await self._clear_timer(tracked_envelope.envelope_id)
 
         # Notify event handler
         for event_handler in self._event_handlers:
-            await event_handler.on_envelope_nacked(entry, envelope.frame.reason)
+            await event_handler.on_envelope_nacked(tracked_envelope, envelope.frame.reason)
 
         logger.debug(
             "tracker_envelope_nacked",
-            envp_id=entry.envelope_id,
+            envp_id=tracked_envelope.envelope_id,
             reason=envelope.frame.reason,
         )
 
     async def on_reply(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
         assert envelope.corr_id, "Reply envelope must have a correlation ID"
 
-        entry = await self.get_tracked_envelope_by_corr_id(envelope.corr_id)
+        tracked_envelope_id = self._correlation_to_envelope.get(envelope.corr_id)
+        if not tracked_envelope_id:
+            logger.debug("tracker_reply_for_unknown_correlation", corr_id=envelope.corr_id)
+            return
 
-        if not entry:
+        tracked_envelope = await self._tracker_store.get(tracked_envelope_id)
+        if not tracked_envelope:
             logger.debug("tracker_reply_for_unknown_envelope", envp_id=envelope.id)
             return
 
-        if entry.envelope_id == envelope.id:
+        if tracked_envelope.envelope_id == envelope.id:
             # Received the original envelope instead of a reply, happens in local-to-local calls
             return
 
-        if entry.expected_response_type & FameResponseType.STREAM:
+        if tracked_envelope.expected_response_type & FameResponseType.STREAM:
             # Treat as stream item for metrics only; upstream handles delivery
-            await self.on_stream_item(entry.envelope_id, envelope)
+            await self.on_stream_item(tracked_envelope.envelope_id, envelope)
             return
 
         # Update status
-        entry.status = EnvelopeStatus.RESPONDED
-        await self._tracker_store.set(entry.envelope_id, entry)
+        tracked_envelope.status = EnvelopeStatus.RESPONDED
+        await self._tracker_store.set(tracked_envelope.envelope_id, tracked_envelope)
 
         # Cancel timer
-        await self._clear_timer(entry.envelope_id)
+        await self._clear_timer(tracked_envelope.envelope_id)
 
         # Resolve reply future
         async with self._lock:
-            future = self._reply_futures.pop(entry.envelope_id, None)
+            future = self._reply_futures.pop(tracked_envelope.envelope_id, None)
 
         if future and not future.done():
             future.set_result(envelope)
 
         # Notify event handler
         for event_handler in self._event_handlers:
-            await event_handler.on_envelope_replied(entry, envelope)
+            await event_handler.on_envelope_replied(tracked_envelope, envelope)
 
         logger.debug(
             "tracked_envelope_replied",
-            envp_id=entry.envelope_id,
+            envp_id=tracked_envelope.envelope_id,
             corr_id=envelope.corr_id,
         )
 
@@ -553,15 +610,22 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         if ev:
             ev.set()
 
-    async def get_tracked_envelope_by_corr_id(self, corr_id: str) -> Optional[TrackedEnvelope]:
-        async with self._lock:
-            orig_envelope_id = self._correlation_to_envelope.get(corr_id)
+    # async def _get_tracked_envelope(
+    #     self, corr_id: str, response_type: FameResponseType,
+    # ) -> Optional[TrackedEnvelope]:
+    #     async with self._lock:
+    #         entry = self._correlation_to_envelope.get(corr_id)
 
-        if not orig_envelope_id:
-            logger.debug("tracker_reply_for_unknown_correlation", corr_id=corr_id)
-            return None
+    #     if not entry:
+    #         logger.debug("tracker_reply_for_unknown_correlation", corr_id=corr_id)
+    #         return None
 
-        return await self._tracker_store.get(orig_envelope_id)
+    #     env_ids = [env_id for env_id, rtype in entry.items() if rtype & response_type]
+
+    #     if envelope_id and envelope_id in env_ids:
+    #         return await self._tracker_store.get(envelope_id)
+
+    #     return await self._tracker_store.get(env_ids[0]) if env_ids else None
 
     async def get_tracked_envelope(self, envelope_id: str) -> Optional[TrackedEnvelope]:
         entry = await self._tracker_store.get(envelope_id)
@@ -621,18 +685,19 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         async with self._lock:
             # Rebuild correlation mapping
             for tracked in pending:
-                if tracked.corr_id:
-                    self._correlation_to_envelope[tracked.corr_id] = tracked.envelope_id
-
                 # Recreate ack future if needed
                 if tracked.expected_response_type & FameResponseType.ACK:
                     self._ack_futures[tracked.envelope_id] = asyncio.get_running_loop().create_future()
 
                 # Recreate reply future if needed
                 if tracked.expected_response_type & FameResponseType.REPLY:
+                    if tracked.corr_id:
+                        self._correlation_to_envelope[tracked.corr_id] = tracked.envelope_id
                     self._reply_futures[tracked.envelope_id] = asyncio.get_running_loop().create_future()
 
                 if tracked.expected_response_type & FameResponseType.STREAM:
+                    if tracked.corr_id:
+                        self._correlation_to_envelope[tracked.corr_id] = tracked.envelope_id
                     self._stream_queues[tracked.envelope_id] = asyncio.Queue()
                     self._stream_done[tracked.envelope_id] = asyncio.Event()
 
@@ -690,6 +755,11 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                         # Cancel futures
                         async with self._lock:
                             future = self._ack_futures.pop(tracked.envelope_id, None)
+                            logger.debug(
+                                "tracker_popped_ack_future_on_timeout",
+                                envp_id=entry.envelope_id,
+                                future_exists=future is not None,
+                            )
                         if future and not future.done():
                             future.set_exception(asyncio.TimeoutError())
 

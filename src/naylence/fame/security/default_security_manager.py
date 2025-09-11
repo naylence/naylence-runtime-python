@@ -229,7 +229,7 @@ class DefaultSecurityManager(SecurityManager):
         async def send_with_context(envelope, context=None):
             """Send envelope using node's deliver method with provided context or LOCAL context."""
             if context is None:
-                context = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL, from_system_id=node.sid)
+                context = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL, from_system_id=node.id)
             await node.deliver(envelope, context)
 
         if self.supports_overlay_security:
@@ -915,7 +915,7 @@ class DefaultSecurityManager(SecurityManager):
                         # Create a LOCAL context for outbound security processing
                         local_context = FameDeliveryContext(
                             origin_type=DeliveryOriginType.LOCAL,
-                            from_system_id=node.sid,
+                            from_system_id=node.id,
                         )
                         # Copy relevant metadata from original context
                         if context.meta:
@@ -1012,7 +1012,7 @@ class DefaultSecurityManager(SecurityManager):
                         # Create a LOCAL context for outbound security processing
                         local_context = FameDeliveryContext(
                             origin_type=DeliveryOriginType.LOCAL,
-                            from_system_id=node.sid,
+                            from_system_id=node.id,
                         )
                         # Copy relevant metadata from original context
                         if context.meta:
@@ -1114,7 +1114,7 @@ class DefaultSecurityManager(SecurityManager):
                         # Create a LOCAL context for outbound security processing
                         local_context = FameDeliveryContext(
                             origin_type=DeliveryOriginType.LOCAL,
-                            from_system_id=node.sid,
+                            from_system_id=node.id,
                         )
                         # Copy relevant metadata from original context
                         if context.meta:
@@ -1236,7 +1236,7 @@ class DefaultSecurityManager(SecurityManager):
             logger.debug("nack_no_destination", envp_id=original_env.id)
             return
 
-        nack_frame = DeliveryAckFrame(ok=False, code=reason)
+        nack_frame = DeliveryAckFrame(ok=False, ref_id=original_env.id, code=reason)
         nack_env = node.envelope_factory.create_envelope(
             trace_id=original_env.trace_id,
             frame=nack_frame,
@@ -1244,7 +1244,7 @@ class DefaultSecurityManager(SecurityManager):
             corr_id=original_env.corr_id,
         )
 
-        ctx = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL, from_system_id=node.sid)
+        ctx = FameDeliveryContext(origin_type=DeliveryOriginType.LOCAL, from_system_id=node.id)
         await node.deliver(nack_env, ctx)
 
     def _get_key_announce_handler(self):

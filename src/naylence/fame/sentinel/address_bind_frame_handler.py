@@ -101,7 +101,7 @@ class AddressBindFrameHandler:
             pool = self._pools.setdefault(pool_key, set())
             pool.add(source_system_id)
 
-            ack = AddressBindAckFrame(address=frame.address, ok=True)
+            ack = AddressBindAckFrame(address=frame.address, ok=True, ref_id=envelope.id)
         else:
             # ── this is an EXACT bind ────────────────────────────
             # Get physical path from the route store
@@ -130,7 +130,7 @@ class AddressBindFrameHandler:
             else:
                 assert False, "unreachable"
 
-            ack = AddressBindAckFrame(address=frame.address, ok=True)
+            ack = AddressBindAckFrame(address=frame.address, ok=True, ref_id=envelope.id)
 
         if context.origin_type == DeliveryOriginType.DOWNSTREAM:
             # send ACK back to the downstream
@@ -228,7 +228,7 @@ class AddressBindFrameHandler:
 
         # Send ACK back to the downstream if it's a downstream request
         if context and context.origin_type == DeliveryOriginType.DOWNSTREAM:
-            ack = AddressUnbindAckFrame(address=frame.address, ok=True)
+            ack = AddressUnbindAckFrame(address=frame.address, ok=True, ref_id=envelope.id)
 
             # Create a LOCAL context for the ACK while preserving signature mirroring information
             routing_node_id = getattr(self._routing_node_like, "id", None)

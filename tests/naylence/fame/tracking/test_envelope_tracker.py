@@ -139,7 +139,7 @@ class TestDefaultDeliveryTracker:
 
         # Create ACK envelope
         ack_envelope = create_fame_envelope(
-            frame=DeliveryAckFrame(ok=True, code="ok"),
+            frame=DeliveryAckFrame(ok=True, code="ok", ref_id=sample_envelope.id),
             corr_id=sample_envelope.corr_id,
         )
 
@@ -279,7 +279,7 @@ class TestDefaultDeliveryTrackerWithStorage:
 
             # Send ack
             ack_envelope = create_fame_envelope(
-                frame=DeliveryAckFrame(ok=True, code="ok"),
+                frame=DeliveryAckFrame(ok=True, code="ok", ref_id=sample_envelope.id),
                 corr_id=sample_envelope.corr_id,
             )
             await storage_tracker.on_ack(ack_envelope)
@@ -313,7 +313,9 @@ class TestDefaultDeliveryTrackerWithStorage:
 
             # Send nack
             nack_envelope = create_fame_envelope(
-                frame=DeliveryAckFrame(ok=False, code="delivery_failed", reason="test nack reason"),
+                frame=DeliveryAckFrame(
+                    ok=False, code="delivery_failed", reason="test nack reason", ref_id=sample_envelope.id
+                ),
                 corr_id=sample_envelope.corr_id,
             )
             await storage_tracker.on_nack(nack_envelope)
@@ -406,7 +408,7 @@ class TestDefaultDeliveryTrackerWithStorage:
 
             # Test ack event
             ack_envelope = create_fame_envelope(
-                frame=DeliveryAckFrame(ok=True, code="ok"),
+                frame=DeliveryAckFrame(ok=True, code="ok", ref_id=sample_envelope.id),
                 corr_id=sample_envelope.corr_id,
             )
             await tracker.on_ack(ack_envelope)
@@ -425,7 +427,9 @@ class TestDefaultDeliveryTrackerWithStorage:
             )
 
             nack_env = create_fame_envelope(
-                frame=DeliveryAckFrame(ok=False, code="delivery_failed", reason="test reason"),
+                frame=DeliveryAckFrame(
+                    ok=False, code="delivery_failed", reason="test reason", ref_id=nack_envelope.id
+                ),
                 corr_id=nack_envelope.corr_id,
             )
             await tracker.on_nack(nack_env)
@@ -467,7 +471,7 @@ class TestDefaultDeliveryTrackerWithStorage:
 
                 # Should be able to handle ack
                 ack_envelope = create_fame_envelope(
-                    frame=DeliveryAckFrame(ok=True, code="ok"),
+                    frame=DeliveryAckFrame(ok=True, code="ok", ref_id=sample_envelope.id),
                     corr_id=sample_envelope.corr_id,
                 )
                 await new_tracker.on_ack(ack_envelope)

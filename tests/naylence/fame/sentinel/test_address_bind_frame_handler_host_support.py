@@ -62,6 +62,7 @@ class TestAddressBindFrameHandler:
 
         envelope = Mock()
         envelope.frame = frame
+        envelope.id = generate_id()  # Add a real ID instead of Mock
 
         context = FameDeliveryContext(
             from_system_id="test-system", origin_type=DeliveryOriginType.DOWNSTREAM
@@ -86,6 +87,7 @@ class TestAddressBindFrameHandler:
 
         envelope = Mock()
         envelope.frame = frame
+        envelope.id = generate_id()  # Add a real ID instead of Mock
 
         context = FameDeliveryContext(
             from_system_id="test-system", origin_type=DeliveryOriginType.DOWNSTREAM
@@ -112,6 +114,7 @@ class TestAddressBindFrameHandler:
 
         envelope = Mock()
         envelope.frame = frame
+        envelope.id = generate_id()  # Add a real ID instead of Mock
 
         context = FameDeliveryContext(
             from_system_id="test-system", origin_type=DeliveryOriginType.DOWNSTREAM

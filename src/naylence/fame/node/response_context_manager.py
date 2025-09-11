@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 class ResponseContextManager:
     """Manages response context creation and crypto level inheritance."""
 
-    def __init__(self, get_sid: Callable[[], str]):
+    def __init__(self, get_id: Callable[[], str], get_sid: Callable[[], str]):
+        self._get_id = get_id
         self._get_sid = get_sid
 
     def create_response_context(
@@ -66,7 +67,7 @@ class ResponseContextManager:
         # Create response context with inherited crypto level
         response_context = FameDeliveryContext(
             origin_type=DeliveryOriginType.LOCAL,
-            from_system_id=self._get_sid(),
+            from_system_id=self._get_id(),
             # For responses, security.inbound_crypto_level represents the original request's crypto level
             # This allows the security policy to use inbound_crypto_level for mirroring decisions
             security=response_security,

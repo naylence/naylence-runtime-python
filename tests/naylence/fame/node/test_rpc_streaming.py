@@ -57,7 +57,9 @@ class SimpleNumberGenerator:
 @pytest_asyncio.fixture
 async def fabric():
     """Create and start an InProcessFameFabric for testing."""
-    fabric = InProcessFameFabric()
+    # Configure with "at-most-once" delivery profile to avoid ACK requirements
+    config = {"node": {"delivery": {"type": "DeliveryProfile", "profile": "at-most-once"}}}
+    fabric = InProcessFameFabric(config=config)
     await fabric.start()
     yield fabric
     await fabric.stop()
