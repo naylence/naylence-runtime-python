@@ -52,6 +52,7 @@ async def test_encrypted_request_encrypted_response():
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
         delivery_policy=delivery_policy,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 
@@ -200,6 +201,7 @@ async def test_plaintext_request_plaintext_response():
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
         delivery_policy=delivery_policy,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 

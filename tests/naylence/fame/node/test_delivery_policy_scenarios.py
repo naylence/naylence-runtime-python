@@ -49,6 +49,7 @@ async def test_at_most_once_delivery_policy():
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
         delivery_policy=delivery_policy,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 
@@ -127,6 +128,7 @@ async def test_at_least_once_delivery_policy_with_acks():
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
         delivery_policy=delivery_policy,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 
@@ -276,6 +278,7 @@ async def test_mixed_delivery_policy_scenarios():
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
         delivery_policy=at_most_once_policy,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 

@@ -777,28 +777,33 @@ class FameNode(TaskSpawner, NodeLike):
         delivery_policy = delivery_policy or self._delivery_policy
 
         is_ack_required = bool(delivery_policy and delivery_policy.is_ack_required(envelope))
-
-        if not is_ack_required:
-            await delivery_fn(envelope, context)
-            return None
-
-        retry_policy = delivery_policy.retry_policy if delivery_policy else None
-
-        if not envelope.corr_id:
-            envelope.corr_id = generate_id()
+        
+        if is_ack_required:
+            if envelope.rtype is None:
+                envelope.rtype = FameResponseType.ACK
+            else:
+                envelope.rtype |= FameResponseType.ACK
+            
+        is_reply_required = envelope.rtype is not None \
+            and (envelope.rtype & FameResponseType.REPLY or envelope.rtype & FameResponseType.STREAM)
 
         if not envelope.trace_id:
             envelope.trace_id = generate_id()
 
-        envelope.rtype = FameResponseType.ACK
+        if not is_ack_required and not is_reply_required:
+            return await delivery_fn(envelope, context)
+        
+        retry_policy = delivery_policy.retry_policy if delivery_policy else None
+        
+        if not envelope.corr_id:
+            envelope.corr_id = generate_id()
 
-        from naylence.fame.node.node import SYSTEM_INBOX
-
-        envelope.reply_to = format_address(SYSTEM_INBOX, self.physical_path)
+        if envelope.reply_to is None:
+            from naylence.fame.node.node import SYSTEM_INBOX
+            envelope.reply_to = format_address(SYSTEM_INBOX, self.physical_path)
 
         retry_handler = None
         if retry_policy:
-
             class _DefaultRetryHandler(RetryEventHandler):
                 async def on_retry_needed(self, envelope: FameEnvelope, attempt: int, next_delay_ms: int):
                     logger.debug(
@@ -815,7 +820,7 @@ class FameNode(TaskSpawner, NodeLike):
 
         await self._delivery_tracker.track(
             envelope=envelope,
-            expected_response_type=FameResponseType.ACK,
+            expected_response_type=envelope.rtype or FameResponseType.ACK,
             timeout_ms=timeout_ms,
             retry_policy=retry_policy,
             retry_handler=retry_handler,
@@ -823,15 +828,16 @@ class FameNode(TaskSpawner, NodeLike):
 
         await delivery_fn(envelope, context)
 
-        logger.debug("waiting_for_ack_post_send", **summarize_env(envelope, prefix=""))
-        ack_env = await self._delivery_tracker.await_ack(
-            envelope_id=envelope.id,
-            timeout_ms=timeout_ms,
-        )
+        if is_ack_required:
+            logger.debug("waiting_for_ack_post_send", **summarize_env(envelope, prefix=""))
+            ack_env = await self._delivery_tracker.await_ack(
+                envelope_id=envelope.id,
+                timeout_ms=timeout_ms,
+            )
 
-        assert isinstance(ack_env.frame, DeliveryAckFrame), "Expected DeliveryAckFrame in response"
+            assert isinstance(ack_env.frame, DeliveryAckFrame), "Expected DeliveryAckFrame in response"
 
-        return ack_env.frame
+            return ack_env.frame
 
     async def deliver(self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
         # Dispatch to all event listeners for security processing
@@ -863,7 +869,8 @@ class FameNode(TaskSpawner, NodeLike):
             "CapabilityAdvertiseAck",
             "CapabilityWithdrawAck",
         ]:
-            return await self._delivery_tracker.on_envelope_delivered(envelope, context)
+            await self._delivery_tracker.on_envelope_delivered(SYSTEM_INBOX, envelope, context)
+            return
 
         # KeyAnnounce frames are now handled by the security manager in on_deliver
         # No need to handle them here anymore

@@ -34,6 +34,7 @@ async def test_fame_stress_with_timing():
         storage_provider=storage_provider,
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
+        event_listeners=[delivery_tracker],  # Add delivery tracker as event listener
     )
     await node.start()
 

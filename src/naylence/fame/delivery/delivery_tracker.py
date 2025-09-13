@@ -9,7 +9,6 @@ from typing import Any, Dict, Optional, Protocol
 from pydantic import BaseModel, ConfigDict, Field
 
 from naylence.fame.core import (
-    FameAddress,
     FameDeliveryContext,
     FameEnvelope,
     FameResponseType,
@@ -22,6 +21,7 @@ logger = getLogger(__name__)
 
 
 class EnvelopeStatus(str, enum.Enum):
+    # The following statuses are used for the outbound tracking only
     PENDING = "pending"
     ACKED = "acked"
     NACKED = "nacked"
@@ -30,15 +30,16 @@ class EnvelopeStatus(str, enum.Enum):
     TIMED_OUT = "timed_out"
     FAILED = "failed"
 
+    # The following statuses are used for the inbound tracking only
+    RECEIVED = "received"
+    HANDLED = "handled"
+    FAILED_TO_HANDLE = "failed_to_handle"
+
 
 class TrackedEnvelope(BaseModel):
     """Information about a tracked envelope."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)  # For FameAddress and FameEnvelope
-
-    envelope_id: str
-    corr_id: Optional[str] = None
-    target: Optional[FameAddress] = None
     timeout_at_ms: int  # When the next timer event should fire (retry or final timeout)
     overall_timeout_at_ms: int  # The absolute deadline - never changes
     expected_response_type: FameResponseType
@@ -49,12 +50,18 @@ class TrackedEnvelope(BaseModel):
     inserted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Store the original envelope for retries
-    original_envelope: Optional[FameEnvelope] = None
+    original_envelope: FameEnvelope
+    service_name: Optional[str] = None
+
+    @property
+    def envelope_id(self) -> str:
+        """Get the envelope ID from the original envelope."""
+        return self.original_envelope.id
 
     @property
     def correlation_id(self) -> Optional[str]:
-        """Alias for corr_id for backward compatibility."""
-        return self.corr_id
+        """Get the correlation ID from the original envelope."""
+        return self.original_envelope.corr_id
 
     @property
     def expect_ack(self) -> bool:
@@ -91,7 +98,12 @@ class DeliveryTracker(ABC):
 
     @abstractmethod
     async def on_envelope_delivered(
-        self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
+        self, inbox_name: str, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
+    ) -> Optional[TrackedEnvelope]: ...
+
+    @abstractmethod
+    async def on_envelope_handled(
+        self, inbox_name: str, envelope: TrackedEnvelope, context: Optional[FameDeliveryContext] = None
     ) -> None: ...
 
     def iter_stream(self, envelope_id: str, *, timeout_ms: Optional[int] = None) -> AsyncIterator[Any]: ...
@@ -103,11 +115,6 @@ class DeliveryTracker(ABC):
 
     @abstractmethod
     async def on_nack(
-        self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
-    ) -> None: ...
-
-    @abstractmethod
-    async def on_reply(
         self, envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None
     ) -> None: ...
 

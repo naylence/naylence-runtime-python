@@ -59,6 +59,7 @@ async def test_context_preservation_through_sink():
         storage_provider=storage_provider,
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 
@@ -155,6 +156,7 @@ async def test_context_preservation_multiple_subscribers():
         storage_provider=storage_provider,
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 

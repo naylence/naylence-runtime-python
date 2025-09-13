@@ -19,9 +19,10 @@ class AtLeastOnceDeliveryPolicy(DeliveryPolicy):
 
     def is_ack_required(self, envelope: FameEnvelope) -> bool:
         # For now require ACKs for DataFrames only
-        return isinstance(envelope.frame, DataFrame) and (
-            envelope.rtype is None or envelope.rtype & FameResponseType.ACK == FameResponseType.ACK
-        )
+        return isinstance(envelope.frame, DataFrame) 
+        # return isinstance(envelope.frame, DataFrame) and (
+        #     envelope.rtype is None or envelope.rtype & FameResponseType.ACK == FameResponseType.ACK
+        # )
 
     @property
     def retry_policy(self) -> Optional[RetryPolicy]:

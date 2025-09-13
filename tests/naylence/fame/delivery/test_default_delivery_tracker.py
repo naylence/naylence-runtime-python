@@ -45,6 +45,12 @@ async def storage_tracker(in_memory_storage):
 
     factory = DefaultDeliveryTrackerFactory()
     tracker = await factory.create(storage_provider=in_memory_storage)
+    
+    # Manually initialize the tracker like a node would
+    mock_node = MagicMock()
+    await tracker.on_node_initialized(mock_node)
+    await tracker.on_node_started(mock_node)
+    
     yield tracker
     await tracker.cleanup()
 
@@ -84,9 +90,16 @@ class TestDefaultDeliveryTracker:
         return await in_memory_storage.get_kv_store(TrackedEnvelope, namespace="test_envelope")
 
     @pytest.fixture
-    async def default_tracker(self, kv_store):
+    async def default_tracker(self, in_memory_storage):
         """Create a default tracker for testing."""
-        tracker = DefaultDeliveryTracker(kv_store)
+        factory = DefaultDeliveryTrackerFactory()
+        tracker = await factory.create(storage_provider=in_memory_storage)
+        
+                # Manually initialize the tracker like a node would
+        mock_node = MagicMock()
+        await tracker.on_node_initialized(mock_node)
+        await tracker.on_node_started(mock_node)
+        
         yield tracker
         await tracker.cleanup()
 
@@ -203,7 +216,10 @@ class TestDefaultDeliveryTracker:
             frame=DataFrame(payload=reply_payload),
             corr_id=sample_envelope.corr_id,
         )
-        await default_tracker.on_reply(reply_envelope)
+        # Get the tracked envelope for the reply
+        tracked = await default_tracker.get_tracked_envelope(sample_envelope.id)
+        assert tracked is not None
+        await default_tracker.on_reply(reply_envelope, tracked)
 
         # Reply task should now be complete
         result = await reply_task
@@ -348,7 +364,10 @@ class TestDefaultDeliveryTrackerWithStorage:
                 frame=DataFrame(payload={"result": "success"}),
                 corr_id=sample_envelope.corr_id,
             )
-            await storage_tracker.on_reply(reply_envelope)
+            # Get the tracked envelope for the reply
+            tracked = await storage_tracker.get_tracked_envelope(sample_envelope.id)
+            assert tracked is not None
+            await storage_tracker.on_reply(reply_envelope, tracked)
 
             # Check status updated
             tracked = await storage_tracker.get_tracked_envelope(sample_envelope.id)
@@ -397,6 +416,10 @@ class TestDefaultDeliveryTrackerWithStorage:
             event_handler=event_handler,
             retry_handler=retry_handler,
         )
+        
+        # Manually initialize the tracker like a node would
+        mock_node = MagicMock()
+        await tracker.on_node_initialized(mock_node)
 
         try:
             # Register envelope
@@ -444,6 +467,10 @@ class TestDefaultDeliveryTrackerWithStorage:
 
         factory = DefaultDeliveryTrackerFactory()
         tracker = await factory.create(storage_provider=in_memory_storage)
+        
+        # Manually initialize the tracker like a node would
+        mock_node = MagicMock()
+        await tracker.on_node_initialized(mock_node)
 
         try:
             # Register envelope
@@ -460,6 +487,10 @@ class TestDefaultDeliveryTrackerWithStorage:
             # Create new tracker with same storage (simulating restart)
             new_factory = DefaultDeliveryTrackerFactory()
             new_tracker = await new_factory.create(storage_provider=in_memory_storage)
+            
+            # Initialize the new tracker too
+            mock_node2 = MagicMock()
+            await new_tracker.on_node_initialized(mock_node2)
 
             try:
                 # Should see the pending envelope in storage
@@ -492,10 +523,16 @@ class TestTrackedEnvelope:
 
     def test_tracked_envelope_serialization(self):
         """Test that TrackedEnvelope can be serialized and deserialized."""
-        tracked = TrackedEnvelope(
-            envelope_id="test-id",
+        # Create a sample original envelope
+        original_envelope = create_fame_envelope(
+            frame=DataFrame(payload={"test": "data"}),
+            to=FameAddress("service@/test"),
             corr_id="test-corr",
-            target=FameAddress("service@/test"),
+        )
+        # Override the ID for consistency
+        original_envelope.id = "test-id"
+        
+        tracked = TrackedEnvelope(
             timeout_at_ms=1234567890000,
             overall_timeout_at_ms=1234567890000,
             expected_response_type=FameResponseType.NONE,
@@ -503,6 +540,7 @@ class TestTrackedEnvelope:
             attempt=1,
             status=EnvelopeStatus.ACKED,
             meta={"test": "metadata"},
+            original_envelope=original_envelope,
         )
 
         # Test Pydantic serialization (what KeyValueStore uses)
@@ -511,7 +549,6 @@ class TestTrackedEnvelope:
 
         assert restored.envelope_id == "test-id"
         assert restored.correlation_id == "test-corr"
-        assert str(restored.target) == "service@/test"
         assert restored.timeout_at_ms == 1234567890000
         assert restored.expect_ack is False
         assert restored.expect_reply is False
@@ -531,7 +568,6 @@ class TestTrackedEnvelope:
         )
 
         tracked = TrackedEnvelope(
-            envelope_id=original.id,
             timeout_at_ms=1234567890000,
             overall_timeout_at_ms=1234567890000,
             expected_response_type=FameResponseType.ACK,
@@ -555,12 +591,12 @@ class TestDeliveryTrackerFactory:
     @pytest.mark.asyncio
     async def test_default_tracker_factory_direct(self):
         """Test creating default tracker via factory directly."""
-        from naylence.fame.storage.in_memory_key_value_store import InMemoryKVStore
+        from naylence.fame.storage.in_memory_storage_provider import InMemoryStorageProvider
 
-        kv_store = InMemoryKVStore(TrackedEnvelope)
+        storage_provider = InMemoryStorageProvider()
         factory = DefaultDeliveryTrackerFactory()
 
-        tracker = await factory.create(kv_store=kv_store)
+        tracker = await factory.create(storage_provider=storage_provider)
 
         assert tracker is not None
         assert isinstance(tracker, DefaultDeliveryTracker)

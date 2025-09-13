@@ -79,7 +79,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
 
     delivery_policy = await create_delivery_policy(cfg.delivery)
 
-    delivery_tracker = await create_delivery_tracker(cfg)
+    delivery_tracker = await create_delivery_tracker(cfg, storage_provider=storage_provider)
 
     if delivery_tracker:
         event_listeners.append(delivery_tracker)
@@ -215,8 +215,10 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     }
 
 
-async def create_delivery_tracker(cfg: FameNodeConfig) -> Optional[DeliveryTracker]:
-    return await create_default_resource(DeliveryTrackerFactory)
+async def create_delivery_tracker(
+    cfg: FameNodeConfig, storage_provider: StorageProvider
+) -> Optional[DeliveryTracker]:
+    return await create_default_resource(DeliveryTrackerFactory, storage_provider=storage_provider)
 
 
 async def create_delivery_policy(

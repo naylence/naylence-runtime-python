@@ -15,7 +15,6 @@ from naylence.fame.delivery.delivery_tracker_factory import (
     DeliveryTrackerFactory,
 )
 from naylence.fame.delivery.retry_event_handler import RetryEventHandler
-from naylence.fame.storage.key_value_store import KeyValueStore
 from naylence.fame.storage.storage_provider import StorageProvider
 
 
@@ -35,7 +34,6 @@ class DefaultDeliveryTrackerFactory(DeliveryTrackerFactory):
         self,
         config: Optional[DefaultDeliveryTrackerConfig | dict[str, Any]] = None,
         storage_provider: Optional[StorageProvider] = None,
-        tracker_store: Optional[KeyValueStore] = None,
         event_handler: Optional[DeliveryTrackerEventHandler] = None,
         retry_handler: Optional[RetryEventHandler] = None,
         **kwargs,
@@ -43,7 +41,6 @@ class DefaultDeliveryTrackerFactory(DeliveryTrackerFactory):
         from naylence.fame.delivery.default_delivery_tracker import (
             DefaultDeliveryTracker,
         )
-        from naylence.fame.delivery.delivery_tracker import TrackedEnvelope
         from naylence.fame.storage.in_memory_storage_provider import (
             InMemoryStorageProvider,
         )
@@ -52,24 +49,10 @@ class DefaultDeliveryTrackerFactory(DeliveryTrackerFactory):
         if config and isinstance(config, dict):
             config = DefaultDeliveryTrackerConfig(**config)
 
-        # Determine the KV store to use
-        # tracker_store: KeyValueStore[TrackedEnvelope]
-        if tracker_store:
-            pass
-        elif storage_provider:
-            tracker_store = await storage_provider.get_kv_store(
-                model_cls=TrackedEnvelope,
-                namespace="__delivery_tracker",
-            )
-        else:
-            # Default to in-memory provider
-            in_memory_provider = InMemoryStorageProvider()
-            tracker_store = await in_memory_provider.get_kv_store(
-                model_cls=TrackedEnvelope,
-                namespace="__delivery_tracker",
-            )
+        if storage_provider is None:
+            storage_provider = InMemoryStorageProvider()
 
-        tracker = DefaultDeliveryTracker(tracker_store=tracker_store)
+        tracker = DefaultDeliveryTracker(storage_provider, **kwargs)
 
         # Add event handler if provided
         if event_handler:

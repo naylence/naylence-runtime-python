@@ -49,6 +49,9 @@ class TestRPCClientManager:
         storage = InMemoryStorageProvider()
         factory = DefaultDeliveryTrackerFactory()
         tracker = await factory.create(storage_provider=storage)
+        # Initialize the tracker manually for testing
+        await tracker.on_node_initialized("test-node")
+        await tracker.on_node_started("test-node")
         return tracker
 
     @pytest.fixture
@@ -406,8 +409,15 @@ class TestRPCClientManager:
         assert manager in delivery_tracker._event_handlers
 
         # Test on_envelope_replied method
+        # Create a mock envelope for testing TrackedEnvelope
+        mock_envelope = create_fame_envelope(
+            frame=DataFrame(payload={"original": "envelope"})
+        )
+        # Set the ID manually after creation
+        mock_envelope.id = "test-envelope-id"
+        
         tracked_envelope = TrackedEnvelope(
-            envelope_id="test-envelope-id",
+            original_envelope=mock_envelope,
             timeout_at_ms=1000000,
             overall_timeout_at_ms=1000000,
             expected_response_type=FameResponseType.REPLY,

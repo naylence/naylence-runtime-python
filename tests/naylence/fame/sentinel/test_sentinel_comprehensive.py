@@ -96,17 +96,27 @@ class TestSentinelComprehensive:
         return client
 
     @pytest.fixture
-    def sentinel(self, mock_security_manager, mock_route_store):
+    def mock_delivery_tracker(self):
+        """Create a mock delivery tracker."""
+        tracker = MagicMock()
+        tracker.track_delivery = AsyncMock()
+        tracker.complete_delivery = AsyncMock()
+        tracker.fail_delivery = AsyncMock()
+        return tracker
+
+    @pytest.fixture
+    def sentinel(self, mock_security_manager, mock_route_store, mock_delivery_tracker):
         """Create a Sentinel instance for testing."""
         return Sentinel(
             has_parent=False,
             security_manager=mock_security_manager,
             route_store=mock_route_store,
+            delivery_tracker=mock_delivery_tracker,
             attach_timeout_sec=DEFAULT_ATTACH_TIMEOUT_SEC,
             binding_ack_timeout_ms=5000,
         )
 
-    async def test_sentinel_initialization_error_no_authorizer(self, mock_route_store):
+    async def test_sentinel_initialization_error_no_authorizer(self, mock_route_store, mock_delivery_tracker):
         """Test Sentinel initialization fails when no authorizer is provided."""
         # Create security manager without authorizer
         security_manager = MagicMock()
@@ -120,6 +130,7 @@ class TestSentinelComprehensive:
                 has_parent=False,
                 security_manager=security_manager,
                 route_store=mock_route_store,
+                delivery_tracker=mock_delivery_tracker,
             )
 
     async def test_sentinel_properties(self, sentinel):
@@ -136,6 +147,7 @@ class TestSentinelComprehensive:
         self,
         mock_security_manager,
         mock_route_store,
+        mock_delivery_tracker,
         mock_attach_client,
         mock_admission_client,
     ):
@@ -150,6 +162,7 @@ class TestSentinelComprehensive:
             has_parent=False,
             security_manager=mock_security_manager,
             route_store=mock_route_store,
+            delivery_tracker=mock_delivery_tracker,
             peers=[peer],
         )
         sentinel.attach_client = mock_attach_client
@@ -436,7 +449,7 @@ class TestSentinelComprehensive:
             mock_logger.warning.assert_called_once_with("No upstream defined to rebind addresses")
 
     async def test_propagate_address_bindings_upstream_with_parent(
-        self, mock_security_manager, mock_route_store
+        self, mock_security_manager, mock_route_store, mock_delivery_tracker
     ):
         """Test _propagate_address_bindings_upstream with parent."""
         # Create sentinel with parent
@@ -444,6 +457,7 @@ class TestSentinelComprehensive:
             has_parent=True,
             security_manager=mock_security_manager,
             route_store=mock_route_store,
+            delivery_tracker=mock_delivery_tracker,
         )
 
         # Set up test routes
@@ -461,13 +475,14 @@ class TestSentinelComprehensive:
         # Should call _bind_address_upstream for each route
         sentinel._bind_address_upstream.assert_called_once_with(test_addr, route_info)
 
-    async def test_bind_address_upstream(self, mock_security_manager, mock_route_store):
+    async def test_bind_address_upstream(self, mock_security_manager, mock_route_store, mock_delivery_tracker):
         """Test _bind_address_upstream method."""
         # Create sentinel with parent
         sentinel = Sentinel(
             has_parent=True,
             security_manager=mock_security_manager,
             route_store=mock_route_store,
+            delivery_tracker=mock_delivery_tracker,
         )
 
         # Set up required attributes
@@ -497,13 +512,14 @@ class TestSentinelComprehensive:
             await sentinel._bind_address_upstream(test_addr, route_info)
             sentinel.forward_upstream.assert_called_once()
 
-    async def test_bind_address_upstream_timeout(self, mock_security_manager, mock_route_store):
+    async def test_bind_address_upstream_timeout(self, mock_security_manager, mock_route_store, mock_delivery_tracker):
         """Test _bind_address_upstream timeout."""
         # Create sentinel with parent
         sentinel = Sentinel(
             has_parent=True,
             security_manager=mock_security_manager,
             route_store=mock_route_store,
+            delivery_tracker=mock_delivery_tracker,
         )
 
         # Set up required attributes
@@ -527,13 +543,14 @@ class TestSentinelComprehensive:
         with pytest.raises(RuntimeError, match="Timeout waiting for bind ack"):
             await sentinel._bind_address_upstream(test_addr, route_info)
 
-    async def test_bind_address_upstream_rejected(self, mock_security_manager, mock_route_store):
+    async def test_bind_address_upstream_rejected(self, mock_security_manager, mock_route_store, mock_delivery_tracker):
         """Test _bind_address_upstream rejection."""
         # Create sentinel with parent
         sentinel = Sentinel(
             has_parent=True,
             security_manager=mock_security_manager,
             route_store=mock_route_store,
+            delivery_tracker=mock_delivery_tracker,
         )
 
         # Set up required attributes

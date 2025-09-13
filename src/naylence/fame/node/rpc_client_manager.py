@@ -261,7 +261,7 @@ class RPCClientManager(DeliveryTrackerEventHandler):
     async def on_envelope_replied(self, envelope: TrackedEnvelope, reply_envelope: FameEnvelope) -> None:
         logger.debug(
             "rpc_envelope_replied",
-            request_id=envelope.envelope_id,
+            request_id=envelope.original_envelope.id,
             reply_id=reply_envelope.id,
         )
 
@@ -283,11 +283,11 @@ class RPCClientManager(DeliveryTrackerEventHandler):
             expected_response_type=expected_response_type.name,
         )
 
-        await self._delivery_tracker.track(
-            envelope,
-            timeout_ms=timeout_ms,
-            expected_response_type=expected_response_type,
-        )
+        # await self._delivery_tracker.track(
+        #     envelope,
+        #     timeout_ms=timeout_ms,
+        #     expected_response_type=expected_response_type,
+        # )
 
         context = FameDeliveryContext(
             origin_type=DeliveryOriginType.LOCAL,

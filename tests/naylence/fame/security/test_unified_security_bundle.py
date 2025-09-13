@@ -5,6 +5,9 @@ Test the final unified security bundle approach.
 
 import pytest
 
+from naylence.fame.delivery.default_delivery_tracker_factory import (
+    DefaultDeliveryTrackerFactory,
+)
 from naylence.fame.security.auth.default_authorizer import DefaultAuthorizer
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
 from naylence.fame.security.security_manager_factory import SecurityManagerFactory
@@ -27,7 +30,14 @@ async def test_unified_security_bundle():
     )
 
     storage_provider = InMemoryStorageProvider()
-    sentinel = Sentinel(security_manager=node_security, storage_provider=storage_provider)
+    delivery_tracker_factory = DefaultDeliveryTrackerFactory()
+    delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
+    
+    sentinel = Sentinel(
+        security_manager=node_security, 
+        storage_provider=storage_provider,
+        delivery_tracker=delivery_tracker,
+    )
     assert sentinel._security_manager.authorizer is custom_authorizer
     print("✓ Direct Sentinel creation works with SecurityManager containing authorizer")
 
@@ -36,7 +46,13 @@ async def test_unified_security_bundle():
     print("\n2. Testing Sentinel without explicit SecurityManager...")
 
     storage_provider2 = InMemoryStorageProvider()
-    sentinel_default = Sentinel(storage_provider=storage_provider2)
+    delivery_tracker_factory2 = DefaultDeliveryTrackerFactory()
+    delivery_tracker2 = await delivery_tracker_factory2.create(storage_provider=storage_provider2)
+    
+    sentinel_default = Sentinel(
+        storage_provider=storage_provider2,
+        delivery_tracker=delivery_tracker2,
+    )
     assert sentinel_default._security_manager.authorizer is not None
     # With NoSecurityManager as default, we get NoopAuthorizer
     from naylence.fame.security.auth.noop_authorizer import NoopAuthorizer

@@ -37,6 +37,7 @@ async def test_storage_provider_integration():
     # Create the node using the factory
     factory = NodeFactory()
     node = await factory.create(node_config)
+    await node.start()  # Start the node to initialize delivery tracker
 
     assert node.storage_provider is not None, "Node should have storage provider"
     assert node.storage_provider.__class__.__name__ == "InMemoryStorageProvider", (
@@ -67,6 +68,7 @@ async def test_node_without_storage_provider():
 
     factory = NodeFactory()
     node = await factory.create(node_config)
+    await node.start()  # Start the node to initialize delivery tracker
 
     # The factory always creates a default InMemoryStorageProvider
     assert node.storage_provider is not None, (
@@ -93,6 +95,7 @@ async def test_storage_provider_kv_store_namespaces():
 
     factory = NodeFactory()
     node = await factory.create(node_config)
+    await node.start()  # Start the node to initialize delivery tracker
 
     # Get stores for different namespaces
     store1 = await node.storage_provider.get_kv_store(TestModel, namespace="ns1")
@@ -134,6 +137,7 @@ async def test_storage_provider_multiple_model_types():
 
     factory = NodeFactory()
     node = await factory.create(node_config)
+    await node.start()  # Start the node to initialize delivery tracker
 
     # Get stores for different model types
     test_store = await node.storage_provider.get_kv_store(TestModel, namespace="test")

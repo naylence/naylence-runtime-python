@@ -483,7 +483,9 @@ class BindingManager:
             | CapabilityWithdrawAckFrame,
         )
         logger.debug("received_ack", frame=envelope.frame)
-        await self._delivery_tracker.on_envelope_delivered(envelope, context)
+        from naylence.fame.node.node import SYSTEM_INBOX
+
+        await self._delivery_tracker.on_envelope_delivered(SYSTEM_INBOX, envelope, context)
 
     def _is_physical_path_prefix(self, path):
         return (path + "/").startswith(self._get_physical_path() + "/")

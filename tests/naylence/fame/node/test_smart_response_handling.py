@@ -62,6 +62,7 @@ async def test_smart_response_context_creation():
         storage_provider=storage_provider,
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 
@@ -192,6 +193,7 @@ async def test_smart_response_preserves_existing_context():
         storage_provider=storage_provider,
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 

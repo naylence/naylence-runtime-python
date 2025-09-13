@@ -25,7 +25,7 @@ from naylence.fame.core import (
     FameEnvelopeHandler,
     FameRPCHandler,
 )
-from naylence.fame.delivery.delivery_tracker import DeliveryTracker
+from naylence.fame.delivery.delivery_tracker import DeliveryTracker, EnvelopeStatus
 from naylence.fame.node.binding_manager import BindingManager
 from naylence.fame.node.channel_polling_manager import ChannelPollingManager
 from naylence.fame.node.response_context_manager import ResponseContextManager
@@ -145,10 +145,16 @@ class EnvelopeListenerManager(TaskSpawner):
         async def tracking_envelope_handler(
             env: FameEnvelope, context: Optional[FameDeliveryContext] = None
         ) -> Optional[Any]:
+            tracked = None
             if self._delivery_tracker:
-                await self._delivery_tracker.on_envelope_delivered(env, context=context)
-            if handler:
-                return await handler(env, context)
+                tracked = await self._delivery_tracker.on_envelope_delivered(
+                    service_name, env, context=context
+                )
+            if handler and (not tracked or tracked.status in [EnvelopeStatus.RECEIVED]):
+                result = await handler(env, context)
+                if tracked is not None:
+                    await self._delivery_tracker.on_envelope_handled(service_name, tracked, context=context)
+                return result
 
             return None
 
@@ -165,7 +171,7 @@ class EnvelopeListenerManager(TaskSpawner):
         # Replace any existing listener
         async with self._listeners_lock:
             if service_name in self._listeners:
-                logger.debug("replacing_listener", recipient=service_name)
+                logger.debug("replacing_envelope_listener", recipient=service_name)
                 old = self._listeners.pop(service_name)
                 old.stop()
                 try:

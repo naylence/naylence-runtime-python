@@ -4,6 +4,9 @@ Test authorizer integration with SecurityManager.
 
 import pytest
 
+from naylence.fame.delivery.default_delivery_tracker_factory import (
+    DefaultDeliveryTrackerFactory,
+)
 from naylence.fame.security.auth.default_authorizer import DefaultAuthorizer
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy
 from naylence.fame.security.security_manager_factory import SecurityManagerFactory
@@ -30,7 +33,14 @@ class TestAuthorizerIntegration:
 
         # Create a Sentinel with this SecurityManager
         storage_provider = InMemoryStorageProvider()
-        sentinel = Sentinel(security_manager=node_security, storage_provider=storage_provider)
+        delivery_tracker_factory = DefaultDeliveryTrackerFactory()
+        delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
+        
+        sentinel = Sentinel(
+            security_manager=node_security, 
+            storage_provider=storage_provider,
+            delivery_tracker=delivery_tracker,
+        )
 
         # Verify the Sentinel uses the authorizer from SecurityManager
         assert sentinel._security_manager.authorizer is custom_authorizer
@@ -47,7 +57,14 @@ class TestAuthorizerIntegration:
 
         # Create a Sentinel with this NodeSecurity
         storage_provider = InMemoryStorageProvider()
-        sentinel = Sentinel(security_manager=node_security, storage_provider=storage_provider)
+        delivery_tracker_factory = DefaultDeliveryTrackerFactory()
+        delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
+        
+        sentinel = Sentinel(
+            security_manager=node_security, 
+            storage_provider=storage_provider,
+            delivery_tracker=delivery_tracker,
+        )
 
         # Verify the Sentinel uses the authorizer from NodeSecurity
         assert sentinel._security_manager.authorizer is node_security.authorizer
@@ -65,8 +82,13 @@ class TestAuthorizerIntegration:
         )
 
         storage_provider = InMemoryStorageProvider()
+        delivery_tracker_factory = DefaultDeliveryTrackerFactory()
+        delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
+        
         sentinel_with_auth = Sentinel(
-            security_manager=node_security_with_auth, storage_provider=storage_provider
+            security_manager=node_security_with_auth, 
+            storage_provider=storage_provider,
+            delivery_tracker=delivery_tracker,
         )
         assert sentinel_with_auth._security_manager.authorizer is custom_authorizer
 
@@ -76,7 +98,9 @@ class TestAuthorizerIntegration:
         )
 
         sentinel_no_auth = Sentinel(
-            security_manager=node_security_no_auth, storage_provider=storage_provider
+            security_manager=node_security_no_auth, 
+            storage_provider=storage_provider,
+            delivery_tracker=delivery_tracker,
         )
         assert sentinel_no_auth._security_manager.authorizer is not None
         assert isinstance(sentinel_no_auth._security_manager.authorizer, DefaultAuthorizer)

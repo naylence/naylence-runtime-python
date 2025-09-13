@@ -58,6 +58,7 @@ async def test_crypto_level_inheritance():
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
         delivery_policy=delivery_policy,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 
@@ -222,6 +223,7 @@ async def test_crypto_level_inheritance_no_context():
         node_meta_store=node_meta_store,
         delivery_tracker=delivery_tracker,
         delivery_policy=delivery_policy,
+        event_listeners=[delivery_tracker],
     )
     await node.start()
 
