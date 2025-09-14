@@ -35,9 +35,9 @@ class TestAuthorizerIntegration:
         storage_provider = InMemoryStorageProvider()
         delivery_tracker_factory = DefaultDeliveryTrackerFactory()
         delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
-        
+
         sentinel = Sentinel(
-            security_manager=node_security, 
+            security_manager=node_security,
             storage_provider=storage_provider,
             delivery_tracker=delivery_tracker,
         )
@@ -59,9 +59,9 @@ class TestAuthorizerIntegration:
         storage_provider = InMemoryStorageProvider()
         delivery_tracker_factory = DefaultDeliveryTrackerFactory()
         delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
-        
+
         sentinel = Sentinel(
-            security_manager=node_security, 
+            security_manager=node_security,
             storage_provider=storage_provider,
             delivery_tracker=delivery_tracker,
         )
@@ -84,9 +84,9 @@ class TestAuthorizerIntegration:
         storage_provider = InMemoryStorageProvider()
         delivery_tracker_factory = DefaultDeliveryTrackerFactory()
         delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
-        
+
         sentinel_with_auth = Sentinel(
-            security_manager=node_security_with_auth, 
+            security_manager=node_security_with_auth,
             storage_provider=storage_provider,
             delivery_tracker=delivery_tracker,
         )
@@ -98,7 +98,7 @@ class TestAuthorizerIntegration:
         )
 
         sentinel_no_auth = Sentinel(
-            security_manager=node_security_no_auth, 
+            security_manager=node_security_no_auth,
             storage_provider=storage_provider,
             delivery_tracker=delivery_tracker,
         )

@@ -464,7 +464,7 @@ class TestBindingManagerComprehensive:
 
         # Verify the delivery tracker's on_envelope_delivered was called
         binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
-            '__sys__', envelope, None
+            "__sys__", envelope, None
         )
 
     @pytest.mark.asyncio
@@ -480,7 +480,7 @@ class TestBindingManagerComprehensive:
 
         # Verify the delivery tracker's on_envelope_delivered was called
         binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
-            '__sys__', envelope, None
+            "__sys__", envelope, None
         )
 
     @pytest.mark.asyncio
@@ -497,7 +497,7 @@ class TestBindingManagerComprehensive:
 
         # Verify the delivery tracker's on_envelope_delivered was called
         binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
-            '__sys__', envelope, None
+            "__sys__", envelope, None
         )
 
     @pytest.mark.asyncio
@@ -514,7 +514,7 @@ class TestBindingManagerComprehensive:
 
         # Verify the delivery tracker's on_envelope_delivered was called
         binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
-            '__sys__', envelope, None
+            "__sys__", envelope, None
         )
 
     @pytest.mark.asyncio
@@ -549,7 +549,7 @@ class TestBindingManagerComprehensive:
         # Should delegate to delivery tracker without error
         await binding_manager_with_upstream.handle_ack(envelope)
         binding_manager_with_upstream._delivery_tracker.on_envelope_delivered.assert_called_once_with(
-            '__sys__', envelope, None
+            "__sys__", envelope, None
         )
 
     # Test capability management

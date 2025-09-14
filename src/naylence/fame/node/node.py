@@ -78,6 +78,29 @@ def get_node() -> FameNode:
     return stack[-1]
 
 
+class _DefaultRetryHandler(RetryEventHandler):
+    def __init__(
+        self, delivery_fn: Callable[[FameEnvelope, Optional[FameDeliveryContext]], Awaitable[Any]]
+    ) -> None:
+        super().__init__()
+        self._delivery_fn = delivery_fn
+
+    async def on_retry_needed(
+        self,
+        envelope: FameEnvelope,
+        attempt: int,
+        next_delay_ms: int,
+        context: Optional[FameDeliveryContext] = None,
+    ):
+        logger.debug(
+            "retrying_sending_envelope",
+            envp_id=envelope.id,
+            attempt=attempt,
+            delay_ms=next_delay_ms,
+        )
+        await self._delivery_fn(envelope, context)
+
+
 class FameNode(TaskSpawner, NodeLike):
     def __init__(
         self,
@@ -191,15 +214,13 @@ class FameNode(TaskSpawner, NodeLike):
             delivery_tracker=delivery_tracker,
         )
 
-        async def deliver_fn(envelope: FameEnvelope, context: Optional[FameDeliveryContext] = None) -> None:
-            await self.send(envelope, context)
-
         self._envelope_listener_manager = EnvelopeListenerManager(
             binding_manager=self._binding_manager,
-            get_physical_path=lambda: self.physical_path,
-            get_id=lambda: self.id,
-            get_sid=lambda: self.sid,
-            deliver=deliver_fn,
+            node_like=self,
+            # get_physical_path=lambda: self.physical_path,
+            # get_id=lambda: self.id,
+            # get_sid=lambda: self.sid,
+            # deliver=deliver_fn,
             envelope_factory=self.envelope_factory,
             delivery_tracker=delivery_tracker,
         )
@@ -279,6 +300,11 @@ class FameNode(TaskSpawner, NodeLike):
     def storage_provider(self) -> StorageProvider:
         """Get the storage provider for this node."""
         return self._storage_provider
+
+    @property
+    def delivery_policy(self) -> Optional[DeliveryPolicy]:
+        """Get the delivery policy for this node."""
+        return self._delivery_policy
 
     def add_event_listener(self, listener: NodeEventListener) -> None:
         """Add an event listener to this node and maintain priority ordering."""
@@ -413,6 +439,8 @@ class FameNode(TaskSpawner, NodeLike):
 
         # Restore bindings only after the node is fully started
         await self._binding_manager.restore()
+
+        await self._envelope_listener_manager.start()
 
         self._is_started = True
 
@@ -777,44 +805,36 @@ class FameNode(TaskSpawner, NodeLike):
         delivery_policy = delivery_policy or self._delivery_policy
 
         is_ack_required = bool(delivery_policy and delivery_policy.is_ack_required(envelope))
-        
+
         if is_ack_required:
             if envelope.rtype is None:
                 envelope.rtype = FameResponseType.ACK
             else:
                 envelope.rtype |= FameResponseType.ACK
-            
-        is_reply_required = envelope.rtype is not None \
-            and (envelope.rtype & FameResponseType.REPLY or envelope.rtype & FameResponseType.STREAM)
+
+        is_reply_required = envelope.rtype is not None and (
+            envelope.rtype & FameResponseType.REPLY or envelope.rtype & FameResponseType.STREAM
+        )
 
         if not envelope.trace_id:
             envelope.trace_id = generate_id()
 
         if not is_ack_required and not is_reply_required:
             return await delivery_fn(envelope, context)
-        
-        retry_policy = delivery_policy.retry_policy if delivery_policy else None
-        
+
+        retry_policy = delivery_policy.sender_retry_policy if delivery_policy else None
+
         if not envelope.corr_id:
             envelope.corr_id = generate_id()
 
         if envelope.reply_to is None:
             from naylence.fame.node.node import SYSTEM_INBOX
+
             envelope.reply_to = format_address(SYSTEM_INBOX, self.physical_path)
 
         retry_handler = None
         if retry_policy:
-            class _DefaultRetryHandler(RetryEventHandler):
-                async def on_retry_needed(self, envelope: FameEnvelope, attempt: int, next_delay_ms: int):
-                    logger.debug(
-                        "retrying_sending_envelope",
-                        envp_id=envelope.id,
-                        attempt=attempt,
-                        delay_ms=next_delay_ms,
-                    )
-                    await delivery_fn(envelope, context)
-
-            retry_handler = _DefaultRetryHandler()
+            retry_handler = _DefaultRetryHandler(delivery_fn=delivery_fn)
 
         timeout_ms = timeout_ms or DEFAULT_INVOKE_TIMEOUT_MILLIS
 

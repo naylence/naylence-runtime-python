@@ -11,10 +11,11 @@ from __future__ import annotations
 import asyncio
 import os
 import time
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, AsyncIterator, Callable, Dict, Optional
 
 from naylence.fame.core import (
     DeliveryAckFrame,
+    DeliveryOriginType,
     FameDeliveryContext,
     FameEnvelope,
     FameResponseType,
@@ -279,6 +280,54 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         envelope.status = EnvelopeStatus.HANDLED
         await self._inbox.set(envelope.original_envelope.id, envelope)
 
+    async def on_envelope_handle_failed(
+        self,
+        inbox_name: str,
+        envelope: TrackedEnvelope,
+        context: Optional[FameDeliveryContext] = None,
+        error: Optional[Exception] = None,
+        is_final_failure: bool = False,
+    ) -> None:
+        """
+        Handle the case where envelope handling failed.
+        This is called on every retry iteration, not just the final failure.
+        Only sets FAILED_TO_HANDLE status if is_final_failure is True.
+        """
+        assert self._inbox
+
+        # Add failure metadata without changing status (unless final failure)
+        if error:
+            envelope.meta[f"failure_attempt_{envelope.attempt}_reason"] = str(error)
+            envelope.meta[f"failure_attempt_{envelope.attempt}_type"] = type(error).__name__
+            envelope.meta["last_failure_reason"] = str(error)
+            envelope.meta["last_failure_type"] = type(error).__name__
+
+        if is_final_failure:
+            envelope.status = EnvelopeStatus.FAILED_TO_HANDLE
+            logger.error(
+                "envelope_handle_failed_final",
+                inbox_name=inbox_name,
+                envp_id=envelope.original_envelope.id,
+                error=str(error) if error else "unknown",
+                status=envelope.status.name,
+                total_attempts=envelope.attempt,
+            )
+        else:
+            logger.warning(
+                "envelope_handle_failed_retry",
+                inbox_name=inbox_name,
+                envp_id=envelope.original_envelope.id,
+                error=str(error) if error else "unknown",
+                attempt=envelope.attempt,
+            )
+
+        await self._inbox.set(envelope.original_envelope.id, envelope)
+
+    async def update_tracked_envelope(self, envelope: TrackedEnvelope) -> None:
+        """Update a tracked envelope in persistent storage."""
+        assert self._inbox
+        await self._inbox.set(envelope.original_envelope.id, envelope)
+
     async def _send_ack(self, envelope: FameEnvelope) -> None:
         assert self._node is not None
 
@@ -361,9 +410,19 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                 self._stream_queues[envelope.id] = asyncio.Queue()
                 self._stream_done[envelope.id] = asyncio.Event()
 
+        # Calculate overall timeout - if there's a retry policy, extend beyond the initial timeout
+        if retry_policy:
+            # Estimate total time needed for all retries
+            estimated_retry_time = sum(
+                retry_policy.next_delay_ms(i) for i in range(1, retry_policy.max_retries + 1)
+            )
+            overall_timeout_ms = timeout_ms + estimated_retry_time
+        else:
+            overall_timeout_ms = timeout_ms
+
         tracked = TrackedEnvelope(
-            timeout_at_ms=now_ms + (retry_policy.next_delay_ms(0) if retry_policy else timeout_ms),
-            overall_timeout_at_ms=now_ms + timeout_ms,
+            timeout_at_ms=now_ms + timeout_ms,
+            overall_timeout_at_ms=now_ms + overall_timeout_ms,
             expected_response_type=expected_response_type,
             created_at_ms=now_ms,
             meta=meta or {},
@@ -736,10 +795,19 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         pending = [entry for entry in all_entries.values() if entry.status == EnvelopeStatus.PENDING]
         return pending
 
+    async def list_inbound(
+        self, filter: Optional[Callable[[TrackedEnvelope], bool]] = None
+    ) -> list[TrackedEnvelope]:
+        """List inbound envelopes that are in RECEIVED or FAILED_TO_HANDLE status."""
+        assert self._inbox
+        all_entries = await self._inbox.list()
+        failed_inbound = [entry for entry in all_entries.values() if not filter or filter(entry)]
+        return failed_inbound
+
     async def cleanup(self) -> None:
         # Signal shutdown to wake up the sweeper
         self._shutdown_event.set()
-        
+
         # Cancel all timers
         async with self._lock:
             timers = list(self._timers.values())
@@ -837,6 +905,7 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
 
             async def _timer():
                 assert self._outbox
+                assert self._node
                 try:
                     now_ms = int(time.time() * 1000)
 
@@ -910,7 +979,12 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                         # Notify retry handler
                         if retry_handler and current_tracked.original_envelope:
                             await retry_handler.on_retry_needed(
-                                current_tracked.original_envelope, current_tracked.attempt, next_delay_ms
+                                current_tracked.original_envelope,
+                                current_tracked.attempt,
+                                next_delay_ms,
+                                context=FameDeliveryContext(
+                                    from_system_id=self._node.id, origin_type=DeliveryOriginType.LOCAL
+                                ),
                             )
 
                         # Reschedule timer
@@ -1003,15 +1077,14 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                 # Wait for either timeout or shutdown signal
                 try:
                     await asyncio.wait_for(
-                        self._shutdown_event.wait(), 
-                        timeout=self._fut_sweep_interval_secs
+                        self._shutdown_event.wait(), timeout=self._fut_sweep_interval_secs
                     )
                     # Shutdown event was set, exit
                     break
                 except asyncio.TimeoutError:
                     # Normal timeout, continue with sweep
                     pass
-                
+
                 if not self._outbox:
                     continue
 

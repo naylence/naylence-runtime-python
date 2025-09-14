@@ -19,7 +19,7 @@ services:
       context: ../../../  # Build from project root (three levels up: telemetry -> integration -> tests -> project_root)
       dockerfile: tests/integration/docker/Dockerfile
     ports:
-      - "8000:8000"
+      - "28000:8000"
     volumes:
       # Mount the telemetry sentinel script
       - ./sentinel_with_telemetry.py:/test/sentinel_with_telemetry.py:ro
@@ -28,7 +28,7 @@ services:
       - PYTHONUNBUFFERED=1
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 28000)); s.close()"]
       interval: 5s
       timeout: 3s
       retries: 6

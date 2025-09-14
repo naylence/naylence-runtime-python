@@ -361,7 +361,7 @@ class TestRPCClientManager:
         mock_listen_callback.assert_called_once()
         call_args = mock_listen_callback.call_args
         recipient = call_args[0][0]
-        assert recipient.startswith("rpc-")
+        assert recipient == "__rpc__"
         assert call_args[0][1] is None  # handler should be None
 
         # Verify reply address format
@@ -410,12 +410,10 @@ class TestRPCClientManager:
 
         # Test on_envelope_replied method
         # Create a mock envelope for testing TrackedEnvelope
-        mock_envelope = create_fame_envelope(
-            frame=DataFrame(payload={"original": "envelope"})
-        )
+        mock_envelope = create_fame_envelope(frame=DataFrame(payload={"original": "envelope"}))
         # Set the ID manually after creation
         mock_envelope.id = "test-envelope-id"
-        
+
         tracked_envelope = TrackedEnvelope(
             original_envelope=mock_envelope,
             timeout_at_ms=1000000,

@@ -45,12 +45,12 @@ async def storage_tracker(in_memory_storage):
 
     factory = DefaultDeliveryTrackerFactory()
     tracker = await factory.create(storage_provider=in_memory_storage)
-    
+
     # Manually initialize the tracker like a node would
     mock_node = MagicMock()
     await tracker.on_node_initialized(mock_node)
     await tracker.on_node_started(mock_node)
-    
+
     yield tracker
     await tracker.cleanup()
 
@@ -70,11 +70,11 @@ class TestRetryPolicy:
 
         # First retry
         delay1 = policy.next_delay_ms(1)
-        assert 200 <= delay1 <= 210  # 100 * 2^1 + jitter
+        assert 190 <= delay1 <= 210  # 100 * 2^1 ± jitter
 
         # Second retry
         delay2 = policy.next_delay_ms(2)
-        assert 400 <= delay2 <= 410  # 100 * 2^2 + jitter
+        assert 390 <= delay2 <= 410  # 100 * 2^2 ± jitter
 
         # Should cap at max_delay_ms
         delay_large = policy.next_delay_ms(10)
@@ -94,12 +94,12 @@ class TestDefaultDeliveryTracker:
         """Create a default tracker for testing."""
         factory = DefaultDeliveryTrackerFactory()
         tracker = await factory.create(storage_provider=in_memory_storage)
-        
-                # Manually initialize the tracker like a node would
+
+        # Manually initialize the tracker like a node would
         mock_node = MagicMock()
         await tracker.on_node_initialized(mock_node)
         await tracker.on_node_started(mock_node)
-        
+
         yield tracker
         await tracker.cleanup()
 
@@ -416,7 +416,7 @@ class TestDefaultDeliveryTrackerWithStorage:
             event_handler=event_handler,
             retry_handler=retry_handler,
         )
-        
+
         # Manually initialize the tracker like a node would
         mock_node = MagicMock()
         await tracker.on_node_initialized(mock_node)
@@ -467,7 +467,7 @@ class TestDefaultDeliveryTrackerWithStorage:
 
         factory = DefaultDeliveryTrackerFactory()
         tracker = await factory.create(storage_provider=in_memory_storage)
-        
+
         # Manually initialize the tracker like a node would
         mock_node = MagicMock()
         await tracker.on_node_initialized(mock_node)
@@ -487,7 +487,7 @@ class TestDefaultDeliveryTrackerWithStorage:
             # Create new tracker with same storage (simulating restart)
             new_factory = DefaultDeliveryTrackerFactory()
             new_tracker = await new_factory.create(storage_provider=in_memory_storage)
-            
+
             # Initialize the new tracker too
             mock_node2 = MagicMock()
             await new_tracker.on_node_initialized(mock_node2)
@@ -531,7 +531,7 @@ class TestTrackedEnvelope:
         )
         # Override the ID for consistency
         original_envelope.id = "test-id"
-        
+
         tracked = TrackedEnvelope(
             timeout_at_ms=1234567890000,
             overall_timeout_at_ms=1234567890000,

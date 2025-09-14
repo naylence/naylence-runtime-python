@@ -209,8 +209,11 @@ class RPCClientManager(DeliveryTrackerEventHandler):
                 )
 
     async def _setup_rpc_reply_listener(self) -> None:
+        if self._rpc_bound:
+            return
+
         """Set up the RPC reply listener for handling invoke() responses."""
-        recipient = f"rpc-{generate_id()}"
+        recipient = "__rpc__"
         self._rpc_reply_address = format_address(recipient, self._get_physical_path())
         logger.debug(
             "binding_rpc_reply_listener",

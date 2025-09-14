@@ -116,7 +116,9 @@ class TestSentinelComprehensive:
             binding_ack_timeout_ms=5000,
         )
 
-    async def test_sentinel_initialization_error_no_authorizer(self, mock_route_store, mock_delivery_tracker):
+    async def test_sentinel_initialization_error_no_authorizer(
+        self, mock_route_store, mock_delivery_tracker
+    ):
         """Test Sentinel initialization fails when no authorizer is provided."""
         # Create security manager without authorizer
         security_manager = MagicMock()
@@ -475,7 +477,9 @@ class TestSentinelComprehensive:
         # Should call _bind_address_upstream for each route
         sentinel._bind_address_upstream.assert_called_once_with(test_addr, route_info)
 
-    async def test_bind_address_upstream(self, mock_security_manager, mock_route_store, mock_delivery_tracker):
+    async def test_bind_address_upstream(
+        self, mock_security_manager, mock_route_store, mock_delivery_tracker
+    ):
         """Test _bind_address_upstream method."""
         # Create sentinel with parent
         sentinel = Sentinel(
@@ -512,7 +516,9 @@ class TestSentinelComprehensive:
             await sentinel._bind_address_upstream(test_addr, route_info)
             sentinel.forward_upstream.assert_called_once()
 
-    async def test_bind_address_upstream_timeout(self, mock_security_manager, mock_route_store, mock_delivery_tracker):
+    async def test_bind_address_upstream_timeout(
+        self, mock_security_manager, mock_route_store, mock_delivery_tracker
+    ):
         """Test _bind_address_upstream timeout."""
         # Create sentinel with parent
         sentinel = Sentinel(
@@ -543,7 +549,9 @@ class TestSentinelComprehensive:
         with pytest.raises(RuntimeError, match="Timeout waiting for bind ack"):
             await sentinel._bind_address_upstream(test_addr, route_info)
 
-    async def test_bind_address_upstream_rejected(self, mock_security_manager, mock_route_store, mock_delivery_tracker):
+    async def test_bind_address_upstream_rejected(
+        self, mock_security_manager, mock_route_store, mock_delivery_tracker
+    ):
         """Test _bind_address_upstream rejection."""
         # Create sentinel with parent
         sentinel = Sentinel(

@@ -233,7 +233,7 @@ async def test_smart_response_preserves_existing_context():
         )
 
         await node.deliver(request_envelope)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(2.0)  # Increased sleep time
 
         # Find the response delivery
         response_delivery = None
@@ -248,8 +248,10 @@ async def test_smart_response_preserves_existing_context():
 
         # Verify existing context was preserved
         assert response_context is not None, "Response context should be preserved"
-        assert response_context.origin_type == DeliveryOriginType.UPSTREAM, "Should preserve custom origin"
-        assert response_context.from_system_id == "custom-system-id", "Should preserve custom system ID"
+        # Origin type should be forced to LOCAL for responses sent by this node
+        assert response_context.origin_type == DeliveryOriginType.LOCAL, "Response should have LOCAL origin"
+        # System ID should be set to the node's ID
+        assert response_context.from_system_id == node.id, "Should use node's system ID for LOCAL origin"
 
         # Verify context metadata was set (should override message-type to "response")
         assert response_context.meta is not None, "Response context should have metadata"

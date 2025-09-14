@@ -8,6 +8,7 @@ don't need to implement encryption logic separately.
 
 from __future__ import annotations
 
+import asyncio
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, Generic, Optional, Type, TypeVar
 
@@ -112,27 +113,32 @@ class EncryptedKeyValueStore(KeyValueStore[V], Generic[V]):
         # Cache for decrypted values
         self._cache: Dict[str, V] = {} if enable_caching else {}
         self._cache_enabled = enable_caching
+        self._cache_lock: Optional[asyncio.Lock] = asyncio.Lock() if enable_caching else None
 
-    def _clear_cache(self) -> None:
+    async def _clear_cache(self) -> None:
         """Clear the entire cache."""
-        if self._cache_enabled:
-            self._cache.clear()
+        if self._cache_enabled and self._cache_lock:
+            async with self._cache_lock:
+                self._cache.clear()
 
-    def _cache_get(self, key: str) -> Optional[V]:
+    async def _cache_get(self, key: str) -> Optional[V]:
         """Get a value from cache if caching is enabled."""
-        if self._cache_enabled:
+        if not self._cache_enabled or not self._cache_lock:
+            return None
+        async with self._cache_lock:
             return self._cache.get(key)
-        return None
 
-    def _cache_set(self, key: str, value: V) -> None:
+    async def _cache_set(self, key: str, value: V) -> None:
         """Set a value in cache if caching is enabled."""
-        if self._cache_enabled:
-            self._cache[key] = value
+        if self._cache_enabled and self._cache_lock:
+            async with self._cache_lock:
+                self._cache[key] = value
 
-    def _cache_delete(self, key: str) -> None:
+    async def _cache_delete(self, key: str) -> None:
         """Delete a value from cache if caching is enabled."""
-        if self._cache_enabled:
-            self._cache.pop(key, None)
+        if self._cache_enabled and self._cache_lock:
+            async with self._cache_lock:
+                self._cache.pop(key, None)
 
     async def set(self, key: str, value: V) -> None:
         # Serialize to JSON
@@ -160,13 +166,13 @@ class EncryptedKeyValueStore(KeyValueStore[V], Generic[V]):
 
         # Update cache with the new value and clear other entries on write
         if self._cache_enabled:
-            self._cache_set(key, value)
+            await self._cache_set(key, value)
             # Note: We could implement more sophisticated cache invalidation
             # For now, we keep the updated value but could clear all on any write
 
     async def get(self, key: str) -> Optional[V]:
         # Check cache first
-        cached_value = self._cache_get(key)
+        cached_value = await self._cache_get(key)
         if cached_value is not None:
             return cached_value
 
@@ -191,7 +197,7 @@ class EncryptedKeyValueStore(KeyValueStore[V], Generic[V]):
         result = self._model_cls.model_validate_json(json_data)
 
         # Cache the result
-        self._cache_set(key, result)
+        await self._cache_set(key, result)
 
         return result
 
@@ -199,7 +205,7 @@ class EncryptedKeyValueStore(KeyValueStore[V], Generic[V]):
         await self._underlying_store.delete(key)
 
         # Remove from cache
-        self._cache_delete(key)
+        await self._cache_delete(key)
 
     async def list(self) -> Dict[str, V]:
         encrypted_items = await self._underlying_store.list()
@@ -215,7 +221,7 @@ class EncryptedKeyValueStore(KeyValueStore[V], Generic[V]):
                 continue
 
             # Check cache first
-            cached_value = self._cache_get(k)
+            cached_value = await self._cache_get(k)
             if cached_value is not None:
                 result[k] = cached_value
                 continue
@@ -229,7 +235,7 @@ class EncryptedKeyValueStore(KeyValueStore[V], Generic[V]):
                 result[k] = decrypted_value
 
                 # Cache the result
-                self._cache_set(k, decrypted_value)
+                await self._cache_set(k, decrypted_value)
             except Exception:
                 # Skip corrupted entries
                 continue

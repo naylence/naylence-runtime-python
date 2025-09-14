@@ -4,7 +4,7 @@ import enum
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Protocol
+from typing import Any, Callable, Dict, Optional, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -106,6 +106,21 @@ class DeliveryTracker(ABC):
         self, inbox_name: str, envelope: TrackedEnvelope, context: Optional[FameDeliveryContext] = None
     ) -> None: ...
 
+    @abstractmethod
+    async def on_envelope_handle_failed(
+        self,
+        inbox_name: str,
+        envelope: TrackedEnvelope,
+        context: Optional[FameDeliveryContext] = None,
+        error: Optional[Exception] = None,
+        is_final_failure: bool = False,
+    ) -> None: ...
+
+    @abstractmethod
+    async def update_tracked_envelope(self, envelope: TrackedEnvelope) -> None:
+        """Update a tracked envelope in persistent storage."""
+        ...
+
     def iter_stream(self, envelope_id: str, *, timeout_ms: Optional[int] = None) -> AsyncIterator[Any]: ...
 
     @abstractmethod
@@ -129,6 +144,13 @@ class DeliveryTracker(ABC):
 
     @abstractmethod
     async def recover_pending(self) -> None: ...
+
+    @abstractmethod
+    async def list_inbound(
+        self, filter: Optional[Callable[[TrackedEnvelope], bool]] = None
+    ) -> list[TrackedEnvelope]:
+        """List inbound envelopes that match the given filter."""
+        ...
 
     def add_event_handler(self, event_handler: DeliveryTrackerEventHandler) -> None:
         self._event_handlers.append(event_handler)

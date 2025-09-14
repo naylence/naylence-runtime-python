@@ -140,12 +140,16 @@ async def test_channel_context_preservation_in_responses():
     mock_delivery_tracker = Mock(spec=DeliveryTracker)
 
     # Create a EnvelopeListenerManager instance but don't use it in this test
+    mock_node_like = Mock()
+    mock_node_like.id = "test-node"
+    mock_node_like.sid = "test-node"
+    mock_node_like.physical_path = "/test/path"
+    mock_node_like.send = AsyncMock()
+    mock_node_like.delivery_policy = None
+
     _ = EnvelopeListenerManager(
         binding_manager=mock_binding_manager,
-        get_physical_path=lambda: "/test/path",
-        get_id=lambda: "test-node",
-        get_sid=lambda: "test-node",
-        deliver=AsyncMock(),
+        node_like=mock_node_like,
         envelope_factory=mock_envelope_factory,
         delivery_tracker=mock_delivery_tracker,
     )

@@ -39,7 +39,7 @@ class SQLiteStorageProviderConfig(StorageProviderConfig):
 
     is_cached: bool = Field(
         default=True,
-        description="Whether to enable in-memory caching of decrypted values",
+        description="Whether to enable in-memory caching values",
     )
 
     master_key: Optional[Annotated[CredentialProviderConfig, SecretSource]] = Field(

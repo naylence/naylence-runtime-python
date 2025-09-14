@@ -107,6 +107,13 @@ class ResponseContextManager:
             if request_envelope.id:
                 response_context.meta["response-to-id"] = request_envelope.id
 
+            # Force origin type to LOCAL for all responses sent by this node
+            # This overrides any explicit origin type provided by the handler
+            response_context.origin_type = DeliveryOriginType.LOCAL
+
+            # Set the correct from_system_id for LOCAL origin
+            response_context.from_system_id = self._get_id()
+
         # Also set metadata in envelope for backward compatibility
         # Always ensure envelope has proper metadata, regardless of whether context was provided
         # if response_envelope.meta is None:

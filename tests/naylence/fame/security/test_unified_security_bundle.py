@@ -32,9 +32,9 @@ async def test_unified_security_bundle():
     storage_provider = InMemoryStorageProvider()
     delivery_tracker_factory = DefaultDeliveryTrackerFactory()
     delivery_tracker = await delivery_tracker_factory.create(storage_provider=storage_provider)
-    
+
     sentinel = Sentinel(
-        security_manager=node_security, 
+        security_manager=node_security,
         storage_provider=storage_provider,
         delivery_tracker=delivery_tracker,
     )
@@ -48,7 +48,7 @@ async def test_unified_security_bundle():
     storage_provider2 = InMemoryStorageProvider()
     delivery_tracker_factory2 = DefaultDeliveryTrackerFactory()
     delivery_tracker2 = await delivery_tracker_factory2.create(storage_provider=storage_provider2)
-    
+
     sentinel_default = Sentinel(
         storage_provider=storage_provider2,
         delivery_tracker=delivery_tracker2,

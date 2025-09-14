@@ -50,6 +50,9 @@ class NodeLike(AbstractAsyncContextManager, Protocol):
     def envelope_factory(self) -> EnvelopeFactory: ...
 
     @property
+    def delivery_policy(self) -> Optional[DeliveryPolicy]: ...
+
+    @property
     def default_binding_path(self) -> str: ...
 
     @property

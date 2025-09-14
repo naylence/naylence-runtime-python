@@ -46,12 +46,17 @@ async def test_envelope_listener_manager_delivery_context():
     from naylence.fame.delivery.delivery_tracker import DeliveryTracker
 
     mock_delivery_tracker = Mock(spec=DeliveryTracker)
+
+    mock_node_like = Mock()
+    mock_node_like.id = test_node_id
+    mock_node_like.sid = test_sid
+    mock_node_like.physical_path = "/test/node"
+    mock_node_like.send = mock_deliver
+    mock_node_like.delivery_policy = None
+
     listener_manager = EnvelopeListenerManager(
         binding_manager=binding_manager,
-        get_physical_path=lambda: "/test/node",
-        get_id=lambda: test_node_id,
-        get_sid=lambda: test_sid,
-        deliver=mock_deliver,
+        node_like=mock_node_like,
         envelope_factory=envelope_factory,
         delivery_tracker=mock_delivery_tracker,
     )

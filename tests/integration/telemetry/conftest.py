@@ -153,7 +153,7 @@ def telemetry_client_config(generic_client_config):
         {
             "type": "WebSocketConnectionGrant",
             "purpose": "node.attach",
-            "url": "ws://localhost:8000/fame/v1/attach/ws/downstream",  # Will be updated by test
+            "url": "ws://localhost:28000/fame/v1/attach/ws/downstream",  # Will be updated by test
             "auth": {
                 "type": "NoAuth",
             },

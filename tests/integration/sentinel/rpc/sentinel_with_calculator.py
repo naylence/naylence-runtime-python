@@ -63,7 +63,7 @@ async def main():
         "node": {
             "type": "Sentinel",
             "id": "test-sentinel",
-            "public_url": "http://localhost:8000",
+            "public_url": "http://localhost:28000",
             "listeners": [
                 {
                     "type": "HttpListener",

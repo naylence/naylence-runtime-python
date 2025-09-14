@@ -1,3 +1,5 @@
+import random
+
 from naylence.fame.factory import ResourceConfig
 
 
@@ -18,8 +20,12 @@ class RetryPolicy(ResourceConfig):
             delay = self.base_delay_ms
         else:
             delay = int(self.base_delay_ms * (self.backoff_factor**attempt))
-        delay = min(delay, self.max_delay_ms)
-        # Simple jitter
-        if self.jitter_ms:
-            delay += int(self.jitter_ms / 2)
+
+        # Apply symmetric random jitter in the range [-jitter_ms, +jitter_ms]
+        if self.jitter_ms and self.jitter_ms > 0:
+            jitter = random.randint(-self.jitter_ms, self.jitter_ms)
+            delay += jitter
+
+        # Clamp to valid range
+        delay = max(0, min(delay, self.max_delay_ms))
         return delay

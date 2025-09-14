@@ -11,14 +11,15 @@ from naylence.fame.delivery.retry_policy import RetryPolicy
 
 
 class AtLeastOnceDeliveryPolicyConfig(DeliveryPolicyConfig):
-    """Configuration for the at-most-once envelope tracker."""
+    """Configuration for the at-least-once delivery policy."""
 
-    type: str = "AtMostOnceMessageDeliveryPolicy"
-    retry_policy: Optional[RetryPolicy] = None
+    type: str = "AtLeastOnceDeliveryPolicy"
+    sender_retry_policy: Optional[RetryPolicy] = None
+    receiver_retry_policy: Optional[RetryPolicy] = None
 
 
 class AtLeastOnceDeliveryPolicyFactory(DeliveryPolicyFactory):
-    """Factory for creating AtMostOnceMessageDeliveryPolicy instances."""
+    """Factory for creating AtLeastOnceDeliveryPolicy instances."""
 
     is_default: bool = True
 
@@ -34,4 +35,7 @@ class AtLeastOnceDeliveryPolicyFactory(DeliveryPolicyFactory):
             AtLeastOnceDeliveryPolicy,
         )
 
-        return AtLeastOnceDeliveryPolicy(retry_policy=config.retry_policy if config else None)
+        return AtLeastOnceDeliveryPolicy(
+            sender_retry_policy=config.sender_retry_policy if config else None,
+            receiver_retry_policy=config.receiver_retry_policy if config else None,
+        )

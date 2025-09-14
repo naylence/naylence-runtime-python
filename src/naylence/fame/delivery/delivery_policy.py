@@ -19,6 +19,11 @@ class DeliveryPolicy(ABC):
         return False
 
     @property
-    def retry_policy(self) -> Optional[RetryPolicy]:
+    def sender_retry_policy(self) -> Optional[RetryPolicy]:
+        """Return retry policy parameters."""
+        return None
+
+    @property
+    def receiver_retry_policy(self) -> Optional[RetryPolicy]:
         """Return retry policy parameters."""
         return None

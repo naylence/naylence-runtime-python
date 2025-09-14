@@ -24,12 +24,19 @@ ENV_VAR_FAME_DELIVERY_BACKOFF_FACTOR = "FAME_DELIVERY_BACKOFF_FACTOR"
 
 AT_LEAST_ONCE_PROFILE = {
     "type": "AtLeastOnceDeliveryPolicy",
-    "retry_policy": {
+    "sender_retry_policy": {
         "max_retries": Expressions.env(ENV_VAR_FAME_DELIVERY_MAX_RETRIES, "5"),
-        "base_delay_ms": Expressions.env(ENV_VAR_FAME_DELIVERY_BASE_DELAY_MS, "200"),
+        "base_delay_ms": Expressions.env(ENV_VAR_FAME_DELIVERY_BASE_DELAY_MS, "1000"),
         "max_delay_ms": Expressions.env(ENV_VAR_FAME_DELIVERY_MAX_DELAY_MS, "10000"),
-        "jitter_ms": Expressions.env(ENV_VAR_FAME_DELIVERY_JITTER_MS, "50"),
+        "jitter_ms": Expressions.env(ENV_VAR_FAME_DELIVERY_JITTER_MS, "200"),
         "backoff_factor": Expressions.env(ENV_VAR_FAME_DELIVERY_BACKOFF_FACTOR, "2.0"),
+    },
+    "receiver_retry_policy": {
+        "max_retries": Expressions.env(ENV_VAR_FAME_DELIVERY_MAX_RETRIES, "6"),
+        "base_delay_ms": Expressions.env(ENV_VAR_FAME_DELIVERY_BASE_DELAY_MS, "100"),
+        "max_delay_ms": Expressions.env(ENV_VAR_FAME_DELIVERY_MAX_DELAY_MS, "2000"),
+        "jitter_ms": Expressions.env(ENV_VAR_FAME_DELIVERY_JITTER_MS, "50"),
+        "backoff_factor": Expressions.env(ENV_VAR_FAME_DELIVERY_BACKOFF_FACTOR, "1.8"),
     },
 }
 
