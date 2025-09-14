@@ -60,10 +60,12 @@ class EncryptedInMemoryStorageProvider(EncryptedStorageProviderBase):
         return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
 
     async def _get_underlying_kv_store(
-        self, model_cls: Type[V], *, namespace: str | None = None
+        self,
+        model_cls: Type[V],
+        namespace: str,
     ) -> KeyValueStore[V]:
         """Get the underlying storage for the encrypted wrapper."""
-        return await self._underlying_provider.get_kv_store(model_cls, namespace=namespace)
+        return await self._underlying_provider.get_kv_store(model_cls, namespace)
 
 
 class TestData(BaseModel):

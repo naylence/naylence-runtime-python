@@ -178,6 +178,29 @@ class DeliveryTracker(ABC):
         """List inbound envelopes that match the given filter."""
         ...
 
+    # Inbox DLQ API
+    @abstractmethod
+    async def add_to_inbox_dlq(
+        self, tracked_envelope: TrackedEnvelope, reason: Optional[str] = None
+    ) -> None:
+        """Add a tracked envelope to the inbox dead letter queue."""
+        ...
+
+    @abstractmethod
+    async def get_from_inbox_dlq(self, envelope_id: str) -> Optional[TrackedEnvelope]:
+        """Get a specific envelope from the inbox DLQ by envelope ID."""
+        ...
+
+    @abstractmethod
+    async def list_inbox_dlq(self) -> list[TrackedEnvelope]:
+        """List all envelopes currently in the inbox DLQ."""
+        ...
+
+    @abstractmethod
+    async def purge_inbox_dlq(self, predicate: Optional[Callable[[TrackedEnvelope], bool]] = None) -> int:
+        """Delete inbox DLQ entries. Returns the number of deleted entries."""
+        ...
+
     def add_event_handler(self, event_handler: DeliveryTrackerEventHandler) -> None:
         self._event_handlers.append(event_handler)
 

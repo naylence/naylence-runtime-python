@@ -22,7 +22,6 @@ class StorageProvider(Protocol):
     async def get_kv_store(
         self,
         model_cls: Type[V],
-        *,
-        namespace: str | None = None,
+        namespace: str,
     ) -> KeyValueStore[V]:
         """Return (or create) a KV-store bound to *model_cls* in *namespace*."""

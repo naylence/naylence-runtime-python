@@ -184,7 +184,7 @@ class EnvelopeListenerManager(TaskSpawner):
 
         for tracked_envelope in envelopes:
             try:
-                logger.debug(
+                logger.warning(
                     "recovering_unhandled_envelope",
                     envelope_id=tracked_envelope.envelope_id,
                     service_name=service_name,

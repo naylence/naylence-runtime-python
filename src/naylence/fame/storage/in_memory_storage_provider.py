@@ -16,9 +16,9 @@ class InMemoryStorageProvider:
 
     def __init__(self) -> None:
         # (namespace, model_cls) → store
-        self._stores: Dict[Tuple[str | None, Type], InMemoryKVStore] = {}
+        self._stores: Dict[Tuple[str, Type], InMemoryKVStore] = {}
 
-    async def get_kv_store(self, model_cls: Type[V], *, namespace: str | None = None):
+    async def get_kv_store(self, model_cls: Type[V], namespace: str):
         key = (namespace, model_cls)
         if key not in self._stores:
             self._stores[key] = InMemoryKVStore(model_cls)

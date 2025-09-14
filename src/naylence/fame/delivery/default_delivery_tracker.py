@@ -102,6 +102,9 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         self._stream_queues: dict[str, asyncio.Queue[Any]] = {}
         self._stream_done: dict[str, asyncio.Event] = {}
 
+        # Dead-letter queue for inbound failures
+        self._inbox_dlq: Optional[KeyValueStore[TrackedEnvelope]] = None
+
         self._lock = asyncio.Lock()
         self._node: NodeLike | None = None
         logger.debug("created_default_delivery_tracker")
@@ -116,6 +119,12 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         self._inbox = await self._storage_provider.get_kv_store(
             model_cls=TrackedEnvelope,
             namespace="__delivery_inbox",
+        )
+
+        # Initialize DLQ store for inbound envelopes
+        self._inbox_dlq = await self._storage_provider.get_kv_store(
+            model_cls=TrackedEnvelope,
+            namespace="__delivery_inbox_dlq",
         )
 
     async def on_node_started(self, node: NodeLike) -> None:
@@ -316,6 +325,11 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                 status=envelope.status.name,
                 total_attempts=envelope.attempt,
             )
+            # Move to DLQ and remove from inbox
+            await self.add_to_inbox_dlq(envelope, reason=str(error) if error else None)
+            # Ensure it is no longer present in the active inbox
+            await self._inbox.delete(envelope.original_envelope.id)
+            return
         else:
             logger.warning(
                 "envelope_handle_failed_retry",
@@ -324,8 +338,8 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                 error=str(error) if error else "unknown",
                 attempt=envelope.attempt,
             )
-
-        await self._inbox.set(envelope.original_envelope.id, envelope)
+            # Persist intermediate failure state so recovery can resume correctly
+            await self._inbox.set(envelope.original_envelope.id, envelope)
 
     async def update_tracked_envelope(self, envelope: TrackedEnvelope) -> None:
         """Update a tracked envelope in persistent storage."""
@@ -820,6 +834,59 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         all_entries = await self._inbox.list()
         failed_inbound = [entry for entry in all_entries.values() if not filter or filter(entry)]
         return failed_inbound
+
+    # Inbox DLQ API
+    async def add_to_inbox_dlq(
+        self, tracked_envelope: TrackedEnvelope, reason: Optional[str] = None
+    ) -> None:
+        """
+        Put an inbound tracked envelope into the DLQ store and annotate with metadata.
+        Keeps the envelope payload for later inspection or manual requeue.
+        """
+        if not self._inbox_dlq:
+            logger.error("dlq_not_initialized", envp_id=tracked_envelope.original_envelope.id)
+            return
+
+        # Mark DLQ metadata (do not introduce a new status to avoid breaking consumers)
+        tracked_envelope.meta["dlq"] = True
+        if reason:
+            tracked_envelope.meta["dlq_reason"] = reason
+        tracked_envelope.meta["dead_lettered_at_ms"] = int(time.time() * 1000)
+
+        await self._inbox_dlq.set(tracked_envelope.original_envelope.id, tracked_envelope)
+        logger.warning(
+            "envelope_moved_to_dlq",
+            envp_id=tracked_envelope.original_envelope.id,
+            service_name=tracked_envelope.service_name,
+        )
+
+    async def get_from_inbox_dlq(self, envelope_id: str) -> Optional[TrackedEnvelope]:
+        """Get a specific envelope from the inbox DLQ by envelope ID."""
+        if not self._inbox_dlq:
+            return None
+        return await self._inbox_dlq.get(envelope_id)
+
+    async def list_inbox_dlq(self) -> list[TrackedEnvelope]:
+        """List all envelopes currently in the inbox DLQ."""
+        if not self._inbox_dlq:
+            return []
+        items = await self._inbox_dlq.list()
+        return list(items.values())
+
+    async def purge_inbox_dlq(self, predicate: Optional[Callable[[TrackedEnvelope], bool]] = None) -> int:
+        """
+        Delete inbox DLQ entries. If a predicate is provided, only delete matching items.
+        Returns the number of deleted entries.
+        """
+        if not self._inbox_dlq:
+            return 0
+        items = await self._inbox_dlq.list()
+        to_delete = [k for k, v in items.items() if (predicate(v) if predicate else True)]
+        for key in to_delete:
+            await self._inbox_dlq.delete(key)
+        if to_delete:
+            logger.debug("dlq_purged", count=len(to_delete))
+        return len(to_delete)
 
     async def cleanup(self) -> None:
         # Signal shutdown to wake up the sweeper

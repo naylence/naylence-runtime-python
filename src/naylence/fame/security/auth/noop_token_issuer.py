@@ -21,3 +21,8 @@ class NoopTokenIssuer(TokenIssuer):
         claims: dict[str, Any],
     ) -> str:
         return ""
+
+    @property
+    def issuer(self) -> str:
+        """Get the issuer identifier for the tokens."""
+        return ""

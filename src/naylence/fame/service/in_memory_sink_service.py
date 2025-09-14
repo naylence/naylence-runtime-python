@@ -129,7 +129,7 @@ class InMemorySinkService(SinkService):
         if not broker:
             raise ValueError(f"No sink found for {sink_address}")
 
-        channel = FameFabricWriteChannel(self._deliver, subscriber_address)
+        channel = FameFabricWriteChannel(self._deliver, subscriber_address)  # type: ignore
 
         broker.add_subscriber(channel)
 

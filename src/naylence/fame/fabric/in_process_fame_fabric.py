@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.metadata
 from typing import Any, AsyncIterator, Dict, Mapping, Optional, cast
 
 from naylence.fame.config.config import ExtendedFameConfig
@@ -21,7 +22,10 @@ from naylence.fame.node.node_like import NodeLike
 from naylence.fame.node.node_like_factory import NodeLikeFactory
 from naylence.fame.service.service_manager import ServiceManager
 from naylence.fame.service.sink_service import SinkService
+from naylence.fame.util.logging import getLogger
 from naylence.fame.util.util import decode_fame_data_payload
+
+logger = getLogger(__name__)
 
 
 class InProcessFameFabric(FameFabric):
@@ -45,6 +49,18 @@ class InProcessFameFabric(FameFabric):
             self._config = None
 
     async def start(self):
+        # Log package version at startup
+        try:
+            version = importlib.metadata.version("naylence-runtime")
+            logger.info("naylence_runtime_startup", version=version, fabric_type="in_process")
+        except importlib.metadata.PackageNotFoundError:
+            logger.warning(
+                "naylence_runtime_version_not_found",
+                message="Could not determine package version",
+                fabric_type="in_process",
+            )
+
+        logger.debug("starting_fabric", type="in_process")  # type: ignore
         if not self._current_node:
             self._current_node = await NodeLikeFactory.create_node(
                 self._config.node if self._config else None

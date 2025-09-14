@@ -283,8 +283,7 @@ class EncryptedStorageProviderBase(StorageProvider, ABC):
     async def get_kv_store(
         self,
         model_cls: Type[V],
-        *,
-        namespace: str | None = None,
+        namespace: str,
     ) -> KeyValueStore[V]:
         """
         Get a key-value store for the given model class and namespace.
@@ -295,12 +294,12 @@ class EncryptedStorageProviderBase(StorageProvider, ABC):
         """
         if not self._is_encrypted:
             # Return the underlying store directly (no encryption)
-            return await self._get_underlying_kv_store(model_cls, namespace=namespace)
+            return await self._get_underlying_kv_store(model_cls, namespace)
 
         # Encryption is enabled - wrap the underlying store
         underlying_store = await self._get_underlying_kv_store(
             EncryptedValue,  # type: ignore - Store encrypted values
-            namespace=namespace,
+            namespace,
         )
 
         # Wrap it with encryption
@@ -316,8 +315,7 @@ class EncryptedStorageProviderBase(StorageProvider, ABC):
     async def _get_underlying_kv_store(
         self,
         model_cls: Type[V],
-        *,
-        namespace: str | None = None,
+        namespace: str,
     ) -> KeyValueStore[V]:
         """
         Get the underlying key-value store.

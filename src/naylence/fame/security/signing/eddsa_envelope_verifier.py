@@ -43,7 +43,7 @@ def _load_public_key_from_jwk(jwk: Dict[str, Any], signing_config: SigningConfig
         # Use FAME_CA_CERTS env var as the single source of truth
         import os
 
-        from naylence.fame.security.cert.util import (
+        from naylence.fame.security.cert.util import (  # type: ignore
             get_certificate_metadata_from_x5c,
             public_key_from_x5c,
         )
@@ -204,7 +204,8 @@ class EdDSAEnvelopeVerifier(EnvelopeVerifier):
                 if not envelope.sid:
                     raise ValueError("Envelope missing SID field required for certificate validation")
 
-                from naylence.fame.security.cert.util import sid_from_cert
+                # TODO: handle this
+                from naylence.fame.security.cert.util import sid_from_cert  # type: ignore
 
                 cert_sid = sid_from_cert(certificate)
 
@@ -215,7 +216,7 @@ class EdDSAEnvelopeVerifier(EnvelopeVerifier):
 
             # Validate logical address is permitted by certificate (if policy requires)
             if self._signing_config.require_cert_logical_match and logical:
-                from naylence.fame.security.cert.util import host_logicals_from_cert
+                from naylence.fame.security.cert.util import host_logicals_from_cert  # type: ignore
 
                 permitted_logicals = host_logicals_from_cert(certificate)
 
