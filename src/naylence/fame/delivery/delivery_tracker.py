@@ -36,22 +36,48 @@ class EnvelopeStatus(str, enum.Enum):
     FAILED_TO_HANDLE = "failed_to_handle"
 
 
+class MailboxType(str, enum.Enum):
+    INBOX = "inbox"
+    OUTBOX = "outbox"
+
+
 class TrackedEnvelope(BaseModel):
     """Information about a tracked envelope."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)  # For FameAddress and FameEnvelope
-    timeout_at_ms: int  # When the next timer event should fire (retry or final timeout)
-    overall_timeout_at_ms: int  # The absolute deadline - never changes
-    expected_response_type: FameResponseType
-    created_at_ms: int
-    attempt: int = 0
-    status: EnvelopeStatus = EnvelopeStatus.PENDING
-    meta: Dict[str, Any] = Field(default_factory=dict)
-    inserted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    timeout_at_ms: int = Field(
+        ..., description="Timestamp (ms) when the next timer event should fire (retry or final timeout)."
+    )
+    overall_timeout_at_ms: int = Field(
+        ..., description="Absolute deadline in ms for the envelope; never changes."
+    )
+    expected_response_type: FameResponseType = Field(
+        ..., description="Bitmask indicating which response types are expected (ACK, REPLY, etc)."
+    )
+    created_at_ms: int = Field(..., description="Timestamp (ms) when the envelope was created.")
+    attempt: int = Field(default=0, description="Current delivery attempt count.")
+    status: EnvelopeStatus = Field(
+        default=EnvelopeStatus.PENDING, description="Current status of the tracked envelope."
+    )
+    meta: Dict[str, Any] = Field(
+        default_factory=dict, description="Arbitrary metadata for the tracked envelope."
+    )
+    inserted_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="UTC datetime when the envelope was inserted into tracking.",
+    )
+
+    mailbox_type: Optional[MailboxType] = Field(
+        default=None, description="Type of mailbox where the envelope is tracked (inbox or outbox)."
+    )
     # Store the original envelope for retries
-    original_envelope: FameEnvelope
-    service_name: Optional[str] = None
+    original_envelope: FameEnvelope = Field(
+        ..., description="The original FameEnvelope being tracked (used for retries)."
+    )
+    service_name: Optional[str] = Field(
+        default=None, description="Optional name of the service handling this envelope."
+    )
 
     @property
     def envelope_id(self) -> str:
@@ -103,7 +129,7 @@ class DeliveryTracker(ABC):
 
     @abstractmethod
     async def on_envelope_handled(
-        self, inbox_name: str, envelope: TrackedEnvelope, context: Optional[FameDeliveryContext] = None
+        self, envelope: TrackedEnvelope, context: Optional[FameDeliveryContext] = None
     ) -> None: ...
 
     @abstractmethod

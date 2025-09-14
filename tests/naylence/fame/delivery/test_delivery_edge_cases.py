@@ -183,14 +183,14 @@ class TestDeliveryTrackerEdgeCases:
         await tracker._inbox.set(original_envelope.id, tracked)
 
         # Call on_envelope_handled
-        await tracker.on_envelope_handled("test-inbox", tracked)
+        await tracker.on_envelope_handled(tracked)
 
         # Verify status was updated
         assert tracked.status == EnvelopeStatus.HANDLED
 
-        # Verify it was saved back to inbox
+        # Verify it was removed from inbox (new behavior to prevent inbox growth)
         saved_tracked = await tracker._inbox.get(original_envelope.id)
-        assert saved_tracked.status == EnvelopeStatus.HANDLED
+        assert saved_tracked is None
 
     async def test_on_heartbeat_sent_display(self, tracker):
         """Test the display functionality in on_heartbeat_sent."""

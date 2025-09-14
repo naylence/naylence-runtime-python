@@ -1520,7 +1520,7 @@ class TestDefaultDeliveryTrackerAdditionalCoverage:
         )
 
         # Test on_envelope_handled
-        await tracker_with_fast_gc.on_envelope_handled("test_inbox", tracked)
+        await tracker_with_fast_gc.on_envelope_handled(tracked)
 
     @pytest.mark.asyncio
     async def test_exception_in_ack_wait(self, tracker_with_fast_gc, sample_envelope):
@@ -1568,7 +1568,7 @@ class TestDefaultDeliveryTrackerAdditionalCoverage:
         )
 
         try:
-            await tracker_with_fast_gc.on_envelope_handled("test_inbox", tracked)
+            await tracker_with_fast_gc.on_envelope_handled(tracked)
         except Exception:
             pass  # Expected
         finally:

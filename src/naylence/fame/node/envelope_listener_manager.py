@@ -90,6 +90,10 @@ class EnvelopeListenerManager(TaskSpawner):
         self._listeners: Dict[str, EnvelopeListener] = {}
         self._listeners_lock = asyncio.Lock()
 
+        # Add handler mapping for recovery
+        self._service_handlers: Dict[str, FameEnvelopeHandler] = {}
+        self._service_handlers_lock = asyncio.Lock()
+
         # Initialize the modular components
         self._response_context_manager = ResponseContextManager(_get_id, _get_sid)
 
@@ -138,8 +142,8 @@ class EnvelopeListenerManager(TaskSpawner):
             logger.debug("no_failed_inbound_envelopes_to_recover")
             return
 
-        logger.info(
-            "recovering_failed_inbound_envelopes",
+        logger.debug(
+            "recovering_unhandled_envelopes",
             count=len(failed_inbound),
             envelope_ids=[env.envelope_id for env in failed_inbound],
         )
@@ -163,36 +167,54 @@ class EnvelopeListenerManager(TaskSpawner):
 
     async def _recover_service_envelopes(self, service_name: str, envelopes: list[TrackedEnvelope]) -> None:
         """
-        Recover envelopes for a specific service by re-delivering them through the delivery path.
+        Recover envelopes for a specific service by resuming handler execution with retry logic.
 
-        This method re-triggers envelope delivery for failed inbound envelopes by calling
-        the same delivery mechanism that would handle fresh envelopes. The existing
-        tracking_envelope_handler logic will detect the restart scenario and handle retries.
+        This method directly calls the handler with the failed envelope, resuming from where
+        we left off without re-applying delivery transformations.
         """
+        # Get the handler for this service
+        async with self._service_handlers_lock:
+            handler = self._service_handlers.get(service_name)
+
+        if not handler:
+            logger.error(
+                "no_handler_found_for_recovery", service_name=service_name, envelope_count=len(envelopes)
+            )
+            return
+
         for tracked_envelope in envelopes:
             try:
-                logger.info(
-                    "recovering_failed_envelope",
+                logger.debug(
+                    "recovering_unhandled_envelope",
                     envelope_id=tracked_envelope.envelope_id,
                     service_name=service_name,
                     current_attempts=tracked_envelope.attempt,
                     status=tracked_envelope.status,
                 )
 
-                # Re-deliver the envelope through the normal delivery path
-                # This will trigger the same logic as a fresh envelope delivery,
-                # but the existing tracking_envelope_handler will detect the
-                # restart scenario via tracked.attempt > 0 and handle it appropriately
                 original_envelope = tracked_envelope.original_envelope
 
-                # Create a delivery context if we have one stored
-                delivery_context = None  # Could be enhanced to restore context from metadata
+                # Create a basic delivery context (could be enhanced to restore from metadata)
+                delivery_context = None
 
-                # Re-trigger delivery - this will go through the same path as fresh deliveries
-                await self._deliver(original_envelope, delivery_context)
+                # Get receiver retry policy from the node's delivery policy
+                receiver_retry_policy = None
+                if self._node_like.delivery_policy:
+                    receiver_retry_policy = self._node_like.delivery_policy.receiver_retry_policy
+
+                # Resume handler execution with retry logic - this will pick up from
+                # the current attempt count and continue retrying
+                await self._execute_handler_with_retries(
+                    handler,
+                    original_envelope,
+                    delivery_context,
+                    receiver_retry_policy,
+                    tracked_envelope,
+                    service_name,
+                )
 
                 logger.debug(
-                    "envelope_recovery_triggered",
+                    "envelope_recovery_completed",
                     envelope_id=tracked_envelope.envelope_id,
                     service_name=service_name,
                 )
@@ -204,10 +226,7 @@ class EnvelopeListenerManager(TaskSpawner):
                     service_name=service_name,
                     error=str(e),
                 )
-                # Mark as permanently failed since recovery itself failed
-                await self._delivery_tracker.on_envelope_handle_failed(
-                    service_name, tracked_envelope, error=e, is_final_failure=True
-                )
+                # The failure is already handled by _execute_handler_with_retries
 
     async def stop(self) -> None:
         """Stop all active listeners and clean up components."""
@@ -216,6 +235,10 @@ class EnvelopeListenerManager(TaskSpawner):
             for listener in self._listeners.values():
                 listener.stop()
             self._listeners.clear()
+
+        # Clear handler mappings
+        async with self._service_handlers_lock:
+            self._service_handlers.clear()
 
         # Clean up RPC client state
         await self._rpc_client_manager.cleanup()
@@ -249,7 +272,11 @@ class EnvelopeListenerManager(TaskSpawner):
         if not retry_policy or retry_policy.max_retries == 0:
             # No retries configured, execute once
             try:
-                return await handler(env, context)
+                result = await handler(env, context)
+                # Mark as handled on success
+                if tracked_envelope and self._delivery_tracker:
+                    await self._delivery_tracker.on_envelope_handled(tracked_envelope, context=context)
+                return result
             except Exception as e:
                 # Even with no retries, we should report the failure
                 if tracked_envelope and self._delivery_tracker:
@@ -283,13 +310,15 @@ class EnvelopeListenerManager(TaskSpawner):
         # Execute attempts starting from current attempt count
         while current_attempt < max_attempts:
             try:
-                # Increment attempt counter before trying (durable)
+                # Increment attempt counter before trying
                 if tracked_envelope:
                     tracked_envelope.attempt = current_attempt + 1
-                    # Persist the updated attempt count immediately
-                    await self._delivery_tracker.update_tracked_envelope(tracked_envelope)
 
                 result = await handler(env, context)
+
+                # Mark as handled on success
+                if tracked_envelope and self._delivery_tracker:
+                    await self._delivery_tracker.on_envelope_handled(tracked_envelope, context=context)
 
                 if current_attempt > 0:
                     logger.info(
@@ -351,6 +380,11 @@ class EnvelopeListenerManager(TaskSpawner):
         """
         logger.debug("listen_start", recipient=service_name, poll_timeout_ms=poll_timeout_ms)
 
+        # Store the handler for recovery purposes
+        if handler:
+            async with self._service_handlers_lock:
+                self._service_handlers[service_name] = handler
+
         # Set up shared state for stopping the polling loop
         state: dict[str, bool] = {"stopped": False}
 
@@ -381,33 +415,12 @@ class EnvelopeListenerManager(TaskSpawner):
                         service_name=service_name,
                     )
 
-                try:
-                    # Execute handler with retry logic
-                    result = await self._execute_handler_with_retries(
-                        handler, env, context, receiver_retry_policy, tracked, service_name
-                    )
+                # Execute handler with retry logic
+                result = await self._execute_handler_with_retries(
+                    handler, env, context, receiver_retry_policy, tracked, service_name
+                )
 
-                    if tracked is not None:
-                        await self._delivery_tracker.on_envelope_handled(
-                            service_name, tracked, context=context
-                        )
-
-                    return result
-                except Exception as e:
-                    # Handler failed after all retries
-                    logger.error(
-                        "handler_execution_failed_permanently",
-                        envelope_id=env.id,
-                        service_name=service_name,
-                        error=str(e),
-                    )
-                    if tracked is not None:
-                        # Call the new failure handler method
-                        await self._delivery_tracker.on_envelope_handle_failed(
-                            service_name, tracked, context=context, error=e, is_final_failure=True
-                        )
-                    # Re-raise the exception so it can be handled by upper layers
-                    raise
+                return result
 
             return None
 

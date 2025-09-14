@@ -23,6 +23,11 @@ class InMemoryKVStore(KeyValueStore[V], Generic[V]):
         # `value` is known to be a V → we can call model_dump_json()
         self._data[key] = value.model_dump_json(by_alias=True, exclude_none=True)
 
+    async def update(self, key: str, value: V) -> None:
+        if key not in self._data:
+            raise KeyError(f"Key '{key}' not found for update.")
+        self._data[key] = value.model_dump_json(by_alias=True, exclude_none=True)
+
     async def get(self, key: str) -> Optional[V]:
         raw = self._data.get(key)
         if raw is None:

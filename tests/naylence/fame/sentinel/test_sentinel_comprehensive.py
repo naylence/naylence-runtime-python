@@ -102,6 +102,7 @@ class TestSentinelComprehensive:
         tracker.track_delivery = AsyncMock()
         tracker.complete_delivery = AsyncMock()
         tracker.fail_delivery = AsyncMock()
+        tracker.list_inbound = AsyncMock(return_value=[])  # Return empty list for recovery
         return tracker
 
     @pytest.fixture

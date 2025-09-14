@@ -77,6 +77,21 @@ class SQLiteKeyValueStore(KeyValueStore[V], Generic[V]):
                 )
                 conn.commit()
 
+    async def update(self, key: str, value: V) -> None:
+        """Store a value in the SQLite database."""
+        json_data = value.model_dump_json(by_alias=True, exclude_none=True)
+
+        async with self._lock:
+            with sqlite3.connect(self._db_path) as conn:
+                cursor = conn.execute(
+                    f"UPDATE {self._table_name} SET value = ? WHERE key = ?",
+                    (json_data, key),
+                )
+                updated_count = cursor.rowcount
+                if updated_count == 0:
+                    raise KeyError(f"Key '{key}' not found for update.")
+                conn.commit()
+
     async def get(self, key: str) -> Optional[V]:
         """Retrieve a value from the SQLite database."""
         async with self._lock:

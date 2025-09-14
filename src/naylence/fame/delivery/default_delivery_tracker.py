@@ -24,6 +24,7 @@ from naylence.fame.core import (
 from naylence.fame.delivery.delivery_tracker import (
     DeliveryTracker,
     EnvelopeStatus,
+    MailboxType,
     TrackedEnvelope,
 )
 from naylence.fame.delivery.retry_event_handler import RetryEventHandler
@@ -274,11 +275,14 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         return None
 
     async def on_envelope_handled(
-        self, inbox_name: str, envelope: TrackedEnvelope, context: Optional[FameDeliveryContext] = None
+        self, envelope: TrackedEnvelope, context: Optional[FameDeliveryContext] = None
     ) -> None:
         assert self._inbox
+        # Set status to HANDLED for consistency
         envelope.status = EnvelopeStatus.HANDLED
-        await self._inbox.set(envelope.original_envelope.id, envelope)
+        # Delete the envelope from inbox to prevent growth
+        # Note: This is the new behavior to prevent inbox from growing indefinitely
+        await self._inbox.delete(envelope.original_envelope.id)
 
     async def on_envelope_handle_failed(
         self,
@@ -325,8 +329,17 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
 
     async def update_tracked_envelope(self, envelope: TrackedEnvelope) -> None:
         """Update a tracked envelope in persistent storage."""
-        assert self._inbox
-        await self._inbox.set(envelope.original_envelope.id, envelope)
+        if envelope.mailbox_type == MailboxType.INBOX:
+            assert self._inbox
+            await self._inbox.update(envelope.original_envelope.id, envelope)
+        elif envelope.mailbox_type == MailboxType.OUTBOX:
+            raise RuntimeError(
+                f"Updating tracked envelopes of mailbox type {MailboxType.OUTBOX} is not supported"
+            )
+        else:
+            # Fallback for backwards compatibility - assume it's in inbox if mailbox_type is None
+            assert self._inbox
+            await self._inbox.update(envelope.original_envelope.id, envelope)
 
     async def _send_ack(self, envelope: FameEnvelope) -> None:
         assert self._node is not None
@@ -426,6 +439,7 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
             expected_response_type=expected_response_type,
             created_at_ms=now_ms,
             meta=meta or {},
+            mailbox_type=MailboxType.OUTBOX,
             original_envelope=envelope,  # Store the envelope directly
         )
 
@@ -665,6 +679,7 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                     expected_response_type=envelope.rtype or FameResponseType.NONE,
                     created_at_ms=int(time.time() * 1000),
                     status=EnvelopeStatus.RECEIVED,
+                    mailbox_type=MailboxType.INBOX,
                     original_envelope=envelope,
                     service_name=inbox_name,
                 )
@@ -799,7 +814,9 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
         self, filter: Optional[Callable[[TrackedEnvelope], bool]] = None
     ) -> list[TrackedEnvelope]:
         """List inbound envelopes that are in RECEIVED or FAILED_TO_HANDLE status."""
-        assert self._inbox
+        if not self._inbox:
+            # Return empty list if inbox is not initialized yet
+            return []
         all_entries = await self._inbox.list()
         failed_inbound = [entry for entry in all_entries.values() if not filter or filter(entry)]
         return failed_inbound

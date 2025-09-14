@@ -266,7 +266,7 @@ class TestDefaultDeliveryTrackerFinalCoverage:
         )
 
         # Test on_envelope_handled
-        await tracker.on_envelope_handled("test_inbox", tracked)
+        await tracker.on_envelope_handled(tracked)
 
     @pytest.mark.asyncio
     async def test_await_envelope_already_expired_timeout(self, tracker):
