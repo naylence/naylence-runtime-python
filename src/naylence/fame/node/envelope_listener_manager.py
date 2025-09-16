@@ -12,7 +12,7 @@ This is the main orchestrator that uses the extracted components:
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Set
 
 from naylence.fame.core import (
     DEFAULT_INVOKE_TIMEOUT_MILLIS,
@@ -94,6 +94,15 @@ class EnvelopeListenerManager(TaskSpawner):
         self._service_handlers: Dict[str, FameEnvelopeHandler] = {}
         self._service_handlers_lock = asyncio.Lock()
 
+        # Track services that have failed inbound envelopes we should recover once a handler is registered
+        self._pending_recovery_services: Set[str] = set()
+        self._pending_recovery_envelopes: Dict[str, list[TrackedEnvelope]] = {}
+        self._pending_recovery_services_lock = asyncio.Lock()
+
+        # Per-service recovery locks to avoid duplicate concurrent recoveries
+        self._service_recovery_locks: Dict[str, asyncio.Lock] = {}
+        self._service_recovery_locks_lock = asyncio.Lock()
+
         # Initialize the modular components
         self._response_context_manager = ResponseContextManager(_get_id, _get_sid)
 
@@ -123,13 +132,13 @@ class EnvelopeListenerManager(TaskSpawner):
         )
 
     async def start(self) -> None:
-        """Start the envelope listener manager and recover failed inbound envelopes."""
+        """Start the envelope listener manager and discover failed inbound envelopes."""
         await self.recover_unhandled_inbound_envelopes()
 
     async def recover_unhandled_inbound_envelopes(self) -> None:
         """
-        Recover inbound envelopes that were in RECEIVED or FAILED_TO_HANDLE status
-        when the node crashed and re-process them with retry logic.
+        Discover inbound envelopes that were in RECEIVED or FAILED_TO_HANDLE status.
+        Defers actual recovery until a handler is registered via listen(service_name, handler).
         """
         if not self._delivery_tracker:
             return
@@ -142,28 +151,63 @@ class EnvelopeListenerManager(TaskSpawner):
             logger.debug("no_failed_inbound_envelopes_to_recover")
             return
 
+        # Group envelopes by service and cache them
+        grouped: Dict[str, list[TrackedEnvelope]] = {}
+        for env in failed_inbound:
+            svc = env.service_name or "unknown"
+            grouped.setdefault(svc, []).append(env)
+
+        async with self._pending_recovery_services_lock:
+            self._pending_recovery_services.clear()
+            self._pending_recovery_services.update(grouped.keys())
+            self._pending_recovery_envelopes = grouped
+
         logger.debug(
-            "recovering_unhandled_envelopes",
-            count=len(failed_inbound),
-            envelope_ids=[env.envelope_id for env in failed_inbound],
+            "discovered_failed_inbound_envelopes",
+            total=len(failed_inbound),
+            services=list(grouped.keys()),
         )
 
-        # Group envelopes by service name for recovery
-        envelopes_by_service: dict[str, list[TrackedEnvelope]] = {}
-        for tracked_envelope in failed_inbound:
-            service_name = tracked_envelope.service_name or "unknown"
-            if service_name not in envelopes_by_service:
-                envelopes_by_service[service_name] = []
-            envelopes_by_service[service_name].append(tracked_envelope)
+    async def _recover_service_if_needed(self, service_name: str) -> None:
+        """
+        If there are failed inbound envelopes for this service and a handler is registered,
+        perform recovery now. Uses a per-service lock to prevent duplicate runs.
+        """
+        # Ensure we have a lock for this service
+        async with self._service_recovery_locks_lock:
+            lock = self._service_recovery_locks.get(service_name)
+            if not lock:
+                lock = asyncio.Lock()
+                self._service_recovery_locks[service_name] = lock
 
-        # Spawn recovery tasks for each service
-        for service_name, envelopes in envelopes_by_service.items():
-            logger.debug("spawning_recovery_task", service_name=service_name, envelope_count=len(envelopes))
+        async with lock:
+            # Verify a handler is registered
+            async with self._service_handlers_lock:
+                handler = self._service_handlers.get(service_name)
+            if not handler:
+                # Handler not registered; nothing to do
+                return
 
-            self.spawn(
-                self._recover_service_envelopes(service_name, envelopes),
-                name=f"recover-{service_name}-{len(envelopes)}",
+            # Consume cached envelopes for this service
+            async with self._pending_recovery_services_lock:
+                envelopes = self._pending_recovery_envelopes.pop(service_name, [])
+                # Clear the pending flag for the service either way
+                self._pending_recovery_services.discard(service_name)
+
+            if not envelopes:
+                # Nothing cached; with no listener previously, there shouldn't be new failures
+                logger.debug("no_cached_recovery_for_service", service_name=service_name)
+                return
+
+            logger.debug(
+                "recovering_unhandled_envelopes_on_listen",
+                service_name=service_name,
+                count=len(envelopes),
+                envelope_ids=[env.envelope_id for env in envelopes],
             )
+
+            # Run the existing recovery path
+            await self._recover_service_envelopes(service_name, envelopes)
 
     async def _recover_service_envelopes(self, service_name: str, envelopes: list[TrackedEnvelope]) -> None:
         """
@@ -384,6 +428,12 @@ class EnvelopeListenerManager(TaskSpawner):
         if handler:
             async with self._service_handlers_lock:
                 self._service_handlers[service_name] = handler
+
+            # Trigger deferred recovery for this service now that we have a handler
+            self.spawn(
+                self._recover_service_if_needed(service_name),
+                name=f"recover-on-listen-{service_name}",
+            )
 
         # Set up shared state for stopping the polling loop
         state: dict[str, bool] = {"stopped": False}
