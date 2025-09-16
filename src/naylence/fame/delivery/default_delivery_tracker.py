@@ -437,18 +437,23 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                 self._stream_queues[envelope.id] = asyncio.Queue()
                 self._stream_done[envelope.id] = asyncio.Event()
 
-        # Calculate overall timeout - if there's a retry policy, extend beyond the initial timeout
-        if retry_policy:
-            # Estimate total time needed for all retries
-            estimated_retry_time = sum(
-                retry_policy.next_delay_ms(i) for i in range(1, retry_policy.max_retries + 1)
-            )
-            overall_timeout_ms = timeout_ms + estimated_retry_time
+        # Overall timeout is a hard cap; do not extend beyond timeout_ms
+        overall_timeout_ms = timeout_ms
+
+        # Determine the first timer checkpoint:
+        # - With a retry policy, schedule the first retry callback at its first delay
+        # - Without a retry policy, the next checkpoint is the overall timeout
+        if retry_policy and retry_policy.max_retries > 0:
+            try:
+                first_delay_ms = max(0, int(retry_policy.next_delay_ms(1)))
+            except Exception:
+                first_delay_ms = 0
+            first_checkpoint_ms = min(overall_timeout_ms, first_delay_ms)
         else:
-            overall_timeout_ms = timeout_ms
+            first_checkpoint_ms = overall_timeout_ms
 
         tracked = TrackedEnvelope(
-            timeout_at_ms=now_ms + timeout_ms,
+            timeout_at_ms=now_ms + first_checkpoint_ms,
             overall_timeout_at_ms=now_ms + overall_timeout_ms,
             expected_response_type=expected_response_type,
             created_at_ms=now_ms,
@@ -1082,7 +1087,23 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
                             next_delay_ms=next_delay_ms,
                         )
                     else:
-                        # No more retries available - timeout
+                        # No more retries available; keep waiting until the overall timeout cap
+                        if now_ms < current_tracked.overall_timeout_at_ms:
+                            current_tracked.timeout_at_ms = current_tracked.overall_timeout_at_ms
+                            await self._outbox.set(tracked.original_envelope.id, current_tracked)
+
+                            # Reschedule only to the overall timeout; no further retries will be issued
+                            await self._schedule_timer(current_tracked, retry_policy, retry_handler)
+
+                            logger.debug(
+                                "envelope_retries_exhausted_waiting_until_overall_timeout",
+                                envp_id=tracked.original_envelope.id,
+                                attempt=current_tracked.attempt,
+                                overall_timeout_at_ms=current_tracked.overall_timeout_at_ms,
+                            )
+                            return
+
+                        # Fallback: treat as timed out (should normally be handled earlier)
                         current_tracked.status = EnvelopeStatus.TIMED_OUT
                         await self._outbox.set(tracked.original_envelope.id, current_tracked)
 

@@ -532,9 +532,10 @@ class TestDefaultDeliveryTrackerTimeoutAndRetry:
         retry_handler = MockRetryEventHandler()
 
         # Track envelope with retry policy
+        # Use longer timeout to allow retries within the hard cap
         await tracker_with_fast_gc.track(
             sample_envelope,
-            timeout_ms=100,  # 100ms initial timeout
+            timeout_ms=500,  # 500ms timeout to allow retries (50ms + 100ms + buffer)
             expected_response_type=FameResponseType.ACK,
             retry_policy=retry_policy,
             retry_handler=retry_handler,
