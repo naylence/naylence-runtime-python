@@ -41,8 +41,6 @@ logger = getLogger(__name__)
 ENV_VAR_SHOW_ENVELOPES = "FAME_SHOW_ENVELOPES"
 ENV_VAR_FAME_FLOW_CONTROL = "FAME_FLOW_CONTROL"
 
-show_envelopes = bool(os.getenv(ENV_VAR_SHOW_ENVELOPES) == "true")
-
 FLOW_CONTROL_ENABLED = os.getenv(ENV_VAR_FAME_FLOW_CONTROL, "1") != "0"
 _STOP_SENTINEL: Any = object()
 
@@ -339,7 +337,7 @@ class BaseAsyncConnector(FameConnector, TaskSpawner, ABC):
                 message_context: FameDeliveryContext | None = None
                 if isinstance(message, FameEnvelope):
                     env = message
-                if isinstance(message, FameChannelMessage):
+                elif isinstance(message, FameChannelMessage):
                     env = message.envelope
                     message_context = message.context
                 elif isinstance(message, bytes):
@@ -351,12 +349,18 @@ class BaseAsyncConnector(FameConnector, TaskSpawner, ABC):
                     except Exception as e:
                         logger.error(f"Invalid envelope: {message}, error: {e}")
                         raise
+                elif isinstance(message, FameTransportClose):
+                    # Transport close - initiate shutdown
+                    await self._shutdown_with_error(message, code=message.code, reason=message.reason)
+                    return
                 else:
-                    raise TypeError(f"Expected FameEnvelope or bytes, got {type(message)}")
+                    raise TypeError(
+                        f"Expected FameEnvelope, bytes, or FameTransportClose, got {type(message)}"
+                    )
 
                 with envelope_context(env):
                     logger.trace(f"connector_received_envelope {pretty_model(env)}\n")
-                    if show_envelopes:
+                    if bool(os.getenv(ENV_VAR_SHOW_ENVELOPES) == "true"):
                         print(
                             f"\n{_timestamp()} - {color('Received envelope 📨', AnsiColor.BLUE)}\n{
                                 pretty_model(env)

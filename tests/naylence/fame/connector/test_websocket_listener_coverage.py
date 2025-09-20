@@ -1,19 +1,3 @@
-"""
-Comprehensive test suite for WebSocketListener to improve coverage from 42.11%.
-
-This test suite targets the largest coverage gaps systematically:
-1. Lines 205-358 (154 lines): websocket_attach_handler method
-- authentication, authorization, error handling
-2. Lines 392-409 (18 lines): _create_websocket_connector method
-3. Lines 181-190 (10 lines): Additional property/method coverage
-4. Lines 115-121 (7 lines): as_callback_grant method
-5. Line 67: on_node_initialized early return path
-6. Line 148: upstream_endpoint property
-7. Line 422: get_websocket_connector function
-
-Following systematic largest-gap-first approach to maximize coverage improvement.
-"""
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
