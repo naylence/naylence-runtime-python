@@ -1,3 +1,4 @@
+import asyncio
 import threading
 import time
 
@@ -125,7 +126,8 @@ def real_mcp_endpoint(free_tcp_port_factory):
 
 @pytest_asyncio.fixture
 async def mcp_service_with_real(real_mcp_endpoint):
-    svc = DefaultMCPHostService(fake_send)
+    # Pass fake_send as sender to prevent Node infrastructure initialization
+    svc = DefaultMCPHostService(sender=fake_send)
     await svc.register_server(
         name="real",
         endpoint=real_mcp_endpoint,
@@ -135,9 +137,21 @@ async def mcp_service_with_real(real_mcp_endpoint):
     try:
         yield svc
     finally:
-        # cancel the background eviction loop so pytest can exit cleanly
-        assert svc._evict_task
-        svc._evict_task.cancel()
+        # Simplified cleanup - no need for Node infrastructure cleanup
+        try:
+            # Cancel eviction task
+            if hasattr(svc, "_evict_task") and svc._evict_task and not svc._evict_task.done():
+                svc._evict_task.cancel()
+                try:
+                    await svc._evict_task
+                except asyncio.CancelledError:
+                    pass
+
+            # Close service sessions
+            await svc.close()
+        except Exception:
+            # Ignore cleanup errors during test teardown
+            pass
 
 
 @pytest.mark.asyncio

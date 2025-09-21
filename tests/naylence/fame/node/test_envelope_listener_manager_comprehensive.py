@@ -73,14 +73,17 @@ class TestEnvelopeListenerManager:
         }
 
     @pytest.fixture
-    def manager(self, mock_components):
+    async def manager(self, mock_components):
         """Create EnvelopeListenerManager instance with mocked components."""
-        return EnvelopeListenerManager(
+        manager_instance = EnvelopeListenerManager(
             binding_manager=mock_components["binding_manager"],
             node_like=mock_components["node_like"],
             envelope_factory=mock_components["envelope_factory"],
             delivery_tracker=mock_components["delivery_tracker"],
         )
+        yield manager_instance
+        # Cleanup: ensure background tasks are properly stopped
+        await manager_instance.stop()
 
     @pytest.mark.asyncio
     async def test_start_with_recovery(self, manager):
@@ -279,7 +282,9 @@ class TestEnvelopeListenerManager:
 
         # Mock the component methods that exist
         with patch.object(manager._channel_polling_manager, "start_polling_loop") as mock_polling:
-            with patch.object(manager, "_recover_service_if_needed") as mock_recovery:
+            with patch.object(
+                manager, "_recover_service_if_needed", new_callable=AsyncMock
+            ) as mock_recovery:
                 # Create a mock task for the listener
                 mock_task = Mock()
                 mock_task.get_name.return_value = "test-task"
@@ -303,11 +308,14 @@ class TestEnvelopeListenerManagerAdditionalCoverage:
     """Additional tests to reach 95% coverage"""
 
     @pytest.fixture
-    def manager(self):
+    async def manager(self):
         """Create a properly configured manager instance"""
-        return EnvelopeListenerManager(
+        manager_instance = EnvelopeListenerManager(
             binding_manager=Mock(), node_like=Mock(), envelope_factory=Mock(), delivery_tracker=Mock()
         )
+        yield manager_instance
+        # Cleanup: ensure background tasks are properly stopped
+        await manager_instance.stop()
 
     @pytest.fixture
     def mock_components(self):
@@ -413,8 +421,14 @@ class TestEnvelopeListenerManagerAdditionalCoverage:
         # Mock handler and spawner
         test_handler = Mock()
 
-        # Mock the spawn method since manager inherits from TaskSpawner
-        manager.spawn = Mock()
+        # Mock the spawn method to properly handle coroutines instead of just Mock()
+        def mock_spawn(coro, name=None):
+            # Need to consume the coroutine to avoid unawaited warnings
+            if hasattr(coro, "close"):
+                coro.close()
+            return Mock()  # Return a mock task
+
+        manager.spawn = Mock(side_effect=mock_spawn)
 
         # Test the listen method
         result = await manager.listen(
@@ -444,14 +458,16 @@ class TestEnvelopeListenerManagerAdditionalCoverage:
             binding_manager=Mock(), node_like=Mock(), envelope_factory=Mock(), delivery_tracker=Mock()
         )
 
-        # Create mock listeners
+        # Create mock listeners with proper task structure
         listener1 = Mock()
         listener1.task = Mock()
-        listener1.stop = Mock()
+        listener1.task.cancel = Mock()
+        listener1.stop = Mock()  # Synchronous stop method
 
         listener2 = Mock()
         listener2.task = Mock()
-        listener2.stop = Mock()
+        listener2.task.cancel = Mock()
+        listener2.stop = Mock()  # Synchronous stop method
 
         # Add listeners to manager
         async with manager._listeners_lock:
@@ -484,8 +500,8 @@ class TestEnvelopeListenerManagerAdditionalCoverage:
         envelope = Mock()
         context = Mock()
 
-        # Mock the _execute_handler_with_retries method if it exists
-        with patch.object(manager, "_execute_handler_with_retries", return_value=None):
+        # Mock the _execute_handler_with_retries method if it exists - use AsyncMock for async method
+        with patch.object(manager, "_execute_handler_with_retries", new=AsyncMock(return_value=None)):
             result = await manager._execute_handler_with_retries(slow_handler, envelope, context)
 
             # Should eventually fail after retries
@@ -734,7 +750,7 @@ class TestEnvelopeListenerManagerIntegration:
     """Integration tests for EnvelopeListenerManager with component interactions."""
 
     @pytest.fixture
-    def full_manager(self):
+    async def full_manager(self):
         """Create a manager with real component mocks."""
         binding_manager = Mock(spec=BindingManager)
         node_like = Mock(spec=NodeLike)
@@ -755,7 +771,16 @@ class TestEnvelopeListenerManagerIntegration:
         manager._response_context_manager = Mock(spec=ResponseContextManager)
         manager._streaming_response_handler = Mock(spec=StreamingResponseHandler)
 
-        return manager
+        try:
+            yield manager
+        finally:
+            # Cleanup: ensure background tasks are properly stopped
+            try:
+                await manager.stop()
+            except Exception:
+                # Ignore cleanup errors
+                pass
+        await manager.stop()
 
     @pytest.mark.asyncio
     async def test_full_listen_workflow(self, full_manager):
@@ -770,7 +795,9 @@ class TestEnvelopeListenerManagerIntegration:
         full_manager._rpc_server_handler.handle_envelope = AsyncMock()
 
         # Mock recovery
-        with patch.object(full_manager, "_recover_service_if_needed") as mock_recovery:
+        with patch.object(
+            full_manager, "_recover_service_if_needed", new_callable=AsyncMock
+        ) as mock_recovery:
             # Register the handler directly for testing
             async with full_manager._service_handlers_lock:
                 full_manager._service_handlers["test-service"] = test_handler

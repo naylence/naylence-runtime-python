@@ -124,7 +124,12 @@ class TestWebSocketListenerLargestGaps:
         """Test websocket_attach_handler authentication failure - covers lines 261-282."""
         # Setup authorizer to return None (authentication failed)
         mock_authorizer = AsyncMock(spec=Authorizer)
-        mock_authorizer.authenticate.return_value = None
+
+        # Create async function that returns None
+        async def auth_failed(*args, **kwargs):
+            return None
+
+        mock_authorizer.authenticate = auth_failed
 
         listener = WebSocketListener(
             http_server=websocket_listener._http_server, authorizer=mock_authorizer
@@ -151,9 +156,13 @@ class TestWebSocketListenerLargestGaps:
         self, websocket_listener, mock_node, mock_websocket
     ):
         """Test websocket_attach_handler authorization exception - covers lines 290-309."""
+
         # Setup authorizer to raise exception
+        async def auth_error(*args, **kwargs):
+            raise RuntimeError("Auth error")
+
         mock_authorizer = AsyncMock(spec=Authorizer)
-        mock_authorizer.authenticate.side_effect = RuntimeError("Auth error")
+        mock_authorizer.authenticate.side_effect = auth_error
 
         listener = WebSocketListener(
             http_server=websocket_listener._http_server, authorizer=mock_authorizer

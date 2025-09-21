@@ -34,7 +34,7 @@ async def test_root_path_encryption_key_lookup():
     )
 
     try:
-        kid, pub_key_bytes = policy._lookup_recipient_encryption_key(envelope.to)
+        kid, pub_key_bytes = await policy._lookup_recipient_encryption_key(envelope.to)
         print(f"❌ Expected exception but got: {kid}, {pub_key_bytes}")
         return False
 
@@ -72,7 +72,7 @@ async def test_regular_path_encryption_key_lookup():
     )
 
     try:
-        kid, pub_key_bytes = policy._lookup_recipient_encryption_key(envelope.to)
+        kid, pub_key_bytes = await policy._lookup_recipient_encryption_key(envelope.to)
         print(f"❌ Expected exception but got: {kid}, {pub_key_bytes}")
         return False
     except ValueError as e:

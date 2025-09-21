@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Iterable
 
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ class JWKEntry(BaseModel):
     jwk: dict[str, Any]  # as received
     sid: str | None = None
     physical_path: str | None = None
-    inserted_at: datetime = Field(default_factory=datetime.utcnow)
+    inserted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class StorageBackedKeyStore(KeyStore):

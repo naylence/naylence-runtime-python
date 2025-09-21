@@ -3,20 +3,20 @@ from typing import Any, Optional
 from naylence.fame.factory import ExtensionManager, ResourceConfig, ResourceFactory
 
 
-class TestResource:
+class SystemResource:
     """Test resource type."""
 
     def __init__(self, name: str):
         self.name = name
 
 
-class TestResourceFactory(ResourceFactory[TestResource, ResourceConfig]):
+class SystemResourceFactory(ResourceFactory[SystemResource, ResourceConfig]):
     """Base factory interface for test resources."""
 
     pass
 
 
-class BasicTestFactory(TestResourceFactory):
+class BasicTestFactory(SystemResourceFactory):
     """Basic implementation with lower priority."""
 
     type = "basic"
@@ -25,11 +25,11 @@ class BasicTestFactory(TestResourceFactory):
 
     async def create(
         self, config: Optional[ResourceConfig | dict[str, Any]] = None, **kwargs: Any
-    ) -> TestResource:
-        return TestResource("basic")
+    ) -> SystemResource:
+        return SystemResource("basic")
 
 
-class AdvancedTestFactory(TestResourceFactory):
+class AdvancedTestFactory(SystemResourceFactory):
     """Advanced implementation with higher priority."""
 
     type = "advanced"
@@ -38,15 +38,15 @@ class AdvancedTestFactory(TestResourceFactory):
 
     async def create(
         self, config: Optional[ResourceConfig | dict[str, Any]] = None, **kwargs: Any
-    ) -> TestResource:
-        return TestResource("advanced")
+    ) -> SystemResource:
+        return SystemResource("advanced")
 
 
 def test_priority_selection():
     """Test that the priority system selects the highest priority default."""
 
     # Create a test extension manager
-    mgr = ExtensionManager(group="test.TestResourceFactory", base_type=TestResourceFactory)
+    mgr = ExtensionManager(group="test.SystemResourceFactory", base_type=SystemResourceFactory)
 
     # Manually register our test factories (simulating entry point loading)
     mgr._registry["basic"] = BasicTestFactory
@@ -64,17 +64,17 @@ def test_priority_selection():
     # Should select the advanced factory due to higher priority
     if factory_type == "advanced":
         print(f"✅ Correctly selected advanced factory (type: {factory_type})")
-        return True
+        assert True  # Test passed
     else:
         print(f"❌ Selected wrong factory (type: {factory_type}), expected 'advanced'")
-        return False
+        assert False, f"Selected wrong factory (type: {factory_type}), expected 'advanced'"
 
 
 def test_only_basic_available():
     """Test that basic factory is selected when advanced is not available."""
 
     # Create a test extension manager with only basic factory
-    mgr = ExtensionManager(group="test.BasicOnlyFactory", base_type=TestResourceFactory)
+    mgr = ExtensionManager(group="test.BasicOnlyFactory", base_type=SystemResourceFactory)
     mgr._registry["basic"] = BasicTestFactory
 
     # Test the best default selection
@@ -89,17 +89,17 @@ def test_only_basic_available():
     # Should select the basic factory since it's the only one available
     if factory_type == "basic":
         print(f"✅ Correctly selected basic factory when only option (type: {factory_type})")
-        return True
+        assert True  # Test passed
     else:
         print(f"❌ Selected wrong factory (type: {factory_type}), expected 'basic'")
-        return False
+        assert False, f"Selected wrong factory (type: {factory_type}), expected 'basic'"
 
 
 def test_fallback_compatibility():
     """Test that the old method still works for backward compatibility."""
 
     # Create a test extension manager
-    mgr = ExtensionManager(group="test.FallbackFactory", base_type=TestResourceFactory)
+    mgr = ExtensionManager(group="test.FallbackFactory", base_type=SystemResourceFactory)
     mgr._registry["basic"] = BasicTestFactory
     mgr._registry["advanced"] = AdvancedTestFactory
 
@@ -115,10 +115,10 @@ def test_fallback_compatibility():
     # Should find a default (may warn about multiple)
     if factory_type in ["basic", "advanced"]:
         print(f"✅ Legacy method found default factory (type: {factory_type})")
-        return True
+        assert True  # Test passed
     else:
         print(f"❌ Legacy method failed (type: {factory_type})")
-        return False
+        assert False, f"Legacy method failed (type: {factory_type})"
 
 
 if __name__ == "__main__":

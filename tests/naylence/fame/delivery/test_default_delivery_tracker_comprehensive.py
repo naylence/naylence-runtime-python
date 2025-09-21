@@ -1280,13 +1280,17 @@ class TestDefaultDeliveryTrackerValidationAndEdgeCases:
             sample_envelope, timeout_ms=10000, expected_response_type=FameResponseType.ACK
         )
 
-        # Test with custom timeout
-        future = tracker_with_fast_gc.await_ack(sample_envelope.id, timeout_ms=1000)
-        assert future is not None
+        # Test with custom timeout - create task to avoid unawaited coroutine warning
+        task1 = asyncio.create_task(tracker_with_fast_gc.await_ack(sample_envelope.id, timeout_ms=1000))
+        assert task1 is not None
 
-        # Test without timeout
-        future2 = tracker_with_fast_gc.await_ack(sample_envelope.id)
-        assert future2 is not None
+        # Test without timeout - create task to avoid unawaited coroutine warning
+        task2 = asyncio.create_task(tracker_with_fast_gc.await_ack(sample_envelope.id))
+        assert task2 is not None
+
+        # Cancel the tasks to clean up
+        task1.cancel()
+        task2.cancel()
 
     @pytest.mark.asyncio
     async def test_envelope_delivered_without_corr_id(self, tracker_with_fast_gc):

@@ -70,7 +70,7 @@ class SQLiteKeyValueStore(KeyValueStore[V], Generic[V]):
         """
         Move the DB and its sidecar files (-wal, -shm) aside with a timestamp suffix.
         """
-        ts = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         base = Path(self._db_path)
         candidates = [base, Path(str(base) + "-wal"), Path(str(base) + "-shm")]
         for p in candidates:

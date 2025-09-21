@@ -1018,7 +1018,14 @@ class TestSentinelComprehensive:
 
         # Mock spawn to return a task that raises an exception
         error_task = asyncio.create_task(self._failing_coroutine())
-        sentinel.spawn = MagicMock(return_value=error_task)
+
+        def mock_spawn(coro, **kwargs):
+            # Close the original coroutine to avoid unawaited warning
+            if hasattr(coro, "close"):
+                coro.close()
+            return error_task
+
+        sentinel.spawn = mock_spawn
 
         # Should re-raise the exception
         with pytest.raises(RuntimeError, match="Test error"):

@@ -27,14 +27,14 @@ def test_polymorphic_deserialization():
         # Verify it has the correct structure
         if isinstance(result, dict) and "type" in result and "params" in result:
             print("✓ Dict-based connector directive works correctly")
-            return True
+            assert True  # Test passed
         else:
             print(f"✗ Wrong structure: {result}")
-            return False
+            assert False, f"Wrong structure: {result}"
 
     except Exception as e:
         print(f"✗ Dict processing failed: {e}")
-        return False
+        assert False, f"Dict processing failed: {e}"
 
 
 def test_direct_instantiation():
@@ -52,12 +52,12 @@ def test_direct_instantiation():
             print(f"✓ Direct result type field: {result['type']}")
         else:
             print("✗ Direct result has no type field")
-            return False
-        return True
+            assert False, "Direct result has no type field"
+        assert True  # Test passed
 
     except Exception as e:
         print(f"✗ Direct instantiation failed: {e}")
-        return False
+        assert False, f"Direct instantiation failed: {e}"
 
 
 if __name__ == "__main__":

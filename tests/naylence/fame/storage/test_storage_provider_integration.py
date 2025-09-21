@@ -15,7 +15,7 @@ from naylence.fame.node.node_config import FameNodeConfig
 from naylence.fame.node.node_factory import NodeFactory
 
 
-class TestModel(BaseModel):
+class StorageModel(BaseModel):
     """Test model for storage provider testing."""
 
     name: str
@@ -45,11 +45,11 @@ async def test_storage_provider_integration():
     )
 
     # Test that we can get a key-value store
-    kv_store = await node.storage_provider.get_kv_store(TestModel, namespace="test")
+    kv_store = await node.storage_provider.get_kv_store(StorageModel, namespace="test")
     assert kv_store is not None, "Should get KV store"
 
     # Test basic store operations
-    test_obj = TestModel(name="test", value=42)
+    test_obj = StorageModel(name="test", value=42)
     await kv_store.set("key1", test_obj)
 
     retrieved = await kv_store.get("key1")
@@ -98,12 +98,12 @@ async def test_storage_provider_kv_store_namespaces():
     await node.start()  # Start the node to initialize delivery tracker
 
     # Get stores for different namespaces
-    store1 = await node.storage_provider.get_kv_store(TestModel, namespace="ns1")
-    store2 = await node.storage_provider.get_kv_store(TestModel, namespace="ns2")
+    store1 = await node.storage_provider.get_kv_store(StorageModel, namespace="ns1")
+    store2 = await node.storage_provider.get_kv_store(StorageModel, namespace="ns2")
 
     # Store different values in each namespace
-    obj1 = TestModel(name="obj1", value=1)
-    obj2 = TestModel(name="obj2", value=2)
+    obj1 = StorageModel(name="obj1", value=1)
+    obj2 = StorageModel(name="obj2", value=2)
 
     await store1.set("key", obj1)
     await store2.set("key", obj2)
@@ -140,11 +140,11 @@ async def test_storage_provider_multiple_model_types():
     await node.start()  # Start the node to initialize delivery tracker
 
     # Get stores for different model types
-    test_store = await node.storage_provider.get_kv_store(TestModel, namespace="test")
+    test_store = await node.storage_provider.get_kv_store(StorageModel, namespace="test")
     another_store = await node.storage_provider.get_kv_store(AnotherModel, namespace="test")
 
     # Store different model types
-    test_obj = TestModel(name="test", value=42)
+    test_obj = StorageModel(name="test", value=42)
     another_obj = AnotherModel(description="another", count=10)
 
     await test_store.set("key1", test_obj)

@@ -167,91 +167,110 @@ async def test_credit_round_trip():
     os.environ["FAME_FLOW_CONTROL"] = "1"
     print()
 
-    # make two in‐process routing nodes
-    cfg_a = SentinelConfig.model_validate(
-        {
-            "mode": "dev",
-            "requested_logicals": [],
-            "is_router": True,
-        },
-        by_alias=True,
-    )
-    nodeA: Sentinel = await NodeLikeFactory.create_node(cfg_a)  # type: ignore
-    nodeA._id = generate_id()
-    await nodeA.start()
+    nodeA = None
+    nodeB = None
+    connAB = None
+    connBA = None
 
-    cfg_b = SentinelConfig.model_validate(
-        {
-            "mode": "dev",
-            "requested_logicals": [],
-            "is_router": True,
-        },
-        by_alias=True,
-    )
-    nodeB: Sentinel = await NodeLikeFactory.create_node(cfg_b)  # type: ignore
-    nodeB._id = generate_id()
-    await nodeB.start()
+    try:
+        # make two in‐process routing nodes
+        cfg_a = SentinelConfig.model_validate(
+            {
+                "mode": "dev",
+                "requested_logicals": [],
+                "is_router": True,
+            },
+            by_alias=True,
+        )
+        nodeA: Sentinel = await NodeLikeFactory.create_node(cfg_a)  # type: ignore
+        nodeA._id = generate_id()
+        await nodeA.start()
 
-    initial_window = 2  # 32
+        cfg_b = SentinelConfig.model_validate(
+            {
+                "mode": "dev",
+                "requested_logicals": [],
+                "is_router": True,
+            },
+            by_alias=True,
+        )
+        nodeB: Sentinel = await NodeLikeFactory.create_node(cfg_b)  # type: ignore
+        nodeB._id = generate_id()
+        await nodeB.start()
 
-    # wire them together with a loopback connector pair
-    # connAB, connBA = loopback_pair(initial_window=initial_window)
+        initial_window = 2  # 32
 
-    (out1, in1), (out2, in2) = _linked_queues()
-    connAB = LoopbackConnector("A->B", out1, in1, initial_window=initial_window)
-    connBA = LoopbackConnector("B->A", out2, in2, initial_window=initial_window)
+        # wire them together with a loopback connector pair
+        # connAB, connBA = loopback_pair(initial_window=initial_window)
 
-    await connAB.start(lambda env, ctx=None: nodeB.deliver(env, ctx))
+        (out1, in1), (out2, in2) = _linked_queues()
+        connAB = LoopbackConnector("A->B", out1, in1, initial_window=initial_window)
+        connBA = LoopbackConnector("B->A", out2, in2, initial_window=initial_window)
 
-    async def slow_handler(env, ctx=None):
-        # simulate slow processing (e.g. disk write, DB call, etc.)
-        await asyncio.sleep(0.5)
-        # you could also forward to the router if you like:
-        # await nodeA.deliver(env, ctx)
+        await connAB.start(lambda env, ctx=None: nodeB.deliver(env, ctx))
 
-    await connBA.start(slow_handler)
+        async def slow_handler(env, ctx=None):
+            # simulate slow processing (e.g. disk write, DB call, etc.)
+            await asyncio.sleep(0.5)
+            # you could also forward to the router if you like:
+            # await nodeA.deliver(env, ctx)
 
-    # register routes so each router knows how to reach the other
-    await nodeA._route_manager.register_downstream_route("B", connAB)
-    await nodeB._route_manager.register_downstream_route("A", connBA)
+        await connBA.start(slow_handler)
 
-    # prepare 3× the initial‐window of envelopes
+        # register routes so each router knows how to reach the other
+        await nodeA._route_manager.register_downstream_route("B", connAB)
+        await nodeB._route_manager.register_downstream_route("A", connBA)
 
-    envelopes = [
-        create_fame_envelope(frame=DataFrame(payload=f"msg{i}"))  # type: ignore
-        for i in range(initial_window * 3)
-    ]
+        # prepare 3× the initial‐window of envelopes
 
-    # fire off a producer that will eventually hit back‐pressure
-    async def producer():
-        for env in envelopes:
-            await connAB.send(env)
+        envelopes = [
+            create_fame_envelope(frame=DataFrame(payload=f"msg{i}"))  # type: ignore
+            for i in range(initial_window * 3)
+        ]
 
-    print(f"\nTotal messages sent: {len(envelopes)}")
-    prod_task = asyncio.create_task(producer())
+        # fire off a producer that will eventually hit back‐pressure
+        async def producer():
+            for env in envelopes:
+                await connAB.send(env)
 
-    # give it a moment to send the first `initial_window` messages and then block
-    await asyncio.sleep(0.1)
-    print("Ensuring the producer is blocked by flow-control")
-    assert not prod_task.done(), "Producer should be blocked by flow-control"
+        print(f"\nTotal messages sent: {len(envelopes)}")
+        prod_task = asyncio.create_task(producer())
 
-    print("Wait *longer* than the handler delay so B can catch up and ACK")
-    # 5) Wait *longer* than the handler delay so B can catch up and ACK
-    await asyncio.sleep(0.6)
+        # give it a moment to send the first `initial_window` messages and then block
+        await asyncio.sleep(0.1)
+        print("Ensuring the producer is blocked by flow-control")
+        assert not prod_task.done(), "Producer should be blocked by flow-control"
 
-    # after credit updates make it back to A, the producer unblocks and completes
-    print("Waiting for the producer to unblock and complete")
-    await prod_task
+        print("Wait *longer* than the handler delay so B can catch up and ACK")
+        # 5) Wait *longer* than the handler delay so B can catch up and ACK
+        await asyncio.sleep(0.6)
 
-    # cleanly shut everything down
-    print("Stopping node A")
-    await nodeA.stop()
-    print("Stopping node B")
-    await nodeB.stop()
-    print("Stopping connector AB")
-    await connAB.stop()
-    print("Stopping connector BA")
-    await connBA.stop()
+        # after credit updates make it back to A, the producer unblocks and completes
+        print("Waiting for the producer to unblock and complete")
+        await prod_task
+
+    finally:
+        # Enhanced cleanup to prevent warnings
+        if connAB:
+            try:
+                await connAB.close()
+            except Exception:
+                pass
+        if connBA:
+            try:
+                await connBA.close()
+            except Exception:
+                pass
+        if nodeA:
+            try:
+                await nodeA.stop()
+            except Exception:
+                pass
+        if nodeB:
+            try:
+                await nodeB.stop()
+            except Exception:
+                pass
 
 
 # 1) __init__ should reject non‐positive windows

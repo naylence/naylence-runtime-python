@@ -68,7 +68,7 @@ class EncryptedInMemoryStorageProvider(EncryptedStorageProviderBase):
         return await self._underlying_provider.get_kv_store(model_cls, namespace)
 
 
-class TestData(BaseModel):
+class StorageTestData(BaseModel):
     """Test model for storage."""
 
     id: str
@@ -84,10 +84,10 @@ async def test_encrypted_storage():
     provider = EncryptedInMemoryStorageProvider("my-secret-password-123")
 
     # Get a key-value store for our test data
-    kv_store = await provider.get_kv_store(TestData, namespace="test")
+    kv_store = await provider.get_kv_store(StorageTestData, namespace="test")
 
     # Test data
-    test_item = TestData(id="test-1", name="Test Item", secret="This is sensitive data!", count=42)
+    test_item = StorageTestData(id="test-1", name="Test Item", secret="This is sensitive data!", count=42)
 
     # Store the data (should be encrypted)
     await kv_store.set("item1", test_item)
@@ -105,7 +105,7 @@ async def test_encrypted_storage():
 async def test_encrypted_storage_missing_keys():
     """Test that non-existent keys return None."""
     provider = EncryptedInMemoryStorageProvider("my-secret-password-123")
-    kv_store = await provider.get_kv_store(TestData, namespace="test")
+    kv_store = await provider.get_kv_store(StorageTestData, namespace="test")
 
     # Test that non-existent keys return None
     missing = await kv_store.get("nonexistent")
@@ -116,18 +116,18 @@ async def test_encrypted_storage_missing_keys():
 async def test_encrypted_storage_different_types():
     """Test storing different types of data."""
     provider = EncryptedInMemoryStorageProvider("test-password")
-    kv_store = await provider.get_kv_store(TestData, namespace="types")
+    kv_store = await provider.get_kv_store(StorageTestData, namespace="types")
 
     # Test with various data values
     test_cases = [
-        TestData(id="empty", name="", secret="", count=0),
-        TestData(
+        StorageTestData(id="empty", name="", secret="", count=0),
+        StorageTestData(
             id="special",
             name="Special Chars: !@#$%^&*()",
             secret="Unicode: café ñoño",
             count=-1,
         ),
-        TestData(id="large", name="Large Data", secret="x" * 1000, count=999999),
+        StorageTestData(id="large", name="Large Data", secret="x" * 1000, count=999999),
     ]
 
     for i, test_item in enumerate(test_cases):
@@ -148,12 +148,12 @@ async def test_encrypted_storage_multiple_namespaces():
     provider = EncryptedInMemoryStorageProvider("test-password")
 
     # Get stores for different namespaces
-    store1 = await provider.get_kv_store(TestData, namespace="ns1")
-    store2 = await provider.get_kv_store(TestData, namespace="ns2")
+    store1 = await provider.get_kv_store(StorageTestData, namespace="ns1")
+    store2 = await provider.get_kv_store(StorageTestData, namespace="ns2")
 
     # Store data in both namespaces using the same key
-    data1 = TestData(id="1", name="Namespace 1", secret="Secret 1", count=1)
-    data2 = TestData(id="2", name="Namespace 2", secret="Secret 2", count=2)
+    data1 = StorageTestData(id="1", name="Namespace 1", secret="Secret 1", count=1)
+    data2 = StorageTestData(id="2", name="Namespace 2", secret="Secret 2", count=2)
 
     await store1.set("shared_key", data1)
     await store2.set("shared_key", data2)
@@ -171,14 +171,14 @@ async def test_encrypted_storage_multiple_namespaces():
 async def test_encrypted_storage_update_operations():
     """Test updating existing items."""
     provider = EncryptedInMemoryStorageProvider("test-password")
-    kv_store = await provider.get_kv_store(TestData, namespace="updates")
+    kv_store = await provider.get_kv_store(StorageTestData, namespace="updates")
 
     # Store initial data
-    original = TestData(id="update_test", name="Original", secret="Original Secret", count=1)
+    original = StorageTestData(id="update_test", name="Original", secret="Original Secret", count=1)
     await kv_store.set("update_key", original)
 
     # Update the data
-    updated = TestData(id="update_test", name="Updated", secret="Updated Secret", count=2)
+    updated = StorageTestData(id="update_test", name="Updated", secret="Updated Secret", count=2)
     await kv_store.set("update_key", updated)
 
     # Retrieve and verify update

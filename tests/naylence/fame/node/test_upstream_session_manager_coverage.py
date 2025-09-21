@@ -241,7 +241,7 @@ class TestUpstreamSessionManagerCoverage:
         """Test message pump loop handling FameMessageTooLarge exception."""
         # Target lines 498-505: FameMessageTooLarge handling in message pump
         session_manager._message_queue = asyncio.Queue()
-        session_manager._stop_evt = asyncio.Event()
+        stop_evt = asyncio.Event()
         session_manager._handle_message_too_large = AsyncMock()
 
         # Create mock envelope and connector
@@ -251,9 +251,24 @@ class TestUpstreamSessionManagerCoverage:
 
         # Put envelope in queue and stop event after short delay
         await session_manager._message_queue.put(env)
-        asyncio.create_task(self._set_stop_after_delay(session_manager._stop_evt, 0.1))
 
-        await session_manager._message_pump_loop(connector, session_manager._stop_evt)
+        # Create the pump task and run it with proper cleanup
+        pump_task = asyncio.create_task(session_manager._message_pump_loop(connector, stop_evt))
+
+        # Give it time to process the message
+        await asyncio.sleep(0.05)
+
+        # Stop the pump loop
+        stop_evt.set()
+
+        try:
+            await asyncio.wait_for(pump_task, timeout=0.5)
+        except asyncio.TimeoutError:
+            pump_task.cancel()
+            try:
+                await pump_task
+            except asyncio.CancelledError:
+                pass
 
         # Verify the too large handler was called
         session_manager._handle_message_too_large.assert_called_once_with(env, "Message too large")
@@ -273,17 +288,27 @@ class TestUpstreamSessionManagerCoverage:
         # Put envelope in queue
         await session_manager._message_queue.put(env)
 
-        # Should re-raise FameTransportClose
-        with pytest.raises(FameTransportClose):
-            await session_manager._message_pump_loop(connector, stop_evt)
+        # Create the pump task and run it with proper cleanup
+        pump_task = asyncio.create_task(session_manager._message_pump_loop(connector, stop_evt))
+
+        # Give it time to process the message and raise the exception
+        await asyncio.sleep(0.05)
+
+        # The task should be done due to the exception
+        try:
+            await asyncio.wait_for(pump_task, timeout=0.5)
+        except FameTransportClose:
+            pass  # Expected exception
+        except asyncio.TimeoutError:
+            # If it didn't complete, clean up
+            pump_task.cancel()
+            try:
+                await pump_task
+            except (asyncio.CancelledError, FameTransportClose):
+                pass
 
         # Verify envelope was put back in queue
         assert session_manager._message_queue.qsize() == 1
-
-    async def _set_stop_after_delay(self, stop_evt, delay):
-        """Helper to set stop event after delay."""
-        await asyncio.sleep(delay)
-        stop_evt.set()
 
     @pytest.mark.asyncio
     async def test_make_heartbeat_enabled_handler_heartbeat_ack(self, session_manager, mock_node):

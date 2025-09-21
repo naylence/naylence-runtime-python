@@ -397,10 +397,16 @@ class TestDefaultDeliveryTrackerFinalCoverage:
     @pytest.mark.asyncio
     async def test_on_node_started_exception_in_setup(self, tracker):
         """Test on_node_started when _sweep_futures spawn raises exception."""
-        # Mock the spawn method to raise exception
+        # Mock the spawn method to raise exception - but first await any coroutines to avoid warnings
         from unittest.mock import Mock
 
-        tracker.spawn = Mock(side_effect=Exception("Spawn error"))
+        def mock_spawn(coro, **kwargs):
+            # Cancel/close the coroutine to avoid unawaited warning
+            if hasattr(coro, "close"):
+                coro.close()
+            raise Exception("Spawn error")
+
+        tracker.spawn = Mock(side_effect=mock_spawn)
 
         # Create a mock node
         class MockNode:

@@ -34,14 +34,14 @@ def test_polymorphic_deserialization():
 
         if not isinstance(connector, dict):
             print("❌ Dict processing is broken!")
-            return False
+            assert False, "Dict processing is broken!"
 
     except Exception as e:
         print(f"❌ Dict processing failed: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        assert False, f"Dict processing failed: {e}"
 
     # Test 2: JSON deserialization should also work with dict format
     print("\n2. Testing dict creation from JSON...")
@@ -54,14 +54,14 @@ def test_polymorphic_deserialization():
 
         if not isinstance(connector_from_json, dict):
             print("❌ JSON dict processing is broken!")
-            return False
+            assert False, "JSON dict processing is broken!"
 
     except Exception as e:
         print(f"❌ JSON dict processing failed: {e}")
-        return False
+        assert False, f"JSON dict processing failed: {e}"
 
     print("✓ Dict processing is working correctly!")
-    return True
+    assert True  # Test passed
 
 
 def test_direct_instantiation():
@@ -87,14 +87,14 @@ def test_direct_instantiation():
         # This should be a dict
         if not isinstance(connector, dict):
             print("❌ Direct dict creation still broken!")
-            return False
+            assert False, "Direct dict creation still broken!"
 
     except Exception as e:
         print(f"❌ Direct dict creation failed: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        assert False, f"Direct dict creation failed: {e}"
 
     # Test 2: DirectNodeAdmissionConfig with callback_grants
     print("\n2. Testing DirectNodeAdmissionConfig with dict format...")
@@ -129,21 +129,21 @@ def test_direct_instantiation():
                 print(f"  ✓ Connector {i + 1}: {conn['type']}")
 
         if not all_good:
-            return False
+            assert False, "Some connectors are empty"
 
         # Test JSON round trip
         json_str = config.model_dump_json()
         DirectNodeAdmissionConfig.model_validate_json(json_str)
         print("✓ JSON round trip successful")
 
-        return True
+        assert True  # Test passed
 
     except Exception as e:
         print(f"❌ DirectNodeAdmissionConfig test failed: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        assert False, f"DirectNodeAdmissionConfig test failed: {e}"
 
 
 def test_mixed_scenarios():
@@ -187,14 +187,14 @@ def test_mixed_scenarios():
         config.model_dump()
         print("✓ Mixed config serializes correctly")
 
-        return True
+        assert True  # Test passed
 
     except Exception as e:
         print(f"❌ Mixed scenario test failed: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        assert False, f"Mixed scenario test failed: {e}"
 
 
 def main():

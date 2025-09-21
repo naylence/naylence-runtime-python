@@ -14,20 +14,20 @@ from naylence.fame.factory import (
 )
 
 
-class TestResource:
+class PriorityResource:
     """Test resource type."""
 
     def __init__(self, name: str):
         self.name = name
 
 
-class TestResourceFactory(ResourceFactory[TestResource, ResourceConfig]):
+class PriorityResourceFactory(ResourceFactory[PriorityResource, ResourceConfig]):
     """Base factory interface for test resources."""
 
     pass
 
 
-class BasicTestFactory(TestResourceFactory):
+class BasicTestFactory(PriorityResourceFactory):
     """Basic implementation with lower priority."""
 
     type = "basic"
@@ -36,11 +36,11 @@ class BasicTestFactory(TestResourceFactory):
 
     async def create(
         self, config: Optional[ResourceConfig | dict[str, Any]] = None, **kwargs: Any
-    ) -> TestResource:
-        return TestResource("basic")
+    ) -> PriorityResource:
+        return PriorityResource("basic")
 
 
-class AdvancedTestFactory(TestResourceFactory):
+class AdvancedTestFactory(PriorityResourceFactory):
     """Advanced implementation with higher priority."""
 
     type = "advanced"
@@ -49,22 +49,24 @@ class AdvancedTestFactory(TestResourceFactory):
 
     async def create(
         self, config: Optional[ResourceConfig | dict[str, Any]] = None, **kwargs: Any
-    ) -> TestResource:
-        return TestResource("advanced")
+    ) -> PriorityResource:
+        return PriorityResource("advanced")
 
 
 async def test_create_default_resource():
     """Test that create_default_resource uses priority-based selection."""
 
     # Set up the extension manager
-    mgr = ExtensionManager.lazy_init(group="naylence.TestResourceFactory", base_type=TestResourceFactory)
+    mgr = ExtensionManager.lazy_init(
+        group="naylence.PriorityResourceFactory", base_type=PriorityResourceFactory
+    )
 
     # Manually register our test factories (simulating entry point loading)
     mgr._registry["basic"] = BasicTestFactory
     mgr._registry["advanced"] = AdvancedTestFactory
 
     # Test the create_default_resource function
-    resource = await create_default_resource(TestResourceFactory)
+    resource = await create_default_resource(PriorityResourceFactory)
 
     if resource is None:
         print("❌ create_default_resource returned None")
@@ -92,7 +94,7 @@ async def test_create_default_resource_with_config():
 
     # Set up the extension manager
     mgr = ExtensionManager.lazy_init(
-        group="naylence.TestResourceFactoryWithConfig", base_type=TestResourceFactory
+        group="naylence.PriorityResourceFactoryWithConfig", base_type=PriorityResourceFactory
     )
 
     # Manually register our test factories
@@ -101,7 +103,7 @@ async def test_create_default_resource_with_config():
 
     # Test with config
     config = {"some_setting": "value"}
-    resource = await create_default_resource(TestResourceFactory, config=config)
+    resource = await create_default_resource(PriorityResourceFactory, config=config)
 
     if resource is None:
         print("❌ create_default_resource with config returned None")

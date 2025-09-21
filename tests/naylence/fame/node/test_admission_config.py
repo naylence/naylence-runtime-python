@@ -50,20 +50,20 @@ def test_admission_config_polymorphic():
             # Check if the connection_grants field is accessible
             if hasattr(result, "connection_grants"):
                 print(f"✓ connection_grants field exists: {result.connection_grants}")
-                return True
+                assert True  # Test passed
             else:
                 print("✗ connection_grants field missing")
-                return False
+                assert False, "connection_grants field missing"
         else:
             print(f"✗ Wrong type created: {type(result)}")
-            return False
+            assert False, f"Wrong type created: {type(result)}"
 
     except Exception as e:
         print(f"✗ Error: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        assert False, f"Error: {e}"
 
 
 def test_direct_instantiation():
@@ -93,17 +93,17 @@ def test_direct_instantiation():
         if isinstance(config, DirectNodeAdmissionConfig):
             print("✓ Direct instantiation worked - created DirectNodeAdmissionConfig")
             print("✓ connection_grants field exists")
-            return True
+            assert True  # Test passed
         else:
             print(f"✗ Wrong type created: {type(config)}")
-            return False
+            assert False, f"Wrong type created: {type(config)}"
 
     except Exception as e:
         print(f"✗ Error: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        assert False, f"Error: {e}"
 
 
 if __name__ == "__main__":

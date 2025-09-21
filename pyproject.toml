@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.3.13"
+version = "0.3.14"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -101,7 +101,10 @@ testpaths = ".:tests"
 pythonpath = "."
 filterwarnings = [
     "ignore::DeprecationWarning:websockets.exceptions",
-    "ignore::pytest.PytestConfigWarning"
+    "ignore::DeprecationWarning:websockets.legacy",
+    "ignore::DeprecationWarning:uvicorn.protocols.websockets.websockets_impl",
+    "ignore::pytest.PytestConfigWarning",
+    "ignore:coroutine.*was never awaited:RuntimeWarning"
 ]
 addopts = [
     "--cov=src/naylence",

@@ -8,6 +8,7 @@ __pycache__
 .DS_Store
 .hypothesis
 naylence-fame-core
+AGENTS.md
 
 docs/
 examples/

@@ -16,7 +16,7 @@ class TestEnvelopeListenerManagerMissingCoverage:
     """Target the specific missing lines for 95% coverage"""
 
     @pytest.fixture
-    def manager(self):
+    async def manager(self):
         """Create manager with complete mocking"""
         binding_manager = Mock()
         node_like = Mock()
@@ -27,14 +27,16 @@ class TestEnvelopeListenerManagerMissingCoverage:
         envelope_factory = Mock()
         delivery_tracker = Mock()
 
-        manager = EnvelopeListenerManager(
+        manager_instance = EnvelopeListenerManager(
             binding_manager=binding_manager,
             node_like=node_like,
             envelope_factory=envelope_factory,
             delivery_tracker=delivery_tracker,
         )
 
-        return manager
+        yield manager_instance
+        # Cleanup: ensure background tasks are properly stopped
+        await manager_instance.stop()
 
     @pytest.mark.asyncio
     async def test_recover_service_envelopes_no_handler_error_path(self, manager):
@@ -349,10 +351,13 @@ class TestEnvelopeListenerManagerEdgeCases:
     """Test remaining edge cases and error conditions"""
 
     @pytest.fixture
-    def manager(self):
-        return EnvelopeListenerManager(
+    async def manager(self):
+        manager_instance = EnvelopeListenerManager(
             binding_manager=Mock(), node_like=Mock(), envelope_factory=Mock(), delivery_tracker=Mock()
         )
+        yield manager_instance
+        # Cleanup: ensure background tasks are properly stopped
+        await manager_instance.stop()
 
     @pytest.mark.asyncio
     async def test_concurrent_listener_management(self, manager):
@@ -394,6 +399,10 @@ class TestEnvelopeListenerManagerEdgeCases:
         original_spawn = manager.spawn
 
         def failing_spawn(coro, name=None):
+            # Close the coroutine to avoid unawaited warning
+            if hasattr(coro, "close"):
+                coro.close()
+
             # Create a task that will fail
             async def failing_task():
                 raise Exception("Spawned task failed")

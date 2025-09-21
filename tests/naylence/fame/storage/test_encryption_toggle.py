@@ -68,7 +68,7 @@ class EncryptedInMemoryStorageProvider(EncryptedStorageProviderBase):
         return await self._underlying_provider.get_kv_store(model_cls, namespace)
 
 
-class TestData(BaseModel):
+class ToggleTestData(BaseModel):
     """Test model for storage."""
 
     id: str
@@ -84,10 +84,10 @@ async def test_encrypted_mode():
     provider = EncryptedInMemoryStorageProvider("my-secret-password-123", is_encrypted=True)
 
     # Get a key-value store for our test data
-    kv_store = await provider.get_kv_store(TestData, namespace="test")
+    kv_store = await provider.get_kv_store(ToggleTestData, namespace="test")
 
     # Test data
-    test_item = TestData(id="test-1", name="Test Item", secret="This is sensitive data!", count=42)
+    test_item = ToggleTestData(id="test-1", name="Test Item", secret="This is sensitive data!", count=42)
 
     # Store and retrieve the data
     await kv_store.set("item1", test_item)
@@ -106,10 +106,10 @@ async def test_unencrypted_mode():
     provider = EncryptedInMemoryStorageProvider(is_encrypted=False)
 
     # Get a key-value store for our test data
-    kv_store = await provider.get_kv_store(TestData, namespace="test")
+    kv_store = await provider.get_kv_store(ToggleTestData, namespace="test")
 
     # Test data
-    test_item = TestData(
+    test_item = ToggleTestData(
         id="test-2",
         name="Unencrypted Item",
         secret="This is plain text data",
@@ -146,11 +146,11 @@ async def test_data_isolation():
     unencrypted_provider = EncryptedInMemoryStorageProvider(is_encrypted=False)
 
     # Get stores for the same namespace
-    encrypted_store = await encrypted_provider.get_kv_store(TestData, namespace="shared")
-    unencrypted_store = await unencrypted_provider.get_kv_store(TestData, namespace="shared")
+    encrypted_store = await encrypted_provider.get_kv_store(ToggleTestData, namespace="shared")
+    unencrypted_store = await unencrypted_provider.get_kv_store(ToggleTestData, namespace="shared")
 
     # Store data in both
-    test_data = TestData(id="shared", name="Shared Key", secret="Secret data")
+    test_data = ToggleTestData(id="shared", name="Shared Key", secret="Secret data")
 
     await encrypted_store.set("key1", test_data)
     await unencrypted_store.set("key1", test_data)
@@ -175,10 +175,12 @@ async def test_performance_comparison():
     encrypted_provider = EncryptedInMemoryStorageProvider("password123", is_encrypted=True)
     unencrypted_provider = EncryptedInMemoryStorageProvider(is_encrypted=False)
 
-    encrypted_store = await encrypted_provider.get_kv_store(TestData, namespace="perf")
-    unencrypted_store = await unencrypted_provider.get_kv_store(TestData, namespace="perf")
+    encrypted_store = await encrypted_provider.get_kv_store(ToggleTestData, namespace="perf")
+    unencrypted_store = await unencrypted_provider.get_kv_store(ToggleTestData, namespace="perf")
 
-    test_data = TestData(id="perf", name="Performance Test", secret="x" * 1000, count=1)  # Larger data
+    test_data = ToggleTestData(
+        id="perf", name="Performance Test", secret="x" * 1000, count=1
+    )  # Larger data
 
     # Test encrypted storage timing
     start = time.time()
@@ -207,12 +209,12 @@ async def test_multiple_namespaces():
     provider = EncryptedInMemoryStorageProvider("test-password", is_encrypted=True)
 
     # Create stores for different namespaces
-    store1 = await provider.get_kv_store(TestData, namespace="ns1")
-    store2 = await provider.get_kv_store(TestData, namespace="ns2")
+    store1 = await provider.get_kv_store(ToggleTestData, namespace="ns1")
+    store2 = await provider.get_kv_store(ToggleTestData, namespace="ns2")
 
     # Store different data in each namespace
-    data1 = TestData(id="1", name="Data One", secret="Secret One")
-    data2 = TestData(id="2", name="Data Two", secret="Secret Two")
+    data1 = ToggleTestData(id="1", name="Data One", secret="Secret One")
+    data2 = ToggleTestData(id="2", name="Data Two", secret="Secret Two")
 
     await store1.set("key", data1)
     await store2.set("key", data2)
