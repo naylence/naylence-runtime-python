@@ -213,7 +213,7 @@ class RPCClientManager(DeliveryTrackerEventHandler):
             return
 
         """Set up the RPC reply listener for handling invoke() responses."""
-        recipient = "__rpc__"
+        recipient = f"__rpc__{generate_id()}"
         self._rpc_reply_address = format_address(recipient, self._get_physical_path())
         logger.debug(
             "binding_rpc_reply_listener",

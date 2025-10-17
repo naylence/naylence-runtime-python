@@ -361,7 +361,7 @@ class TestRPCClientManager:
         mock_listen_callback.assert_called_once()
         call_args = mock_listen_callback.call_args
         recipient = call_args[0][0]
-        assert recipient == "__rpc__"
+        assert recipient.startswith("__rpc__")
         assert call_args[0][1] is None  # handler should be None
 
         # Verify reply address format
