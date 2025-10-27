@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from fastapi import Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from naylence.fame.core import FameEnvelopeWith, NodeHelloFrame, create_fame_envelope
@@ -44,7 +46,8 @@ def create_node_welcome_fastapi_router(
         try:
             welcome = await welcome_service.handle_hello(hello_env.frame)
             env = create_fame_envelope(frame=welcome)
-            return env
+            body = jsonable_encoder(env, by_alias=True, exclude_none=True)
+            return JSONResponse(content=body)
 
         except ValidationError as ve:
             logger.error("Validation error", exc_info=True)
