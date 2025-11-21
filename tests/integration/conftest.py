@@ -13,6 +13,30 @@ import pytest
 import requests
 
 
+def _get_docker_client():
+    """Get Docker client with proper configuration for different platforms."""
+    try:
+        # Try to create client from environment first
+        return docker.from_env()
+    except docker.errors.DockerException:
+        # On macOS, Docker Desktop may use a non-standard socket path
+        # Try common macOS Docker Desktop socket locations
+        macos_socket_paths = [
+            os.path.expanduser("~/.docker/run/docker.sock"),
+            "/var/run/docker.sock",
+        ]
+        
+        for socket_path in macos_socket_paths:
+            if os.path.exists(socket_path):
+                try:
+                    return docker.DockerClient(base_url=f"unix://{socket_path}")
+                except docker.errors.DockerException:
+                    continue
+        
+        # If all else fails, re-raise the original exception
+        raise
+
+
 def _calculate_source_hash(project_root: Path) -> str:
     """Calculate a hash of the source code to detect changes."""
     hasher = hashlib.sha256()
@@ -43,7 +67,7 @@ def _calculate_source_hash(project_root: Path) -> str:
 @pytest.fixture(scope="session")
 def integration_docker_image():
     """Build Docker image with automatic rebuilding when source code changes."""
-    client = docker.from_env()
+    client = _get_docker_client()
 
     # Get paths
     project_root = Path(__file__).parent.parent.parent
@@ -126,7 +150,7 @@ def integration_docker_image():
 @pytest.fixture(scope="session")
 def docker_network():
     """Create a shared Docker network for integration tests."""
-    client = docker.from_env()
+    client = _get_docker_client()
     network_name = "naylence-integration-test"
 
     # Check if network already exists
