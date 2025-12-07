@@ -75,7 +75,8 @@ class DefaultHttpServer(HttpServer):
                 loop="asyncio",
                 access_log=False,
                 # Better shutdown handling
-                timeout_keep_alive=5,
+                # Set to 1 hour to prevent WebSocket idle disconnections
+                timeout_keep_alive=3600,
                 timeout_graceful_shutdown=30,
             )
 
