@@ -17,6 +17,7 @@ Use::
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Optional, Protocol, Sequence, runtime_checkable
 
 import structlog
@@ -165,16 +166,33 @@ def getLogger(name: str | Sequence[str]) -> TraceLogger:  # pragma: no cover
     return structlog.get_logger(name)
 
 
+def _resolve_log_level(value: str | int | None) -> int:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        return logging.getLevelNamesMapping().get(value.upper(), logging.WARNING)
+    return logging.WARNING
+
+
 def basicConfig(*args: Any, **kwargs: Any) -> None:  # pragma: no cover
     """
     Thin wrapper around ``logging.basicConfig`` that:
 
     * sets ``format="%(message)s"`` (structlog emits final text)
-    * sets root level to TRACE by default
+    * sets root level to ``FAME_LOG_LEVEL`` (WARNING if unspecified)
     """
     kwargs.setdefault("format", "%(message)s")
-    kwargs.setdefault("level", TRACE)
+
+    env_level = os.environ.get("FAME_LOG_LEVEL")
+    if "level" in kwargs:
+        resolved_level = _resolve_log_level(kwargs["level"])
+    else:
+        resolved_level = _resolve_log_level(env_level)
+        kwargs["level"] = resolved_level
+
+    kwargs["level"] = resolved_level
     logging.basicConfig(*args, **kwargs)
+    logging.getLogger().setLevel(resolved_level)
 
 
 # re-export common level constants
@@ -208,10 +226,14 @@ def summarize_env(env: FameEnvelope, prefix: Optional[str] = "child_") -> EventD
     }
 
 
-def enable_logging(log_level: str | int):
-    if isinstance(log_level, int):
-        log_level_i = log_level
-    elif isinstance(log_level, str):
-        log_level_i = logging.getLevelNamesMapping().get(log_level.upper())
-    getLogger("naylence").setLevel(log_level_i)
-    basicConfig(level=logging.WARNING)
+def enable_logging(log_level: str | int | None = None):
+    env_level = os.environ.get("FAME_LOG_LEVEL")
+    chosen_level = log_level if log_level is not None else env_level
+    resolved_level = _resolve_log_level(chosen_level)
+    getLogger("naylence").setLevel(resolved_level)
+    basicConfig(level=resolved_level)
+
+
+# Ensure logging gets configured once when this module is imported so env vars
+# are respected even if applications forget to call enable_logging().
+basicConfig()
