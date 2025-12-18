@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.3.20"
+version = "0.3.21"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -290,3 +290,6 @@ TraceEmitterProfile = "naylence.fame.telemetry.trace_emitter_profile_factory:Tra
 AtLeastOnceDeliveryPolicy = "naylence.fame.delivery.at_least_once_delivery_policy_factory:AtLeastOnceDeliveryPolicyFactory"
 AtMostOnceDeliveryPolicy = "naylence.fame.delivery.at_most_once_delivery_policy_factory:AtMostOnceDeliveryPolicyFactory"
 DeliveryProfile = "naylence.fame.delivery.delivery_profile_factory:DeliveryProfileFactory"
+
+[project.entry-points."naylence.ConnectionRetryPolicyFactory"]
+DefaultConnectionRetryPolicy = "naylence.fame.node.default_connection_retry_policy_factory:DefaultConnectionRetryPolicyFactory"

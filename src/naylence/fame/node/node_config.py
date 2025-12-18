@@ -5,6 +5,7 @@ from pydantic import Field
 from naylence.fame.connector.transport_listener_config import TransportListenerConfig
 from naylence.fame.delivery.delivery_policy_factory import DeliveryPolicyConfig
 from naylence.fame.node.admission.admission_client_factory import AdmissionConfig
+from naylence.fame.node.connection_retry_policy_factory import ConnectionRetryPolicyConfig
 from naylence.fame.node.node_like_factory import NodeLikeConfig
 from naylence.fame.security.keys.attachment_key_validator_factory import (
     AttachmentKeyValidatorConfig,
@@ -87,4 +88,11 @@ class FameNodeConfig(NodeLikeConfig):
     telemetry: Optional[TraceEmitterConfig] = Field(
         default=None,
         description="Telemetry configuration",
+    )
+
+    connection_retry_policy: Optional[ConnectionRetryPolicyConfig] = Field(
+        default=None,
+        description="Retry policy for upstream connection attempts before first successful attach. "
+        "Controls behavior when initial connection fails: "
+        "1 (default) = fail immediately, 0 = unlimited retries, N = retry up to N times.",
     )

@@ -79,7 +79,8 @@ class WebSocketConnector(BaseAsyncConnector):
                 raise FameTransportClose(1006, "WebSocket object is None")
 
             # Use a timeout to prevent hanging during shutdown scenarios
-            receive_timeout = 30.0  # 30 seconds should be plenty for normal operations
+            # Increased to 3600s to match Uvicorn keep-alive and prevent idle disconnects
+            receive_timeout = 30.0
 
             if self._is_fastapi:
                 # Check if receive_bytes method exists and is callable

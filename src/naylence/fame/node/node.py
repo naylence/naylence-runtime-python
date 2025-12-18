@@ -33,6 +33,7 @@ from naylence.fame.core import (
     generate_id,
 )
 from naylence.fame.node.admission.admission_client import AdmissionClient
+from naylence.fame.node.connection_retry_policy import ConnectionRetryPolicy
 from naylence.fame.node.admission.node_attach_client import (
     AttachInfo,
     NodeAttachClient,
@@ -123,6 +124,7 @@ class FameNode(TaskSpawner, NodeLike):
         storage_provider: StorageProvider,
         delivery_tracker: DeliveryTracker,
         delivery_policy: Optional[DeliveryPolicy] = None,
+        connection_retry_policy: Optional[ConnectionRetryPolicy] = None,
         **kwargs: Any,
     ):
         TaskSpawner.__init__(self)
@@ -198,6 +200,7 @@ class FameNode(TaskSpawner, NodeLike):
         self._delivery_tracker = delivery_tracker
 
         self._delivery_policy = delivery_policy
+        self._connection_retry_policy = connection_retry_policy
 
         self._binding_manager = BindingManager(
             has_upstream=self._has_parent,
@@ -468,6 +471,8 @@ class FameNode(TaskSpawner, NodeLike):
             on_welcome=self._on_welcome,
             on_attach=self._on_attach_to_upstream,
             on_epoch_change=self._on_epoch_change,
+            admission_client=self._admission_client,
+            retry_policy=self._connection_retry_policy,
         )
         await self._session_manager.start()
 

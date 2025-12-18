@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import os
 import random
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional, cast
@@ -30,6 +31,10 @@ from naylence.fame.errors.errors import (
 )
 from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.admission_client import AdmissionClient
+from naylence.fame.node.connection_retry_policy import (
+    ConnectionRetryContext,
+    ConnectionRetryPolicy,
+)
 from naylence.fame.node.admission.node_attach_client import AttachInfo, NodeAttachClient
 from naylence.fame.node.session_manager import SessionManager
 from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
@@ -74,6 +79,7 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
         on_attach: Callable[[AttachInfo, FameConnector], Coroutine[Any, Any, Any]],
         on_epoch_change: Callable[[str], Coroutine[Any, Any, Any]],
         admission_client: Optional[AdmissionClient] = None,
+        retry_policy: Optional[ConnectionRetryPolicy] = None,
     ) -> None:
         super().__init__()
         self._node = node
@@ -87,6 +93,10 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
         self._on_welcome = on_welcome
         self._on_attach = on_attach
         self._on_epoch_change = on_epoch_change
+
+        # Store the connection retry policy (can be None, in which case default behavior applies)
+        self._connection_retry_policy = retry_policy
+        self._initial_attempts = 0
 
         # ───── runtime state ────────────────────────────────────────────────
         self._message_queue: asyncio.Queue[FameEnvelope] = asyncio.Queue(self.TX_QUEUE_MAX)
@@ -102,7 +112,11 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
         self._had_successful_attach = False
         self._connect_epoch = 0
 
-        logger.debug("created_upstream_session_manager", target_system_id=self._target_system_id)
+        logger.debug(
+            "created_upstream_session_manager",
+            target_system_id=self._target_system_id,
+            has_retry_policy=self._connection_retry_policy is not None,
+        )
 
     # --------------------------------------------------------------------------- #
     # PUBLIC API
@@ -174,22 +188,65 @@ class UpstreamSessionManager(TaskSpawner, SessionManager):
     async def _fsm_loop(self) -> None:
         """Reconnect loop: attach → run helper tasks → re-attach on error."""
         delay = self.BACKOFF_INITIAL
+        self._initial_attempts = 0
+
         while not self._stop_evt.is_set():
+            self._initial_attempts += 1
+
             try:
                 await self._connect_cycle()
                 delay = self.BACKOFF_INITIAL  # reset after each success
+                self._initial_attempts = 0  # reset on success
             except asyncio.CancelledError:
                 raise
             except (FameTransportClose, FameConnectError) as e:
-                logger.warning("upstream_link_closed", error=e, will_retry=True)
-                if not self._had_successful_attach and isinstance(e, FameConnectError):
-                    raise  # fail-fast on first attempt
+                should_fail_fast = self._should_fail_fast_on_error(e)
+                logger.warning(
+                    "upstream_link_closed",
+                    error=e,
+                    will_retry=not should_fail_fast,
+                    attempt=self._initial_attempts,
+                    has_retry_policy=self._connection_retry_policy is not None,
+                )
+                if should_fail_fast and isinstance(e, FameConnectError):
+                    raise  # fail-fast when configured
                 delay = await self._apply_backoff(delay)
             except Exception as e:
-                logger.warning("upstream_link_closed", error=e, will_retry=True, exc_info=True)
-                if not self._had_successful_attach:
-                    raise  # fail-fast on very first attempt
+                should_fail_fast = self._should_fail_fast_on_error(e)
+                logger.warning(
+                    "upstream_link_closed",
+                    error=e,
+                    will_retry=not should_fail_fast,
+                    attempt=self._initial_attempts,
+                    has_retry_policy=self._connection_retry_policy is not None,
+                    exc_info=True,
+                )
+                if should_fail_fast:
+                    raise  # fail-fast when configured
                 delay = await self._apply_backoff(delay)
+
+    def _should_fail_fast_on_error(self, error: BaseException) -> bool:
+        """
+        Determine whether to fail immediately or continue retrying.
+        Returns True if we should raise the error instead of retrying.
+        """
+        # If no policy is configured, use legacy behavior (fail-fast after first attempt)
+        if self._connection_retry_policy is None:
+            # After first successful attach, always retry (existing behavior)
+            if self._had_successful_attach:
+                return False
+            # Without a policy, fail on first error
+            return True
+
+        # Delegate decision to the policy
+        context = ConnectionRetryContext(
+            had_successful_attach=self._had_successful_attach,
+            attempt_number=self._initial_attempts,
+            error=error,
+        )
+        should_retry = self._connection_retry_policy.should_retry(context)
+
+        return not should_retry
 
     async def _apply_backoff(self, delay: float) -> float:
         """Sleep with stop-interrupt and return the next delay."""

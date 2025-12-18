@@ -617,6 +617,7 @@ class Sentinel(FameNode, RoutingNodeLike):
             on_attach=self._on_node_attach_to_peer,
             on_epoch_change=self._on_epoch_change,
             on_welcome=self._on_welcome,
+            retry_policy=self._connection_retry_policy,
         )
         await peer_session_manager.start()
         assert peer_session_manager.system_id

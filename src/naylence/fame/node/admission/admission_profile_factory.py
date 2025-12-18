@@ -123,7 +123,10 @@ OPEN_PROFILE = {
 }
 
 
-NOOP_PROFILE = {"type": "NoopAdmissionClient", "auto_accept_logicals": True}
+NOOP_PROFILE = {
+    "type": "NoopAdmissionClient",
+    "auto_accept_logicals": True,
+}
 
 
 class AdmissionProfileConfig(AdmissionConfig):

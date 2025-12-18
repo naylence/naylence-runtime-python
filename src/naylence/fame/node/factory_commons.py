@@ -15,6 +15,8 @@ from naylence.fame.node.admission.admission_client_factory import AdmissionClien
 from naylence.fame.node.admission.default_node_attach_client import (
     DefaultNodeAttachClient,
 )
+from naylence.fame.node.connection_retry_policy import ConnectionRetryPolicy
+from naylence.fame.node.connection_retry_policy_factory import ConnectionRetryPolicyFactory
 from naylence.fame.node.node_config import FameNodeConfig
 from naylence.fame.node.node_meta import NodeMeta
 from naylence.fame.security.keys.attachment_key_validator import AttachmentKeyValidator
@@ -193,6 +195,9 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     if isinstance(trace_emitter, NodeEventListener):
         event_listeners.append(trace_emitter)
 
+    # Create connection retry policy
+    connection_retry_policy = await create_connection_retry_policy(cfg)
+
     return {
         "system_id": node_id,
         "has_parent": has_parent,
@@ -212,6 +217,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
         "security_manager": security_manager,
         "transport_listeners": transport_listeners,
         "delivery_policy": delivery_policy,
+        "connection_retry_policy": connection_retry_policy,
     }
 
 
@@ -228,6 +234,27 @@ async def create_delivery_policy(
         return await create_resource(DeliveryPolicyFactory, cfg)
 
     return await create_default_resource(DeliveryPolicyFactory)
+
+
+async def create_connection_retry_policy(
+    cfg: FameNodeConfig,
+) -> Optional[ConnectionRetryPolicy]:
+    """Create a connection retry policy from configuration.
+
+    Args:
+        cfg: Node configuration containing retry policy settings
+
+    Returns:
+        ConnectionRetryPolicy instance, or None if creation fails
+    """
+    if cfg.connection_retry_policy is not None:
+        return await create_resource(
+            ConnectionRetryPolicyFactory,
+            cfg.connection_retry_policy,
+        )
+
+    # Create default policy
+    return await create_default_resource(ConnectionRetryPolicyFactory)
 
 
 async def create_security_manager(
