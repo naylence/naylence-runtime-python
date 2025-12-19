@@ -26,7 +26,9 @@ PROFILE_NAME_TOKEN_SUBJECT_ALIAS = "token_subject"
 
 # Profile configurations
 DEFAULT_PROFILE: NodeIdentityPolicyConfig = NodeIdentityPolicyConfig(type="DefaultNodeIdentityPolicy")
-TOKEN_SUBJECT_PROFILE: NodeIdentityPolicyConfig = NodeIdentityPolicyConfig(type="TokenSubjectNodeIdentityPolicy")
+TOKEN_SUBJECT_PROFILE: NodeIdentityPolicyConfig = NodeIdentityPolicyConfig(
+    type="TokenSubjectNodeIdentityPolicy"
+)
 
 PROFILE_MAP: dict[str, NodeIdentityPolicyConfig] = {
     PROFILE_NAME_DEFAULT: DEFAULT_PROFILE,

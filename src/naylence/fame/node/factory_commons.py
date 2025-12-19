@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from naylence.fame.connector.transport_listener import TransportListener
 from naylence.fame.connector.transport_listener_factory import TransportListenerFactory
-from naylence.fame.core import generate_id
 from naylence.fame.delivery.delivery_policy import DeliveryPolicy
 from naylence.fame.delivery.delivery_policy_factory import DeliveryPolicyConfig, DeliveryPolicyFactory
 from naylence.fame.delivery.delivery_tracker import DeliveryTracker
@@ -85,7 +84,9 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     identity_policy: Optional[NodeIdentityPolicy] = None
     if cfg.identity_policy:
         try:
-            identity_policy = await NodeIdentityPolicyFactory.create_node_identity_policy(cfg.identity_policy)
+            identity_policy = await NodeIdentityPolicyFactory.create_node_identity_policy(
+                cfg.identity_policy
+            )
         except Exception as error:
             logger.warning(
                 "node_identity_policy_creation_failed",

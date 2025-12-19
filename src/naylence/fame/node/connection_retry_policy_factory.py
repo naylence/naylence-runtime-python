@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import Any, Optional, TypeVar
 
 from naylence.fame.factory import ResourceConfig, ResourceFactory, create_resource
-
 from naylence.fame.node.connection_retry_policy import ConnectionRetryPolicy
 
 

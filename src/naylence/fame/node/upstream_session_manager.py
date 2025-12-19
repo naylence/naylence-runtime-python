@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import os
 import random
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional, cast
@@ -31,11 +30,11 @@ from naylence.fame.errors.errors import (
 )
 from naylence.fame.grants.grant import GRANT_PURPOSE_NODE_ATTACH
 from naylence.fame.node.admission.admission_client import AdmissionClient
+from naylence.fame.node.admission.node_attach_client import AttachInfo, NodeAttachClient
 from naylence.fame.node.connection_retry_policy import (
     ConnectionRetryContext,
     ConnectionRetryPolicy,
 )
-from naylence.fame.node.admission.node_attach_client import AttachInfo, NodeAttachClient
 from naylence.fame.node.session_manager import SessionManager
 from naylence.fame.security.crypto.providers.crypto_provider import get_crypto_provider
 from naylence.fame.util.logging import getLogger

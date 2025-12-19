@@ -33,12 +33,12 @@ from naylence.fame.core import (
     generate_id,
 )
 from naylence.fame.node.admission.admission_client import AdmissionClient
-from naylence.fame.node.connection_retry_policy import ConnectionRetryPolicy
 from naylence.fame.node.admission.node_attach_client import (
     AttachInfo,
     NodeAttachClient,
 )
 from naylence.fame.node.binding_manager import BindingManager, BindingStoreEntry
+from naylence.fame.node.connection_retry_policy import ConnectionRetryPolicy
 from naylence.fame.node.envelope_listener_manager import EnvelopeListenerManager
 from naylence.fame.node.node_envelope_factory import (
     EnvelopeFactory,
