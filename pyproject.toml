@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.3.22"
+version = "0.3.23"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -293,3 +293,8 @@ DeliveryProfile = "naylence.fame.delivery.delivery_profile_factory:DeliveryProfi
 
 [project.entry-points."naylence.ConnectionRetryPolicyFactory"]
 DefaultConnectionRetryPolicy = "naylence.fame.node.default_connection_retry_policy_factory:DefaultConnectionRetryPolicyFactory"
+
+[project.entry-points."naylence.NodeIdentityPolicyFactory"]
+DefaultNodeIdentityPolicy = "naylence.fame.node.default_node_identity_policy_factory:DefaultNodeIdentityPolicyFactory"
+TokenSubjectNodeIdentityPolicy = "naylence.fame.node.token_subject_node_identity_policy_factory:TokenSubjectNodeIdentityPolicyFactory"
+NodeIdentityPolicyProfile = "naylence.fame.node.node_identity_policy_profile_factory:NodeIdentityPolicyProfileFactory"

@@ -17,7 +17,13 @@ from naylence.fame.node.admission.default_node_attach_client import (
 )
 from naylence.fame.node.connection_retry_policy import ConnectionRetryPolicy
 from naylence.fame.node.connection_retry_policy_factory import ConnectionRetryPolicyFactory
+from naylence.fame.node.default_node_identity_policy import DefaultNodeIdentityPolicy
 from naylence.fame.node.node_config import FameNodeConfig
+from naylence.fame.node.node_identity_policy import (
+    InitialIdentityContext,
+    NodeIdentityPolicy,
+)
+from naylence.fame.node.node_identity_policy_factory import NodeIdentityPolicyFactory
 from naylence.fame.node.node_meta import NodeMeta
 from naylence.fame.security.keys.attachment_key_validator import AttachmentKeyValidator
 from naylence.fame.security.keys.attachment_key_validator_factory import (
@@ -75,7 +81,26 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
         node_id=node_meta.id if node_meta else None,
     )
 
-    node_id = cfg.id or (node_meta.id if node_meta else None) or generate_id(mode="fingerprint")
+    # Resolve identity policy
+    identity_policy: Optional[NodeIdentityPolicy] = None
+    if cfg.identity_policy:
+        try:
+            identity_policy = await NodeIdentityPolicyFactory.create_node_identity_policy(cfg.identity_policy)
+        except Exception as error:
+            logger.warning(
+                "node_identity_policy_creation_failed",
+                error=str(error),
+            )
+
+    effective_identity_policy = identity_policy or DefaultNodeIdentityPolicy()
+
+    # Resolve initial node ID using identity policy
+    node_id = await effective_identity_policy.resolve_initial_node_id(
+        InitialIdentityContext(
+            configured_id=cfg.id,
+            persisted_id=node_meta.id if node_meta else None,
+        )
+    )
 
     event_listeners = []
 
@@ -218,6 +243,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
         "transport_listeners": transport_listeners,
         "delivery_policy": delivery_policy,
         "connection_retry_policy": connection_retry_policy,
+        "identity_policy": effective_identity_policy,
     }
 
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from naylence.fame.constants.ttl_constants import (
     DEFAULT_DIRECT_ADMISSION_TTL_SEC,
@@ -11,6 +11,9 @@ from naylence.fame.core import FameEnvelopeWith, NodeWelcomeFrame, generate_id
 from naylence.fame.node.admission.admission_client import AdmissionClient
 from naylence.fame.util import logging
 from naylence.fame.util.ttl_validation import validate_ttl_sec
+
+if TYPE_CHECKING:
+    from naylence.fame.node.node_identity_policy import NodeIdentityPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +31,7 @@ class DirectAdmissionClient(AdmissionClient):
         self,
         connection_grants: List[dict[str, Any]],
         ttl_sec: int | None = TTL_NEVER_EXPIRES,  # 0 = never expires
+        node_identity_policy: Optional[NodeIdentityPolicy] = None,
     ) -> None:
         self._connection_grants = connection_grants
         # Validate TTL but allow TTL_NEVER_EXPIRES (0) and None
@@ -40,6 +44,7 @@ class DirectAdmissionClient(AdmissionClient):
                 context="Direct admission TTL",
             )  # pyright: ignore[reportAssignmentType]
         self._ttl_sec = ttl_sec
+        self._node_identity_policy = node_identity_policy
 
     async def hello(
         self,
@@ -62,9 +67,26 @@ class DirectAdmissionClient(AdmissionClient):
         if not system_id:
             system_id = generate_id(mode="fingerprint")
 
+        # Resolve effective system ID using identity policy if available
+        effective_system_id = system_id
+        if self._node_identity_policy:
+            from naylence.fame.node.node_identity_policy import (
+                NodeIdentityPolicyContext,
+            )
+
+            effective_system_id = (
+                await self._node_identity_policy.resolve_admission_node_id(
+                    NodeIdentityPolicyContext(
+                        current_node_id=system_id,
+                        identities=[],
+                        grants=self._connection_grants,
+                    )
+                )
+            )
+
         envelope = FameEnvelopeWith(
             frame=NodeWelcomeFrame(
-                system_id=system_id,
+                system_id=effective_system_id,
                 instance_id=instance_id,
                 accepted_logicals=requested_logicals or ["*"],  # TODO get rid of the *
                 expires_at=expires_at,

@@ -6,6 +6,7 @@ from naylence.fame.connector.transport_listener_config import TransportListenerC
 from naylence.fame.delivery.delivery_policy_factory import DeliveryPolicyConfig
 from naylence.fame.node.admission.admission_client_factory import AdmissionConfig
 from naylence.fame.node.connection_retry_policy_factory import ConnectionRetryPolicyConfig
+from naylence.fame.node.node_identity_policy_factory import NodeIdentityPolicyConfig
 from naylence.fame.node.node_like_factory import NodeLikeConfig
 from naylence.fame.security.keys.attachment_key_validator_factory import (
     AttachmentKeyValidatorConfig,
@@ -95,4 +96,12 @@ class FameNodeConfig(NodeLikeConfig):
         description="Retry policy for upstream connection attempts before first successful attach. "
         "Controls behavior when initial connection fails: "
         "1 (default) = fail immediately, 0 = unlimited retries, N = retry up to N times.",
+    )
+
+    identity_policy: Optional[NodeIdentityPolicyConfig] = Field(
+        default=None,
+        description="Node identity policy for resolving node IDs during initialization and admission. "
+        "Supports 'DefaultNodeIdentityPolicy' (priority: configured > persisted > fingerprint), "
+        "'TokenSubjectNodeIdentityPolicy' (derives ID from token subject), "
+        "or 'NodeIdentityPolicyProfile' with profile names like 'default' or 'token-subject'.",
     )
