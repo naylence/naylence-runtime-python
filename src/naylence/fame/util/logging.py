@@ -179,7 +179,8 @@ def basicConfig(*args: Any, **kwargs: Any) -> None:  # pragma: no cover
     Thin wrapper around ``logging.basicConfig`` that:
 
     * sets ``format="%(message)s"`` (structlog emits final text)
-    * sets root level to ``FAME_LOG_LEVEL`` (WARNING if unspecified)
+    * sets root level to WARNING to suppress noisy third-party loggers
+    * sets naylence logger to ``FAME_LOG_LEVEL`` (WARNING if unspecified)
     """
     kwargs.setdefault("format", "%(message)s")
 
@@ -188,11 +189,15 @@ def basicConfig(*args: Any, **kwargs: Any) -> None:  # pragma: no cover
         resolved_level = _resolve_log_level(kwargs["level"])
     else:
         resolved_level = _resolve_log_level(env_level)
-        kwargs["level"] = resolved_level
 
-    kwargs["level"] = resolved_level
+    # Keep root logger at WARNING to suppress third-party debug noise
+    # (e.g., websockets, asyncio, etc.)
+    kwargs["level"] = logging.WARNING
     logging.basicConfig(*args, **kwargs)
-    logging.getLogger().setLevel(resolved_level)
+    logging.getLogger().setLevel(logging.WARNING)
+
+    # Only set naylence loggers to the desired level
+    logging.getLogger("naylence").setLevel(resolved_level)
 
 
 # re-export common level constants
@@ -227,11 +232,17 @@ def summarize_env(env: FameEnvelope, prefix: Optional[str] = "child_") -> EventD
 
 
 def enable_logging(log_level: str | int | None = None):
+    """
+    Enable logging with the specified level for naylence loggers.
+
+    The root logger remains at WARNING to suppress third-party debug noise.
+    Only naylence loggers are set to the specified level.
+    """
     env_level = os.environ.get("FAME_LOG_LEVEL")
     chosen_level = log_level if log_level is not None else env_level
     resolved_level = _resolve_log_level(chosen_level)
-    getLogger("naylence").setLevel(resolved_level)
-    basicConfig(level=resolved_level)
+    logging.getLogger("naylence").setLevel(resolved_level)
+    basicConfig()
 
 
 # Ensure logging gets configured once when this module is imported so env vars
