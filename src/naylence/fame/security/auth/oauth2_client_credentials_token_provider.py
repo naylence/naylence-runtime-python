@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -8,16 +10,18 @@ import aiohttp
 from naylence.fame.security.credential import CredentialProvider
 from naylence.fame.util.logging import getLogger
 
+from .auth_identity import AuthIdentity
 from .token import Token
-from .token_provider import TokenProvider
+from .token_provider import IdentityExposingTokenProvider
 
 logger = getLogger(__name__)
 
 
-class OAuth2ClientCredentialsTokenProvider(TokenProvider):
+class OAuth2ClientCredentialsTokenProvider(IdentityExposingTokenProvider):
     """
     Token provider that implements OAuth2 client credentials flow.
     Caches tokens until they expire and automatically refreshes them.
+    Also implements IdentityExposingTokenProvider to extract identity from JWT tokens.
     """
 
     def __init__(
@@ -111,3 +115,40 @@ class OAuth2ClientCredentialsTokenProvider(TokenProvider):
         )
 
         return token
+
+    async def get_identity(self) -> Optional[AuthIdentity]:
+        """
+        Extract identity information from the OAuth2 access token.
+
+        Parses the JWT token to extract the subject claim and other claims.
+
+        Returns:
+            An AuthIdentity object if the token is a valid JWT with a subject,
+            None otherwise.
+        """
+        token = await self.get_token()
+        token_value = token.value
+
+        parts = token_value.split(".")
+        if len(parts) != 3:
+            return None
+
+        try:
+            payload_segment = parts[1]
+            # Fix padding for base64url
+            padding = "=" * ((4 - len(payload_segment) % 4) % 4)
+            base64_str = payload_segment + padding
+            # Convert base64url to standard base64
+            base64_str = base64_str.replace("-", "+").replace("_", "/")
+
+            json_bytes = base64.b64decode(base64_str)
+            json_string = json_bytes.decode("utf-8")
+            payload = json.loads(json_string)
+
+            if payload and isinstance(payload.get("sub"), str):
+                return AuthIdentity(subject=payload["sub"], claims=payload)
+        except Exception:
+            # Ignore decoding errors
+            pass
+
+        return None

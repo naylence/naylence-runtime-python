@@ -1,5 +1,7 @@
 from unittest.mock import AsyncMock, patch
 
+import base64
+import json
 import pytest
 
 from naylence.fame.security.auth.oauth2_client_credentials_token_provider import (
@@ -7,6 +9,18 @@ from naylence.fame.security.auth.oauth2_client_credentials_token_provider import
 )
 from naylence.fame.security.auth.token import Token
 from naylence.fame.security.credential import StaticCredentialProvider
+
+
+def create_jwt(payload: dict) -> str:
+    """Create a minimal JWT token for testing."""
+    header = {"alg": "HS256", "typ": "JWT"}
+
+    def encode_segment(data: dict) -> str:
+        json_bytes = json.dumps(data).encode("utf-8")
+        b64 = base64.urlsafe_b64encode(json_bytes).decode("utf-8")
+        return b64.rstrip("=")
+
+    return f"{encode_segment(header)}.{encode_segment(payload)}.signature"
 
 
 class TestOAuth2ClientCredentialsTokenProvider:
@@ -143,3 +157,108 @@ class TestOAuth2ClientCredentialsTokenProvider:
             # Verify scopes were sent correctly
             call_args = mock_post.call_args
             assert call_args[1]["data"]["scope"] == "node.connect node.read node.write"
+
+
+class TestOAuth2ClientCredentialsTokenProviderIdentity:
+    """Test get_identity method for OAuth2 client credentials token provider."""
+
+    @pytest.fixture
+    def client_id_provider(self):
+        """Create a credential provider with OAuth2 client ID."""
+        return StaticCredentialProvider("test-client-id")
+
+    @pytest.fixture
+    def client_secret_provider(self):
+        """Create a credential provider with OAuth2 client secret."""
+        return StaticCredentialProvider("test-client-secret")
+
+    @pytest.fixture
+    def token_provider(self, client_id_provider, client_secret_provider):
+        """Create an OAuth2 token provider."""
+        return OAuth2ClientCredentialsTokenProvider(
+            token_url="https://auth.example.com/oauth/token",
+            client_id_provider=client_id_provider,
+            client_secret_provider=client_secret_provider,
+            scopes=["node.connect"],
+        )
+
+    @pytest.mark.asyncio
+    async def test_extracts_subject_from_valid_jwt(self, token_provider):
+        """Test extraction of subject from valid JWT token."""
+        jwt_token = create_jwt({"sub": "user-123", "aud": "test-audience"})
+        mock_response_data = {
+            "access_token": jwt_token,
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }
+
+        with patch("aiohttp.ClientSession.post") as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status = 200
+            mock_response.json = AsyncMock(return_value=mock_response_data)
+            mock_post.return_value.__aenter__.return_value = mock_response
+
+            identity = await token_provider.get_identity()
+
+            assert identity is not None
+            assert identity.subject == "user-123"
+            assert identity.claims["sub"] == "user-123"
+            assert identity.claims["aud"] == "test-audience"
+
+    @pytest.mark.asyncio
+    async def test_returns_none_for_non_jwt_token(self, token_provider):
+        """Test that non-JWT tokens return None."""
+        mock_response_data = {
+            "access_token": "opaque-token-value",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }
+
+        with patch("aiohttp.ClientSession.post") as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status = 200
+            mock_response.json = AsyncMock(return_value=mock_response_data)
+            mock_post.return_value.__aenter__.return_value = mock_response
+
+            identity = await token_provider.get_identity()
+
+            assert identity is None
+
+    @pytest.mark.asyncio
+    async def test_returns_none_when_jwt_has_no_sub_claim(self, token_provider):
+        """Test that JWTs without sub claim return None."""
+        jwt_token = create_jwt({"aud": "test-audience", "iss": "issuer"})
+        mock_response_data = {
+            "access_token": jwt_token,
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }
+
+        with patch("aiohttp.ClientSession.post") as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status = 200
+            mock_response.json = AsyncMock(return_value=mock_response_data)
+            mock_post.return_value.__aenter__.return_value = mock_response
+
+            identity = await token_provider.get_identity()
+
+            assert identity is None
+
+    @pytest.mark.asyncio
+    async def test_returns_none_for_malformed_jwt(self, token_provider):
+        """Test that malformed JWTs return None."""
+        mock_response_data = {
+            "access_token": "header.invalid-base64.signature",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        }
+
+        with patch("aiohttp.ClientSession.post") as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status = 200
+            mock_response.json = AsyncMock(return_value=mock_response_data)
+            mock_post.return_value.__aenter__.return_value = mock_response
+
+            identity = await token_provider.get_identity()
+
+            assert identity is None
