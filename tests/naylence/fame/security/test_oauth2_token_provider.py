@@ -1,7 +1,7 @@
-from unittest.mock import AsyncMock, patch
-
 import base64
 import json
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from naylence.fame.security.auth.oauth2_client_credentials_token_provider import (
