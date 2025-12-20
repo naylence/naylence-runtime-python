@@ -39,7 +39,11 @@ class DirectAdmissionClientFactory(AdmissionClientFactory):
             evaluated_grant = ConnectorFactory.evaluate_grant(grant)
             preprocessed_grants.append(evaluated_grant.model_dump(by_alias=True))
 
+        # Extract node_identity_policy from kwargs if provided
+        node_identity_policy = kwargs.get("node_identity_policy")
+
         return DirectAdmissionClient(
             connection_grants=preprocessed_grants,
             ttl_sec=config.ttl_sec,
+            node_identity_policy=node_identity_policy,
         )

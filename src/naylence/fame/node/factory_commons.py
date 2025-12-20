@@ -71,8 +71,6 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
 
     node_meta_store = await storage_provider.get_kv_store(NodeMeta, namespace="__node_meta")
 
-    admission_client: AdmissionClient = await create_resource(AdmissionClientFactory, cfg.admission)
-
     node_meta = await node_meta_store.get("self")
     logger.debug(
         "node_meta_store_loaded",
@@ -80,7 +78,7 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
         node_id=node_meta.id if node_meta else None,
     )
 
-    # Resolve identity policy
+    # Resolve identity policy first (needed for admission client)
     identity_policy: Optional[NodeIdentityPolicy] = None
     if cfg.identity_policy:
         try:
@@ -94,6 +92,11 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
             )
 
     effective_identity_policy = identity_policy or DefaultNodeIdentityPolicy()
+
+    # Create admission client with identity policy
+    admission_client: AdmissionClient = await create_resource(
+        AdmissionClientFactory, cfg.admission, node_identity_policy=effective_identity_policy
+    )
 
     # Resolve initial node ID using identity policy
     node_id = await effective_identity_policy.resolve_initial_node_id(
