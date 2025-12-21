@@ -183,4 +183,4 @@ class AdmissionProfileFactory(AdmissionClientFactory):
 
         logger.debug("enabling_admission_profile", profile=profile)  # type: ignore
 
-        return await create_resource(AdmissionClientFactory, admission_config)
+        return await create_resource(AdmissionClientFactory, admission_config, **kwargs)
