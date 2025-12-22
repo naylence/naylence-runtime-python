@@ -14,6 +14,10 @@ class TransportListenerConfig(ResourceConfig):
     host: str = "0.0.0.0"
     port: int = 0  # Let OS choose port
 
+    # Whether this listener is enabled. Defaults to True.
+    # Disabled listeners are skipped during node initialization.
+    enabled: bool = True
+
     # Optional authorizer configuration for this listener
     authorizer: Optional[dict] = Field(
         default=None,

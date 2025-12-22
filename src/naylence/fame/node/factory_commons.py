@@ -126,6 +126,13 @@ async def make_common_opts(cfg: FameNodeConfig) -> Dict[str, Any]:
     transport_listeners: list[TransportListener] = []
     if cfg.listeners:
         for listener_config in cfg.listeners:
+            # Skip disabled listeners (enabled defaults to True if not specified)
+            if isinstance(listener_config, dict):
+                if listener_config.get("enabled") is False:
+                    continue
+            elif hasattr(listener_config, "enabled") and listener_config.enabled is False:
+                continue
+
             transport_listener = await create_resource(TransportListenerFactory, listener_config)
             transport_listeners.append(transport_listener)
             event_listeners.append(transport_listener)
