@@ -54,6 +54,32 @@ class OAuth2AuthorizerConfig(AuthorizerConfig):
         description="Maximum TTL for authorized connections in seconds",
     )
 
+    # Token subject node identity enforcement
+    enforce_token_subject_node_identity: bool = Field(
+        default=False,
+        description=(
+            "Whether to enforce that node system IDs are prefixed with a hash of the "
+            "token subject claim. When enabled, nodes must use TokenSubjectNodeIdentityPolicy."
+        ),
+    )
+    trusted_client_scope: str = Field(
+        default="node.trusted",
+        description=(
+            "OAuth2 scope that indicates a trusted client (e.g., client credentials). "
+            "Tokens with this scope bypass token subject node identity enforcement."
+        ),
+    )
+
+    @field_validator("enforce_token_subject_node_identity", mode="before")
+    @classmethod
+    def validate_enforce_token_subject_node_identity(cls, v: Any) -> bool:
+        """Normalize string/bool values to boolean."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "yes")
+        return bool(v)
+
     @field_validator("default_ttl_sec")
     @classmethod
     def validate_default_ttl_sec(cls, v: int) -> int:
@@ -153,4 +179,6 @@ class OAuth2AuthorizerFactory(AuthorizerFactory):
             max_ttl_sec=config.max_ttl_sec,
             token_issuer=token_issuer,
             reverse_auth_ttl_sec=config.reverse_auth_ttl_sec,
+            enforce_token_subject_node_identity=config.enforce_token_subject_node_identity,
+            trusted_client_scope=config.trusted_client_scope,
         )

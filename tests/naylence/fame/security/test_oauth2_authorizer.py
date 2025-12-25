@@ -206,3 +206,188 @@ async def test_oauth2_authorizer_factory_invalid_config():
 
     with pytest.raises(ValueError, match="OAuth2AuthorizerConfig is required"):
         await factory.create(wrong_config)
+
+
+@pytest.mark.asyncio
+async def test_oauth2_authorizer_rejects_mismatched_node_identity():
+    """Test OAuth2 authorizer rejects node attach when node identity doesn't match token subject"""
+    config = OAuth2AuthorizerConfig(
+        type="OAuth2Authorizer",
+        issuer="https://auth.example.com",
+        audience="fame-sentinel",
+        required_scopes=["node.connect"],
+        require_scope=True,
+        default_ttl_sec=3600,
+        enforce_token_subject_node_identity=True,
+    )
+
+    # Create an attach frame with a system_id that doesn't match token subject
+    attach_frame = NodeAttachFrame(
+        system_id="wrong-prefix-node",  # Should be fingerprint of 'oauth-client-id'
+        instance_id="test-instance",
+        attach_token="mock-jwt-token",
+        accepted_logicals=["api.services.domain"],
+        capabilities=["read", "write"],
+        corr_id="test-corr-id",
+    )
+
+    mock_verifier = AsyncMock()
+    mock_verifier.verify.return_value = {
+        "iss": "https://auth.example.com",
+        "aud": "fame-sentinel",
+        "scope": "node.connect node.read",
+        "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
+        "iat": int(datetime.now(timezone.utc).timestamp()),
+        "sub": "oauth-client-id",
+    }
+
+    factory = OAuth2AuthorizerFactory()
+
+    with patch("naylence.fame.security.auth.oauth2_authorizer_factory.create_resource") as mock:
+        mock.return_value = mock_verifier
+        authorizer = await factory.create(config)
+
+        target_node = MockNodeLike(physical_path="fame-sentinel")
+
+        auth_context = await authorizer.authenticate("mock-jwt-token")
+        result = await authorizer.validate_node_attach_request(
+            target_node, attach_frame, auth_context
+        )
+
+        # Should reject because system_id doesn't match fingerprint of token subject
+        assert result is None
+
+
+@pytest.mark.asyncio
+async def test_oauth2_authorizer_accepts_matching_node_identity():
+    """Test OAuth2 authorizer accepts node attach when node identity matches token subject"""
+    from naylence.fame.core import generate_id
+
+    config = OAuth2AuthorizerConfig(
+        type="OAuth2Authorizer",
+        issuer="https://auth.example.com",
+        audience="fame-sentinel",
+        required_scopes=["node.connect"],
+        require_scope=True,
+        default_ttl_sec=3600,
+        enforce_token_subject_node_identity=True,
+    )
+
+    token_subject = "oauth-client-id"
+    expected_prefix = generate_id(mode="fingerprint", material=token_subject, length=8)
+
+    # Create an attach frame with matching system_id
+    attach_frame = NodeAttachFrame(
+        system_id=f"{expected_prefix}-my-node",
+        instance_id="test-instance",
+        attach_token="mock-jwt-token",
+        accepted_logicals=["api.services.domain"],
+        capabilities=["read", "write"],
+        corr_id="test-corr-id",
+    )
+
+    mock_verifier = AsyncMock()
+    mock_verifier.verify.return_value = {
+        "iss": "https://auth.example.com",
+        "aud": "fame-sentinel",
+        "scope": "node.connect node.read",
+        "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
+        "iat": int(datetime.now(timezone.utc).timestamp()),
+        "sub": token_subject,
+    }
+
+    factory = OAuth2AuthorizerFactory()
+
+    with patch("naylence.fame.security.auth.oauth2_authorizer_factory.create_resource") as mock:
+        mock.return_value = mock_verifier
+        authorizer = await factory.create(config)
+
+        target_node = MockNodeLike(physical_path="fame-sentinel")
+
+        auth_context = await authorizer.authenticate("mock-jwt-token")
+        result = await authorizer.validate_node_attach_request(
+            target_node, attach_frame, auth_context
+        )
+
+        # Should accept because system_id starts with fingerprint of token subject
+        assert result is not None
+        assert result.sub == token_subject
+
+
+@pytest.mark.asyncio
+async def test_oauth2_authorizer_trusted_client_bypasses_identity_check():
+    """Test OAuth2 authorizer allows trusted clients to bypass identity enforcement"""
+    config = OAuth2AuthorizerConfig(
+        type="OAuth2Authorizer",
+        issuer="https://auth.example.com",
+        audience="fame-sentinel",
+        required_scopes=["node.connect"],
+        require_scope=True,
+        default_ttl_sec=3600,
+        enforce_token_subject_node_identity=True,
+        trusted_client_scope="node.trusted",
+    )
+
+    # Create an attach frame with a system_id that doesn't match token subject
+    attach_frame = NodeAttachFrame(
+        system_id="arbitrary-node-id",  # Would normally fail identity check
+        instance_id="test-instance",
+        attach_token="mock-jwt-token",
+        accepted_logicals=["api.services.domain"],
+        capabilities=["read", "write"],
+        corr_id="test-corr-id",
+    )
+
+    mock_verifier = AsyncMock()
+    mock_verifier.verify.return_value = {
+        "iss": "https://auth.example.com",
+        "aud": "fame-sentinel",
+        "scope": "node.connect node.trusted",  # Has trusted scope
+        "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
+        "iat": int(datetime.now(timezone.utc).timestamp()),
+        "sub": "oauth-client-id",
+    }
+
+    factory = OAuth2AuthorizerFactory()
+
+    with patch("naylence.fame.security.auth.oauth2_authorizer_factory.create_resource") as mock:
+        mock.return_value = mock_verifier
+        authorizer = await factory.create(config)
+
+        target_node = MockNodeLike(physical_path="fame-sentinel")
+
+        auth_context = await authorizer.authenticate("mock-jwt-token")
+        result = await authorizer.validate_node_attach_request(
+            target_node, attach_frame, auth_context
+        )
+
+        # Should accept because token has trusted scope, bypassing identity check
+        assert result is not None
+        assert result.sub == "oauth-client-id"
+
+
+def test_oauth2_authorizer_config_enforce_flag_string_parsing():
+    """Test that enforce_token_subject_node_identity parses string values"""
+    # Test string "true"
+    config1 = OAuth2AuthorizerConfig(
+        type="OAuth2Authorizer",
+        issuer="https://auth.example.com",
+        enforce_token_subject_node_identity="true",  # type: ignore
+    )
+    assert config1.enforce_token_subject_node_identity is True
+
+    # Test string "false"
+    config2 = OAuth2AuthorizerConfig(
+        type="OAuth2Authorizer",
+        issuer="https://auth.example.com",
+        enforce_token_subject_node_identity="false",  # type: ignore
+    )
+    assert config2.enforce_token_subject_node_identity is False
+
+    # Test boolean True
+    config3 = OAuth2AuthorizerConfig(
+        type="OAuth2Authorizer",
+        issuer="https://auth.example.com",
+        enforce_token_subject_node_identity=True,
+    )
+    assert config3.enforce_token_subject_node_identity is True

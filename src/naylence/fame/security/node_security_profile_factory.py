@@ -25,6 +25,9 @@ ENV_VAR_HMAC_SECRET = "FAME_HMAC_SECRET"
 ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER = "FAME_JWT_REVERSE_AUTH_TRUSTED_ISSUER"
 ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE = "FAME_JWT_REVERSE_AUTH_AUDIENCE"
 
+ENV_VAR_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY = "FAME_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY"
+ENV_VAR_TRUSTED_CLIENT_SCOPE = "FAME_TRUSTED_CLIENT_SCOPE"
+
 
 PROFILE_NAME_STRICT_OVERLAY = "strict-overlay"
 PROFILE_NAME_OVERLAY = "overlay"
@@ -277,6 +280,12 @@ GATED_PROFILE = {
         "max_ttl_sec": 86400,
         "algorithm": Expressions.env(ENV_VAR_JWT_ALGORITHM, default="RS256"),
         "audience": Expressions.env(ENV_VAR_JWT_AUDIENCE),
+        "enforce_token_subject_node_identity": Expressions.env(
+            ENV_VAR_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY, default="false"
+        ),
+        "trusted_client_scope": Expressions.env(
+            ENV_VAR_TRUSTED_CLIENT_SCOPE, default="node.trusted"
+        ),
     },
 }
 

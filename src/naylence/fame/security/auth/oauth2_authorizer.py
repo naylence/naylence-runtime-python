@@ -8,6 +8,7 @@ from naylence.fame.core import (
     FameDeliveryContext,
     FameEnvelope,
     NodeAttachFrame,
+    generate_id,
 )
 from naylence.fame.node.node_context import FameNodeAuthorizationContext
 from naylence.fame.node.node_event_listener import NodeEventListener
@@ -47,6 +48,8 @@ class OAuth2Authorizer(NodeEventListener, Authorizer, TokenVerifierProvider):
         default_ttl_sec: int = 3600,
         max_ttl_sec: int = 86400,
         reverse_auth_ttl_sec: int = 86400,
+        enforce_token_subject_node_identity: bool = False,
+        trusted_client_scope: str = "node.trusted",
     ):
         super().__init__()
         self._token_verifier = token_verifier
@@ -57,6 +60,8 @@ class OAuth2Authorizer(NodeEventListener, Authorizer, TokenVerifierProvider):
         self._max_ttl_sec = max_ttl_sec
         self._token_issuer = token_issuer
         self._reverse_auth_ttl_sec = reverse_auth_ttl_sec
+        self._enforce_token_subject_node_identity = enforce_token_subject_node_identity
+        self._trusted_client_scope = trusted_client_scope
         self._node: Optional[NodeLike] = None
 
     async def on_node_started(self, node: NodeLike) -> None:
@@ -239,10 +244,27 @@ class OAuth2Authorizer(NodeEventListener, Authorizer, TokenVerifierProvider):
         if self._require_scope and self._required_scopes:
             if not any(scope in token_scopes for scope in self._required_scopes):
                 logger.warning(
-                    f"Token missing required scopes. Required: {self._required_scopes}, "
-                    f"Token has: {list(token_scopes)}"
+                    "oauth2_attach_missing_required_scope",
+                    required_scopes=list(self._required_scopes),
+                    token_scopes=list(token_scopes),
                 )
                 return None
+
+        # Enforce token subject node identity if enabled and not a trusted client
+        if self._enforce_token_subject_node_identity:
+            is_trusted_client = self._trusted_client_scope in token_scopes
+            if is_trusted_client:
+                logger.debug(
+                    "oauth2_attach_trusted_client_bypass",
+                    system_id=frame.system_id,
+                    trusted_scope=self._trusted_client_scope,
+                )
+            else:
+                validation_result = self._validate_token_subject_node_identity(
+                    frame.system_id, claims
+                )
+                if not validation_result:
+                    return None
 
         # Create node-specific authorization context
         return FameNodeAuthorizationContext(
@@ -257,4 +279,45 @@ class OAuth2Authorizer(NodeEventListener, Authorizer, TokenVerifierProvider):
             claims=claims,
         )
 
-        return auth_context
+    def _validate_token_subject_node_identity(
+        self,
+        system_id: str,
+        claims: dict,
+    ) -> bool:
+        """
+        Validate that the node's system_id is prefixed with a hash of the token subject.
+
+        This enforces that nodes using OAuth2 authentication have identities
+        that are cryptographically bound to their token subject claim.
+        """
+        sub = claims.get("sub")
+
+        if not isinstance(sub, str) or not sub.strip():
+            logger.warning(
+                "oauth2_attach_missing_subject_claim",
+                system_id=system_id,
+            )
+            return False
+
+        expected_prefix = generate_id(
+            mode="fingerprint",
+            material=sub,
+            length=8,
+        )
+
+        if not system_id.startswith(f"{expected_prefix}-"):
+            logger.warning(
+                "oauth2_attach_node_identity_mismatch",
+                system_id=system_id,
+                expected_prefix=expected_prefix,
+                subject=sub,
+            )
+            return False
+
+        logger.debug(
+            "oauth2_attach_node_identity_verified",
+            system_id=system_id,
+            expected_prefix=expected_prefix,
+        )
+
+        return True

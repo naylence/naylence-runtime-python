@@ -2,13 +2,12 @@
 Default node identity policy implementation.
 
 This module provides the default implementation of NodeIdentityPolicy
-that uses a priority-based approach for initial ID resolution and
-attempts to extract identity from token providers during admission.
+that preserves the current node ID without deriving identity from tokens.
+
+For token-subject-based identity, use TokenSubjectNodeIdentityPolicy.
 """
 
 from __future__ import annotations
-
-from typing import Any, Dict, Optional
 
 from naylence.fame.core import generate_id
 from naylence.fame.node.node_identity_policy import (
@@ -16,8 +15,6 @@ from naylence.fame.node.node_identity_policy import (
     NodeIdentityPolicy,
     NodeIdentityPolicyContext,
 )
-from naylence.fame.security.auth.token_provider import is_identity_exposing_token_provider
-from naylence.fame.security.auth.token_provider_factory import TokenProviderFactory
 from naylence.fame.util.logging import getLogger
 
 logger = getLogger(__name__)
@@ -27,14 +24,17 @@ class DefaultNodeIdentityPolicy(NodeIdentityPolicy):
     """
     Default implementation of NodeIdentityPolicy.
 
+    This policy does NOT derive identity from tokens or grants.
+    For token-subject-based identity, use TokenSubjectNodeIdentityPolicy.
+
     Initial ID resolution priority:
     1. Configured ID (explicitly set by user)
     2. Persisted ID (from previous session)
     3. Generated fingerprint-based ID
 
     Admission ID resolution:
-    - Attempts to extract identity from token providers in grants
-    - Returns the subject if found, otherwise returns current node ID
+    - Returns current node ID if present
+    - Otherwise generates a new fingerprint-based ID
     """
 
     async def resolve_initial_node_id(self, context: InitialIdentityContext) -> str:
@@ -70,66 +70,17 @@ class DefaultNodeIdentityPolicy(NodeIdentityPolicy):
 
     async def resolve_admission_node_id(self, context: NodeIdentityPolicyContext) -> str:
         """
-        Resolve admission node ID, attempting to extract identity from grants.
+        Resolve admission node ID by preserving current ID or generating a new one.
 
         Args:
-            context: The admission context with grants
+            context: The admission context
 
         Returns:
-            The subject from token provider if found, otherwise current node ID
+            The current node ID if present, otherwise a generated fingerprint ID
         """
-        if context.grants:
-            for grant in context.grants:
-                try:
-                    identity = await self._extract_identity_from_grant(grant)
-                    if identity and identity.subject:
-                        logger.debug(
-                            "identity_extracted_from_grant",
-                            identity_id=identity.subject,
-                            grant_type=grant.get("type"),
-                        )
-                        return identity.subject
-                except Exception as error:
-                    logger.warning(
-                        "identity_extraction_failed",
-                        error=str(error),
-                        grant_type=grant.get("type"),
-                    )
-
-        if not context.current_node_id:
-            return generate_id(mode="fingerprint")
-
-        return context.current_node_id
-
-    async def _extract_identity_from_grant(
-        self,
-        grant: Dict[str, Any],
-    ) -> Optional[Any]:
-        """
-        Extract identity from a grant's token provider configuration.
-
-        Args:
-            grant: The grant dictionary that may contain auth configuration
-
-        Returns:
-            AuthIdentity if extraction successful, None otherwise
-        """
-        auth = grant.get("auth")
-        if not auth or not isinstance(auth, dict):
-            return None
-
-        token_provider_config = auth.get("tokenProvider") or auth.get("token_provider")
-        if not token_provider_config or not isinstance(token_provider_config, dict):
-            return None
-
-        if not token_provider_config.get("type"):
-            return None
-
-        provider = await TokenProviderFactory.create_token_provider(token_provider_config)
-        if provider and is_identity_exposing_token_provider(provider):
-            return await provider.get_identity()
-
-        return None
+        if context.current_node_id:
+            return context.current_node_id
+        return generate_id(mode="fingerprint")
 
 
 # Type assertion for protocol compliance
