@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
+from naylence.fame.factory import Expressions
 from naylence.fame.profile import RegisterProfileOptions, get_profile, register_profile
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.auth.authorizer_factory import AuthorizerConfig, AuthorizerFactory
@@ -54,44 +55,44 @@ DEFAULT_REVERSE_AUTH_ISSUER = "reverse-auth.naylence.ai"
 DEFAULT_REVERSE_AUTH_AUDIENCE = "dev.naylence.ai"
 
 # Profile configurations
-# Note: In Python we don't have expression evaluation like TypeScript's Expressions.env()
-# These are simplified versions - actual env resolution happens at runtime
+# Using Expressions.env() for dynamic environment variable resolution
 
 DEFAULT_PROFILE: dict[str, Any] = {
     "type": "DefaultAuthorizer",
     "verifier": {
         "type": "JWKSJWTTokenVerifier",
-        # These would be resolved from env at runtime
-        "jwks_url_env": ENV_VAR_JWKS_URL,
-        "issuer_env": ENV_VAR_JWT_TRUSTED_ISSUER,
+        "jwks_url": Expressions.env(ENV_VAR_JWKS_URL),
+        "issuer": Expressions.env(ENV_VAR_JWT_TRUSTED_ISSUER),
     },
 }
 
 OAUTH2_PROFILE: dict[str, Any] = {
     "type": "OAuth2Authorizer",
-    "issuer_env": ENV_VAR_JWT_TRUSTED_ISSUER,
+    "issuer": Expressions.env(ENV_VAR_JWT_TRUSTED_ISSUER),
     "required_scopes": ["node.connect"],
     "require_scope": True,
     "default_ttl_sec": 3600,
     "max_ttl_sec": 86400,
-    "algorithm_env": ENV_VAR_JWT_ALGORITHM,
-    "algorithm_default": "RS256",
-    "audience_env": ENV_VAR_JWT_AUDIENCE,
+    "algorithm": Expressions.env(ENV_VAR_JWT_ALGORITHM, default="RS256"),
+    "audience": Expressions.env(ENV_VAR_JWT_AUDIENCE),
 }
 
 OAUTH2_GATED_PROFILE: dict[str, Any] = {
     **OAUTH2_PROFILE,
-    "enforce_token_subject_node_identity_env": ENV_VAR_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY,
-    "enforce_token_subject_node_identity_default": "false",
-    "trusted_client_scope_env": ENV_VAR_TRUSTED_CLIENT_SCOPE,
-    "trusted_client_scope_default": "node.trusted",
+    "enforce_token_subject_node_identity": Expressions.env(
+        ENV_VAR_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY, default="false"
+    ),
+    "trusted_client_scope": Expressions.env(
+        ENV_VAR_TRUSTED_CLIENT_SCOPE, default="node.trusted"
+    ),
 }
 
 OAUTH2_CALLBACK_PROFILE: dict[str, Any] = {
     "type": "OAuth2Authorizer",
-    "issuer_env": ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
-    "issuer_default": DEFAULT_REVERSE_AUTH_ISSUER,
-    "audience_env": ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE,
+    "issuer": Expressions.env(
+        ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER, default=DEFAULT_REVERSE_AUTH_ISSUER
+    ),
+    "audience": Expressions.env(ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE),
     "require_scope": True,
     "default_ttl_sec": 3600,
     "max_ttl_sec": 86400,
@@ -99,21 +100,26 @@ OAUTH2_CALLBACK_PROFILE: dict[str, Any] = {
     "token_verifier_config": {
         "type": "JWTTokenVerifier",
         "algorithm": "HS256",
-        "hmac_secret_env": ENV_VAR_HMAC_SECRET,
-        "issuer_env": ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
-        "issuer_default": DEFAULT_REVERSE_AUTH_ISSUER,
+        "hmac_secret": Expressions.env(ENV_VAR_HMAC_SECRET),
+        "issuer": Expressions.env(
+            ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
+            default=DEFAULT_REVERSE_AUTH_ISSUER,
+        ),
         "ttl_sec": 86400,
     },
     "token_issuer_config": {
         "type": "JWTTokenIssuer",
         "algorithm": "HS256",
-        "hmac_secret_env": ENV_VAR_HMAC_SECRET,
+        "hmac_secret": Expressions.env(ENV_VAR_HMAC_SECRET),
         "kid": "hmac-reverse-auth-key",
-        "issuer_env": ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
-        "issuer_default": DEFAULT_REVERSE_AUTH_ISSUER,
+        "issuer": Expressions.env(
+            ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
+            default=DEFAULT_REVERSE_AUTH_ISSUER,
+        ),
         "ttl_sec": 86400,
-        "audience_env": ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE,
-        "audience_default": DEFAULT_REVERSE_AUTH_AUDIENCE,
+        "audience": Expressions.env(
+            ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE, default=DEFAULT_REVERSE_AUTH_AUDIENCE
+        ),
     },
 }
 
@@ -123,16 +129,14 @@ NOOP_PROFILE: dict[str, Any] = {
 
 DEFAULT_VERIFIER_CONFIG: dict[str, Any] = {
     "type": "JWKSJWTTokenVerifier",
-    "jwks_url_env": ENV_VAR_JWKS_URL,
-    "issuer_env": ENV_VAR_JWT_TRUSTED_ISSUER,
+    "jwks_url": Expressions.env(ENV_VAR_JWKS_URL),
+    "issuer": Expressions.env(ENV_VAR_JWT_TRUSTED_ISSUER),
 }
 
 DEFAULT_POLICY_SOURCE: dict[str, Any] = {
     "type": "LocalFileAuthorizationPolicySource",
-    "path_env": ENV_VAR_AUTH_POLICY_PATH,
-    "path_default": "./auth-policy.yaml",
-    "format_env": ENV_VAR_AUTH_POLICY_FORMAT,
-    "format_default": "auto",
+    "path": Expressions.env(ENV_VAR_AUTH_POLICY_PATH, default="./auth-policy.yaml"),
+    "format": Expressions.env(ENV_VAR_AUTH_POLICY_FORMAT, default="auto"),
 }
 
 POLICY_LOCALFILE_PROFILE: dict[str, Any] = {

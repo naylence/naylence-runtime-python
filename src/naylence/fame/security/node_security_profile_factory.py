@@ -15,18 +15,18 @@ from .security_manager import SecurityManager
 logger = getLogger(__name__)
 
 
+# Environment variables - exported for external use
 ENV_VAR_JWT_TRUSTED_ISSUER = "FAME_JWT_TRUSTED_ISSUER"
 ENV_VAR_JWT_ALGORITHM = "FAME_JWT_ALGORITHM"
 ENV_VAR_JWT_AUDIENCE = "FAME_JWT_AUDIENCE"
 ENV_VAR_JWKS_URL = "FAME_JWKS_URL"
 ENV_VAR_DEFAULT_ENCRYPTION_LEVEL = "FAME_DEFAULT_ENCRYPTION_LEVEL"
 ENV_VAR_HMAC_SECRET = "FAME_HMAC_SECRET"
-
 ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER = "FAME_JWT_REVERSE_AUTH_TRUSTED_ISSUER"
 ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE = "FAME_JWT_REVERSE_AUTH_AUDIENCE"
-
 ENV_VAR_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY = "FAME_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY"
 ENV_VAR_TRUSTED_CLIENT_SCOPE = "FAME_TRUSTED_CLIENT_SCOPE"
+ENV_VAR_AUTHORIZATION_PROFILE = "FAME_AUTHORIZATION_PROFILE"
 
 
 PROFILE_NAME_STRICT_OVERLAY = "strict-overlay"
@@ -36,9 +36,6 @@ PROFILE_NAME_GATED = "gated"
 PROFILE_NAME_GATED_CALLBACK = "gated-callback"
 PROFILE_NAME_OPEN = "open"
 
-
-DEFAULT_REVERSE_AUTH_ISSUER = "reverse-auth.naylence.ai"
-DEFAULT_REVERSE_AUTH_AUDIENCE = "dev.naylence.ai"
 
 STRICT_OVERLAY_PROFILE = {
     "type": "DefaultSecurityManager",
@@ -85,12 +82,8 @@ STRICT_OVERLAY_PROFILE = {
         },
     },
     "authorizer": {
-        "type": "DefaultAuthorizer",
-        "verifier": {
-            "type": "JWKSJWTTokenVerifier",
-            "jwks_url": Expressions.env(ENV_VAR_JWKS_URL),
-            "issuer": Expressions.env(ENV_VAR_JWT_TRUSTED_ISSUER),
-        },
+        "type": "AuthorizationProfile",
+        "profile": Expressions.env(ENV_VAR_AUTHORIZATION_PROFILE, default="jwt"),
     },
 }
 
@@ -138,14 +131,8 @@ OVERLAY_PROFILE = {
         },
     },
     "authorizer": {
-        "type": "OAuth2Authorizer",
-        "issuer": Expressions.env(ENV_VAR_JWT_TRUSTED_ISSUER),
-        "required_scopes": ["node.connect"],
-        "require_scope": True,
-        "default_ttl_sec": 3600,
-        "max_ttl_sec": 86400,
-        "algorithm": Expressions.env(ENV_VAR_JWT_ALGORITHM, default="RS256"),
-        "audience": Expressions.env(ENV_VAR_JWT_AUDIENCE),
+        "type": "AuthorizationProfile",
+        "profile": Expressions.env(ENV_VAR_AUTHORIZATION_PROFILE, default="oauth2"),
     },
 }
 
@@ -193,39 +180,8 @@ OVERLAY_CALLBACK_PROFILE = {
         },
     },
     "authorizer": {
-        "type": "OAuth2Authorizer",
-        "issuer": Expressions.env(
-            ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER, default=DEFAULT_REVERSE_AUTH_ISSUER
-        ),
-        "audience": Expressions.env(ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE),
-        "require_scope": True,
-        "default_ttl_sec": 3600,
-        "max_ttl_sec": 86400,
-        "reverse_auth_ttl_sec": 86400,
-        "token_verifier_config": {
-            "type": "JWTTokenVerifier",
-            "algorithm": "HS256",
-            "hmac_secret": Expressions.env(ENV_VAR_HMAC_SECRET),
-            "issuer": Expressions.env(
-                ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
-                default="reverse-auth.naylence.ai",
-            ),
-            "ttl_sec": 86400,
-        },
-        "token_issuer_config": {
-            "type": "JWTTokenIssuer",
-            "algorithm": "HS256",
-            "hmac_secret": Expressions.env(ENV_VAR_HMAC_SECRET),
-            "kid": "hmac-reverse-auth-key",
-            "issuer": Expressions.env(
-                ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
-                default="reverse-auth.naylence.ai",
-            ),
-            "ttl_sec": 86400,
-            "audience": Expressions.env(
-                ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE, default=DEFAULT_REVERSE_AUTH_AUDIENCE
-            ),
-        },
+        "type": "AuthorizationProfile",
+        "profile": Expressions.env(ENV_VAR_AUTHORIZATION_PROFILE, default="oauth2-callback"),
     },
 }
 
@@ -272,20 +228,8 @@ GATED_PROFILE = {
         },
     },
     "authorizer": {
-        "type": "OAuth2Authorizer",
-        "issuer": Expressions.env(ENV_VAR_JWT_TRUSTED_ISSUER),
-        "required_scopes": ["node.connect"],
-        "require_scope": True,
-        "default_ttl_sec": 3600,
-        "max_ttl_sec": 86400,
-        "algorithm": Expressions.env(ENV_VAR_JWT_ALGORITHM, default="RS256"),
-        "audience": Expressions.env(ENV_VAR_JWT_AUDIENCE),
-        "enforce_token_subject_node_identity": Expressions.env(
-            ENV_VAR_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY, default="false"
-        ),
-        "trusted_client_scope": Expressions.env(
-            ENV_VAR_TRUSTED_CLIENT_SCOPE, default="node.trusted"
-        ),
+        "type": "AuthorizationProfile",
+        "profile": Expressions.env(ENV_VAR_AUTHORIZATION_PROFILE, default="oauth2-gated"),
     },
 }
 
@@ -333,39 +277,8 @@ GATED_CALLBACK_PROFILE = {
         },
     },
     "authorizer": {
-        "type": "OAuth2Authorizer",
-        "issuer": Expressions.env(
-            ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER, default=DEFAULT_REVERSE_AUTH_ISSUER
-        ),
-        "audience": Expressions.env(ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE),
-        "require_scope": True,
-        "default_ttl_sec": 3600,
-        "max_ttl_sec": 86400,
-        "reverse_auth_ttl_sec": 86400,
-        "token_verifier_config": {
-            "type": "JWTTokenVerifier",
-            "algorithm": "HS256",
-            "hmac_secret": Expressions.env(ENV_VAR_HMAC_SECRET),
-            "issuer": Expressions.env(
-                ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
-                default="reverse-auth.naylence.ai",
-            ),
-            "ttl_sec": 86400,
-        },
-        "token_issuer_config": {
-            "type": "JWTTokenIssuer",
-            "algorithm": "HS256",
-            "hmac_secret": Expressions.env(ENV_VAR_HMAC_SECRET),
-            "kid": "hmac-reverse-auth-key",
-            "issuer": Expressions.env(
-                ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER,
-                default="reverse-auth.naylence.ai",
-            ),
-            "ttl_sec": 86400,
-            "audience": Expressions.env(
-                ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE, default=DEFAULT_REVERSE_AUTH_AUDIENCE
-            ),
-        },
+        "type": "AuthorizationProfile",
+        "profile": Expressions.env(ENV_VAR_AUTHORIZATION_PROFILE, default="oauth2-callback"),
     },
 }
 
@@ -375,7 +288,8 @@ OPEN_PROFILE = {
         "type": "NoSecurityPolicy",
     },
     "authorizer": {
-        "type": "NoopAuthorizer",
+        "type": "AuthorizationProfile",
+        "profile": Expressions.env(ENV_VAR_AUTHORIZATION_PROFILE, default="noop"),
     },
 }
 

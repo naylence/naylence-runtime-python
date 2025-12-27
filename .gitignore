@@ -7,8 +7,8 @@ __pycache__
 .pytest*
 .DS_Store
 .hypothesis
-# .coverage
-# coverage.xml
+.coverage
+coverage.xml
 naylence-fame-core
 AGENTS.md
 

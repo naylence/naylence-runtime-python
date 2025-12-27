@@ -78,7 +78,7 @@ class TestProfileConfigurations:
     def test_oauth2_gated_profile_extends_oauth2(self):
         """OAuth2 gated profile should extend OAuth2 profile."""
         assert OAUTH2_GATED_PROFILE["type"] == "OAuth2Authorizer"
-        assert "enforce_token_subject_node_identity_env" in OAUTH2_GATED_PROFILE
+        assert "enforce_token_subject_node_identity" in OAUTH2_GATED_PROFILE
 
     def test_oauth2_callback_profile_has_type(self):
         """OAuth2 callback profile should have type OAuth2Authorizer."""
