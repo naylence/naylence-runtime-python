@@ -632,13 +632,22 @@ class DefaultDeliveryTracker(NodeEventListener, DeliveryTracker, TaskSpawner):
 
         await self._outbox.set(tracked_envelope.original_envelope.id, tracked_envelope)
 
-        # Resolve ack future with error (idempotent) and mark for GC
+        # Resolve ack and reply futures with error (idempotent) and mark for GC
+        nack_error = RuntimeError(f"Envelope nacked: {envelope.frame.reason or 'unknown'}")
         async with self._lock:
-            future = self._ack_futures.get(tracked_envelope.original_envelope.id, None)
-        if future and not future.done():
-            future.set_exception(RuntimeError(f"Envelope nacked: {envelope.frame.reason or 'unknown'}"))
+            ack_future = self._ack_futures.get(tracked_envelope.original_envelope.id, None)
+            reply_future = self._reply_futures.get(tracked_envelope.original_envelope.id, None)
+
+        if ack_future and not ack_future.done():
+            ack_future.set_exception(nack_error)
+        if reply_future and not reply_future.done():
+            reply_future.set_exception(nack_error)
+
         await self._mark_done_since(
             self._ack_futures, tracked_envelope.original_envelope.id, self._ack_done_since
+        )
+        await self._mark_done_since(
+            self._reply_futures, tracked_envelope.original_envelope.id, self._reply_done_since
         )
 
         stream_queue = self._stream_queues.get(tracked_envelope.original_envelope.id)
