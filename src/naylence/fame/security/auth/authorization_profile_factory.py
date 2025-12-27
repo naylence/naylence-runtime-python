@@ -142,7 +142,7 @@ DEFAULT_POLICY_SOURCE: dict[str, Any] = {
 POLICY_LOCALFILE_PROFILE: dict[str, Any] = {
     "type": "PolicyAuthorizer",
     "verifier": DEFAULT_VERIFIER_CONFIG,
-    "policySource": DEFAULT_POLICY_SOURCE,
+    "policy_source": DEFAULT_POLICY_SOURCE,
 }
 
 # Register all profiles

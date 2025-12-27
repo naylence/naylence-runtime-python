@@ -93,7 +93,7 @@ class TestProfileConfigurations:
     def test_policy_localfile_profile_has_type(self):
         """Policy localfile profile should have type PolicyAuthorizer."""
         assert POLICY_LOCALFILE_PROFILE["type"] == "PolicyAuthorizer"
-        assert "policySource" in POLICY_LOCALFILE_PROFILE
+        assert "policy_source" in POLICY_LOCALFILE_PROFILE
 
 
 class TestProfileAliases:
@@ -416,7 +416,7 @@ class TestAuthorizationProfileFactory:
     async def test_resolves_policy_localfile_profile_name(
         self, factory, mock_authorizer_factory
     ):
-        """Should resolve policy-localfile to PolicyAuthorizer with policySource."""
+        """Should resolve policy-localfile to PolicyAuthorizer with policy_source."""
         await factory.create({
             "type": "AuthorizationProfile",
             "profile": PROFILE_NAME_POLICY_LOCALFILE,
@@ -425,9 +425,9 @@ class TestAuthorizationProfileFactory:
         mock_authorizer_factory.assert_called_once()
         profile_config = mock_authorizer_factory.call_args[0][0]
         assert profile_config["type"] == "PolicyAuthorizer"
-        assert "policySource" in profile_config
+        assert "policy_source" in profile_config
         assert (
-            profile_config["policySource"]["type"]
+            profile_config["policy_source"]["type"]
             == "LocalFileAuthorizationPolicySource"
         )
 

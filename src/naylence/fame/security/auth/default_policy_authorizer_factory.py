@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional, Union
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 
 from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.authorizer import Authorizer
@@ -39,7 +39,7 @@ from naylence.fame.security.auth.token_verifier_factory import (
 class DefaultPolicyAuthorizerConfig(AuthorizerConfig):
     """Configuration for DefaultPolicyAuthorizer."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     type: str = "PolicyAuthorizer"
 
@@ -52,9 +52,10 @@ class DefaultPolicyAuthorizerConfig(AuthorizerConfig):
 
     policy_source: Optional[
         Union[AuthorizationPolicySourceConfig, dict[str, Any]]
-    ] = None
+    ] = Field(None, alias="policySource")
     """Authorization policy source configuration.
-    Either policy or policy_source must be provided."""
+    Either policy or policy_source must be provided.
+    Supports both policySource (camelCase) and policy_source (snake_case) keys."""
 
 
 def _is_token_verifier(candidate: Any) -> bool:
@@ -132,7 +133,8 @@ class DefaultPolicyAuthorizerFactory(AuthorizerFactory[DefaultPolicyAuthorizerCo
 
         verifier_config = cfg.get("verifier")
         policy_config = cfg.get("policy")
-        policy_source_config = cfg.get("policy_source")
+        # Support both snake_case and camelCase for policy_source
+        policy_source_config = cfg.get("policy_source") or cfg.get("policySource")
 
         # Resolve token verifier from args or config
         token_verifier: Optional[TokenVerifier] = None
