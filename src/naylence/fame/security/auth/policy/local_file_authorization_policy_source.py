@@ -172,8 +172,8 @@ class LocalFileAuthorizationPolicySource(AuthorizationPolicySource):
         # Build the factory config with the policy definition
         # The file content IS the policy definition, so we extract the type
         # and wrap the remaining content as the policyDefinition
-        file_type = policy_definition.pop("type", None)
-        rest_of_file = policy_definition
+        file_type = policy_definition.get("type")
+        rest_of_file = {k: v for k, v in policy_definition.items() if k != "type"}
 
         resolved_type = (
             file_type
