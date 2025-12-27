@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 
 from naylence.fame.security.auth.policy.authorization_policy import (
     AuthorizationPolicy,
@@ -24,15 +24,19 @@ from naylence.fame.security.auth.policy.authorization_policy_factory import (
 class BasicAuthorizationPolicyConfig(AuthorizationPolicyConfig):
     """Configuration for creating a BasicAuthorizationPolicy via factory."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     type: str = "BasicAuthorizationPolicy"
 
     # The policy definition to evaluate - can be dict or Pydantic model
-    policy_definition: AuthorizationPolicyDefinition | dict[str, Any] | None = None
+    policy_definition: AuthorizationPolicyDefinition | dict[str, Any] | None = Field(
+        default=None, alias="policyDefinition"
+    )
 
     # Whether to log warnings for unknown fields (default: True)
-    warn_on_unknown_fields: bool = True
+    warn_on_unknown_fields: bool = Field(
+        default=True, alias="warnOnUnknownFields"
+    )
 
 
 def _normalize_config(

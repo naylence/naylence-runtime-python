@@ -40,6 +40,39 @@ def _create_auth_context(**kwargs: Any) -> AuthorizationContext:
     return AuthorizationContext(**kwargs)
 
 
+def _extract_scopes_from_claims(claims: dict[str, Any]) -> list[str]:
+    """
+    Extract scopes from JWT claims and return as a list.
+
+    Handles multiple scope claim formats:
+    - 'scope': space-separated string (OAuth2 standard)
+    - 'scopes': array of strings
+    - 'scp': Azure AD style
+    """
+    scopes: list[str] = []
+
+    # Handle 'scope' field (space-separated string - OAuth2 standard)
+    scope_claim = claims.get("scope")
+    if isinstance(scope_claim, str):
+        scopes.extend(scope_claim.split())
+    elif isinstance(scope_claim, list):
+        scopes.extend(s for s in scope_claim if isinstance(s, str))
+
+    # Handle 'scopes' field (array - some providers use this)
+    scopes_claim = claims.get("scopes")
+    if isinstance(scopes_claim, list):
+        scopes.extend(s for s in scopes_claim if isinstance(s, str) and s not in scopes)
+
+    # Handle 'scp' field (Azure AD style)
+    scp_claim = claims.get("scp")
+    if isinstance(scp_claim, list):
+        scopes.extend(s for s in scp_claim if isinstance(s, str) and s not in scopes)
+    elif isinstance(scp_claim, str):
+        scopes.extend(s for s in scp_claim.split() if s not in scopes)
+
+    return scopes
+
+
 def _decode_credentials(credentials: bytes) -> str:
     """Decode credential bytes to string."""
     return credentials.decode("utf-8")
@@ -198,12 +231,16 @@ class DefaultPolicyAuthorizer(PolicyAuthorizer, TokenVerifierProvider):
             verifier = self.token_verifier
             context = await verifier.verify(token)
 
+            # Extract scopes from JWT claims and set as granted_scopes
+            granted_scopes = _extract_scopes_from_claims(context)
+
             return _create_auth_context(
                 **{
                     **context,
                     "authenticated": True,
                     "authorized": False,  # Authorization happens in authorize()
                     "auth_method": context.get("auth_method", "jwt"),
+                    "granted_scopes": granted_scopes,
                 }
             )
         except Exception as error:
