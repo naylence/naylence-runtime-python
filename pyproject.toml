@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.4.1"
+version = "0.4.2"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -262,6 +262,7 @@ NoopAuthorizer = "naylence.fame.security.auth.noop_authorizer_factory:NoopAuthor
 SharedSecretAuthorizer = "naylence.fame.security.auth.shared_secret_authorizer_factory:SharedSecretAuthorizerFactory"
 OAuth2Authorizer = "naylence.fame.security.auth.oauth2_authorizer_factory:OAuth2AuthorizerFactory"
 AuthorizationProfile = "naylence.fame.security.auth.authorization_profile_factory:AuthorizationProfileFactory"
+PolicyAuthorizer = "naylence.fame.security.auth.default_policy_authorizer_factory:DefaultPolicyAuthorizerFactory"
 
 [project.entry-points."naylence.AuthorizationPolicyFactory"]
 BasicAuthorizationPolicy = "naylence.fame.security.auth.policy.basic_authorization_policy_factory:BasicAuthorizationPolicyFactory"

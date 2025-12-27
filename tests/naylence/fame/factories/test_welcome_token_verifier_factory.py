@@ -100,3 +100,55 @@ class TestTokenVerifierFactory:
 
         with pytest.raises(Exception):
             await create_resource(TokenVerifierFactory, config)
+
+    @pytest.mark.asyncio
+    async def test_create_token_verifier_with_config(self):
+        """Test create_token_verifier class method with config creates instance."""
+        config = NoopTokenVerifierConfig()
+        verifier = await TokenVerifierFactory.create_token_verifier(config)
+
+        assert isinstance(verifier, NoopTokenVerifier)
+        assert verifier.__class__.__name__ == "NoopTokenVerifier"
+
+    @pytest.mark.asyncio
+    async def test_create_token_verifier_with_dict_config(self):
+        """Test create_token_verifier with dictionary config creates instance."""
+        config = {"type": "NoopTokenVerifier"}
+        verifier = await TokenVerifierFactory.create_token_verifier(config)
+
+        assert isinstance(verifier, NoopTokenVerifier)
+
+    @pytest.mark.asyncio
+    async def test_create_token_verifier_without_config_uses_default(self):
+        """Test create_token_verifier without config raises error when no default exists."""
+        with pytest.raises(ValueError, match="Failed to create default token verifier"):
+            await TokenVerifierFactory.create_token_verifier()
+
+    @pytest.mark.asyncio
+    async def test_create_token_verifier_with_jwt_config(self):
+        """Test create_token_verifier with JWTVerifier config."""
+        config = JWTVerifierConfig(
+            issuer="test-issuer", kid="test-kid", allowed_algorithms=["EdDSA"]
+        )
+        verifier = await TokenVerifierFactory.create_token_verifier(config)
+
+        assert isinstance(verifier, JWTTokenVerifier)
+        assert verifier.__class__.__name__ == "JWTTokenVerifier"
+
+    @pytest.mark.asyncio
+    async def test_create_token_verifier_with_shared_secret_config(self):
+        """Test create_token_verifier with SharedSecretVerifier config."""
+        config = SharedSecretVerifierConfig(
+            secret=StaticCredentialProviderConfig(credential_value="test-secret")
+        )
+        verifier = await TokenVerifierFactory.create_token_verifier(config)
+
+        assert isinstance(verifier, SharedSecretTokenVerifier)
+
+    @pytest.mark.asyncio
+    async def test_create_token_verifier_invalid_config_raises_error(self):
+        """Test create_token_verifier with invalid config raises error."""
+        config = {"type": "InvalidTokenVerifier"}
+        with pytest.raises(Exception):  # Will raise from create_resource lookup failure
+            await TokenVerifierFactory.create_token_verifier(config)
+

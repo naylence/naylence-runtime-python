@@ -11,9 +11,9 @@ from typing import Any, Optional, Union
 
 from pydantic import ConfigDict
 
+from naylence.fame.factory import create_resource
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.auth.authorizer_factory import (
-    AUTHORIZER_FACTORY_BASE_TYPE,
     AuthorizerConfig,
     AuthorizerFactory,
 )
@@ -83,7 +83,7 @@ def _is_authorization_policy_source(candidate: Any) -> bool:
 
 # Factory metadata for registration
 FACTORY_META = {
-    "base": AUTHORIZER_FACTORY_BASE_TYPE,
+    "base": "Authorizer",
     "key": "PolicyAuthorizer",
 }
 
@@ -145,14 +145,9 @@ class DefaultPolicyAuthorizerFactory(AuthorizerFactory[DefaultPolicyAuthorizerCo
             token_verifier = factory_args["token_verifier"]
 
         if not token_verifier and verifier_config:
-            if isinstance(verifier_config, dict) and verifier_config:
-                token_verifier = await TokenVerifierFactory.create_token_verifier(
-                    verifier_config
-                )
-            elif verifier_config:
-                token_verifier = await TokenVerifierFactory.create_token_verifier(
-                    verifier_config
-                )
+            token_verifier = await create_resource(
+                TokenVerifierFactory, verifier_config
+            )
 
         if not token_verifier:
             raise ValueError(
