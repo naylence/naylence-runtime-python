@@ -3,6 +3,8 @@ name: Test
 on:
   push:
     branches: [ main, develop, public-main ]
+    tags:
+      - 'v*'  # Run tests on version tags
   pull_request:
     branches: [ main, develop, public-main ]
 

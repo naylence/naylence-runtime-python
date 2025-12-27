@@ -3,9 +3,6 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
-  push:
-    tags:
-      - 'v*'  # Trigger on version tags (e.g., v1.0.0, v0.4.0)
   workflow_dispatch:
     inputs:
       target:
@@ -18,6 +15,8 @@ on:
     workflows: ["Test"]
     types: [completed]
     branches: [main]
+    tags:
+      - 'v*'  # Trigger after tests pass on version tags
 
 permissions:
   contents: read
@@ -26,10 +25,9 @@ permissions:
 jobs:
   # Build once and upload where needed
   build:
-    # Only run if tests passed or if manually triggered or on tag push or release
+    # Only run if tests passed or if manually triggered or on release
     if: |
       github.event_name == 'release' || 
-      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
@@ -82,8 +80,11 @@ jobs:
           verbose: true
 
   publish-pypi:
-    # Run on release, tag push, or on dispatch with target == pypi
-    if: github.event_name == 'release' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
+    # Run on release, after successful test workflow, or on dispatch with target == pypi
+    if: |
+      github.event_name == 'release' || 
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
     needs: build
     runs-on: ubuntu-latest
     environment: pypi            # Environment for PyPI OIDC
