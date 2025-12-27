@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from naylence.fame.core import AuthorizationContext, FameDeliveryContext, FameEnvelope
 from naylence.fame.core.protocol.frames import NodeAttachFrame
 from naylence.fame.node.node_like import NodeLike
-from naylence.fame.security.auth.authorizer import Authorizer
+from naylence.fame.security.auth.authorizer import Authorizer, RouteAuthorizationResult
+
+if TYPE_CHECKING:
+    from naylence.fame.security.auth.policy.authorization_policy_definition import RuleAction
 
 
 class NoopAuthorizer(Authorizer):
@@ -50,6 +53,20 @@ class NoopAuthorizer(Authorizer):
 
             # Return a basic authorization context
             return AuthorizationContext()
+
+    async def authorize_route(
+        self,
+        node: NodeLike,
+        envelope: FameEnvelope,
+        action: RuleAction,
+        context: Optional[FameDeliveryContext] = None,
+    ) -> Optional[RouteAuthorizationResult]:
+        """
+        Authorize routing action unconditionally.
+
+        For NoopAuthorizer, always allows the routing action.
+        """
+        return RouteAuthorizationResult(authorized=True)
 
     # Legacy method for backward compatibility with NodeAttach frames
     async def validate_node_attach_request(

@@ -41,7 +41,7 @@ from naylence.fame.sentinel.node_heartbeat_frame_handler import (
 )
 from naylence.fame.sentinel.peer import Peer
 from naylence.fame.sentinel.route_manager import AddressRouteInfo, RouteManager
-from naylence.fame.sentinel.router import RouterState, RoutingAction
+from naylence.fame.sentinel.router import Drop, RouterState, RoutingAction
 from naylence.fame.sentinel.routing_policy import RoutingPolicy
 from naylence.fame.sentinel.store.route_store import RouteStore, get_default_route_store
 from naylence.fame.stickiness.load_balancer_stickiness_manager import (
@@ -201,6 +201,43 @@ class Sentinel(FameNode, RoutingNodeLike):
             return
         if envelope.flow_flags and (envelope.flow_flags & FlowFlags.RESET):  # or your FlowClose frame type
             self._route_manager._flow_routes.pop(fid, None)
+
+    async def _dispatch_routing_action_selected(
+        self,
+        envelope: FameEnvelope,
+        selected: RoutingAction,
+        state: RouterState,
+        context: Optional[FameDeliveryContext] = None,
+    ) -> Optional[RoutingAction]:
+        """
+        Dispatch on_routing_action_selected event to all listeners.
+
+        This provides a single, centralized hook for route authorization after
+        the routing policy has selected an action but before it executes.
+
+        Returns the final action to execute, or None to drop the envelope.
+        """
+        current_action = selected
+
+        for listener in self._event_listeners:
+            if hasattr(listener, "on_routing_action_selected"):
+                method = getattr(listener, "on_routing_action_selected")
+                try:
+                    result = await method(self, envelope, current_action, state, context)
+                    if result is None:
+                        # Listener signaled to drop - return None
+                        return None
+                    current_action = result
+                except Exception as e:
+                    logger.warning(
+                        "routing_action_selected_hook_failed",
+                        listener=type(listener).__name__,
+                        error=str(e),
+                    )
+                    # On hook failure, drop the envelope for safety
+                    return None
+
+        return current_action
 
     # ---------------------------------------------------------------------------------- public API
 
@@ -414,7 +451,21 @@ class Sentinel(FameNode, RoutingNodeLike):
         # Note: KeyAnnounce and KeyRequest frames are now handled by SecurityManager.on_deliver
 
         state = self.build_router_state()
-        action: RoutingAction = await self._routing_policy.decide(processed_envelope, state, context)
+        selected_action: RoutingAction = await self._routing_policy.decide(
+            processed_envelope, state, context
+        )
+
+        # Dispatch on_routing_action_selected hook for route authorization
+        # This allows security managers and other listeners to authorize or replace
+        # the selected action before it executes
+        action = await self._dispatch_routing_action_selected(
+            processed_envelope, selected_action, state, context
+        )
+
+        if action is None:
+            # Hook signaled to drop - use Drop action with NO_ROUTE nack
+            action = Drop()
+
         await action.execute(processed_envelope, self, state, context)
 
     async def forward_to_route(

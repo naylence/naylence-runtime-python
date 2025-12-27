@@ -831,6 +831,123 @@ class DefaultSecurityManager(SecurityManager):
         logger.debug("on_deliver_security_processing_complete", envp_id=processed_envelope.id)
         return processed_envelope
 
+    async def on_routing_action_selected(
+        self,
+        node: NodeLike,
+        envelope: FameEnvelope,
+        selected: Any,  # RoutingAction
+        state: Any,  # RouterState
+        context: Optional[FameDeliveryContext] = None,
+    ) -> Optional[Any]:  # RoutingAction | None
+        """
+        Route authorization hook - invoked after routing policy selects an action.
+
+        This method provides centralized route authorization by:
+        1. Mapping the RoutingAction to an authorization action token
+        2. Calling authorizer.authorize_route() if available
+        3. Returning a Deny action on authorization failure (opaque on wire)
+
+        Args:
+            node: The node performing the routing
+            envelope: The envelope being routed
+            selected: The RoutingAction selected by routing policy
+            state: The current router state
+            context: Optional delivery context
+
+        Returns:
+            The action to execute (selected if authorized, Deny if denied)
+        """
+        from naylence.fame.sentinel.router import (
+            Deny,
+            DenyOptions,
+            map_routing_action_to_authorization_action,
+        )
+
+        # If no authorizer or authorizer doesn't implement authorize_route, allow
+        if not self._authorizer:
+            return selected
+
+        if not callable(getattr(self._authorizer, "authorize_route", None)):
+            return selected
+
+        # Map RoutingAction to authorization action token
+        action_token = map_routing_action_to_authorization_action(selected)
+
+        # Terminal actions (Drop, Deny) don't need authorization
+        if action_token is None:
+            return selected
+
+        try:
+            auth_result = await self._authorizer.authorize_route(
+                node,
+                envelope,
+                action_token,  # type: ignore[arg-type]  # action_token is guaranteed to be RuleAction by this point
+                context,
+            )
+
+            # None means allow (authorizer has no opinion)
+            if auth_result is None:
+                return selected
+
+            # Check authorization result
+            if auth_result.authorized:
+                logger.debug(
+                    "route_authorization_allowed",
+                    envp_id=envelope.id,
+                    action=action_token,
+                    frame_type=envelope.frame.type if envelope.frame else None,
+                    matched_rule=auth_result.matched_rule,
+                )
+                return selected
+
+            # Authorization denied - return Deny action with opaque NACK
+            logger.warning(
+                "route_authorization_denied_by_policy",
+                envp_id=envelope.id,
+                action=action_token,
+                frame_type=envelope.frame.type if envelope.frame else None,
+                origin_type=context.origin_type if context else None,
+                to=str(envelope.to) if envelope.to else None,
+                denial_reason=auth_result.denial_reason or "policy_denied",
+                matched_rule=auth_result.matched_rule,
+            )
+
+            # Determine disclosure mode from configuration
+            disclosure = self._get_nack_disclosure_mode()
+
+            return Deny(
+                DenyOptions(
+                    internal_reason=auth_result.denial_reason or "unauthorized_route",
+                    denied_action=action_token,
+                    matched_rule=auth_result.matched_rule,
+                    disclosure=disclosure,
+                    context={
+                        "frame_type": envelope.frame.type if envelope.frame else None,
+                        "origin_type": str(context.origin_type) if context else None,
+                    },
+                )
+            )
+        except Exception as error:
+            logger.error(
+                "route_authorization_error",
+                envp_id=envelope.id,
+                action=action_token,
+                error=str(error),
+            )
+            # On error, deny by default for security
+            return Deny(
+                DenyOptions(
+                    internal_reason="authorization_error",
+                    denied_action=action_token,
+                    disclosure="opaque",
+                )
+            )
+
+    def _get_nack_disclosure_mode(self) -> str:
+        """Get the NACK disclosure mode from policy configuration."""
+        # Default to opaque for security
+        return "opaque"
+
     async def on_forward_upstream(
         self,
         node: NodeLike,

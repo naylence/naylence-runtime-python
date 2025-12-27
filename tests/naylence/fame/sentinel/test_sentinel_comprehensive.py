@@ -52,6 +52,11 @@ class TestSentinelComprehensive:
         security_manager.on_node_preparing_to_stop = AsyncMock()
         security_manager.on_node_stopped = AsyncMock()
         security_manager.on_welcome = AsyncMock()
+        # Add routing action hook - returns action unchanged by default
+        # Signature: (self, envelope, action, state, context) -> action
+        security_manager.on_routing_action_selected = AsyncMock(
+            side_effect=lambda sentinel, envelope, action, state, context: action
+        )
         return security_manager
 
     @pytest.fixture

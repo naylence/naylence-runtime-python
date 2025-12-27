@@ -17,6 +17,7 @@ from naylence.fame.node.admission.node_attach_client import AttachInfo
 
 if TYPE_CHECKING:
     from naylence.fame.node.node_like import NodeLike
+    from naylence.fame.sentinel.router import RouterState, RoutingAction
 
 
 @runtime_checkable
@@ -244,6 +245,48 @@ class NodeEventListener(Protocol):
         """
         # Default implementation passes envelope through unchanged
         return envelope
+
+    async def on_routing_action_selected(
+        self,
+        node: NodeLike,
+        envelope: FameEnvelope,
+        selected: RoutingAction,
+        state: RouterState,
+        context: Optional[FameDeliveryContext] = None,
+    ) -> Optional[RoutingAction]:
+        """
+        Called after routing policy has selected a RoutingAction but before it executes.
+
+        This hook provides a single, centralized entry point for route authorization.
+        It is invoked AFTER `routing_policy.decide(...)` returns a RoutingAction and
+        BEFORE `action.execute(...)` is called.
+
+        Components implementing this hook can:
+        - Authorize the selected routing action (ForwardUpstream, ForwardDownstream, etc.)
+        - Replace the action with a Deny/Drop action to block unauthorized routes
+        - Apply route-level security policies
+        - Log or audit routing decisions
+
+        Return semantics:
+        - Return the RoutingAction to execute (either the `selected` action or a replacement).
+        - If the hook returns `None` or throws, the router will execute a
+          Drop action (envelope is dropped with NO_ROUTE nack).
+
+        To allow the originally selected action, return `selected` directly.
+        To deny/block, return a `Drop` or `Deny` action.
+
+        Args:
+            node: The node performing the routing
+            envelope: The envelope being routed
+            selected: The RoutingAction selected by the routing policy
+            state: The current router state (for context, not modification)
+            context: Optional delivery context
+
+        Returns:
+            The RoutingAction to execute (None => Drop)
+        """
+        # Default implementation passes action through unchanged
+        return selected
 
     async def on_forward_upstream(
         self,

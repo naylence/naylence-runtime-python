@@ -1,6 +1,6 @@
 [project]
 name = "naylence-runtime"
-version = "0.3.28"
+version = "0.4.0"
 description = "Naylence Runtime"
 authors = [
     {name = "naylencedev@gmail.com"}
@@ -11,7 +11,7 @@ requires-python = ">=3.12"
 
 keywords = ["messaging", "ai", "agents", "platform", "naylence"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
@@ -261,6 +261,13 @@ DefaultAuthorizer = "naylence.fame.security.auth.default_authorizer_factory:Defa
 NoopAuthorizer = "naylence.fame.security.auth.noop_authorizer_factory:NoopAuthorizerFactory"
 SharedSecretAuthorizer = "naylence.fame.security.auth.shared_secret_authorizer_factory:SharedSecretAuthorizerFactory"
 OAuth2Authorizer = "naylence.fame.security.auth.oauth2_authorizer_factory:OAuth2AuthorizerFactory"
+AuthorizationProfile = "naylence.fame.security.auth.authorization_profile_factory:AuthorizationProfileFactory"
+
+[project.entry-points."naylence.AuthorizationPolicyFactory"]
+BasicAuthorizationPolicy = "naylence.fame.security.auth.policy.basic_authorization_policy_factory:BasicAuthorizationPolicyFactory"
+
+[project.entry-points."naylence.AuthorizationPolicySourceFactory"]
+LocalFileAuthorizationPolicySource = "naylence.fame.security.auth.policy.local_file_authorization_policy_source_factory:LocalFileAuthorizationPolicySourceFactory"
 
 [project.entry-points."naylence.SecurityManagerFactory"]
 DefaultSecurityManager = "naylence.fame.security.default_security_manager_factory:DefaultSecurityManagerFactory"

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Optional, Protocol, Tuple
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from naylence.fame.core import (
     DataFrame,
@@ -24,6 +25,10 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
+
+
+# Type alias for authorization action tokens
+AuthorizationAction = str  # 'ForwardUpstream', 'ForwardDownstream', 'ForwardPeer', 'DeliverLocal'
 
 
 PoolKey = Tuple[str, str]
@@ -141,6 +146,134 @@ class ForwardPeer(RoutingAction):
                     code="ROUTE_CONNECTOR_CLOSED",
                     context=context,
                 )
+
+
+@dataclass
+class DenyOptions:
+    """Options for Deny routing action."""
+
+    internal_reason: str = "unauthorized"
+    """Reason for denial (internal logging only, not disclosed on wire)."""
+
+    denied_action: Optional[str] = None
+    """The action that was denied (for logging/audit)."""
+
+    matched_rule: Optional[str] = None
+    """The rule that matched (for logging/audit)."""
+
+    disclosure: str = "opaque"
+    """Disclosure mode: 'opaque' (default), 'minimal', or 'verbose'."""
+
+    context: Optional[Dict[str, Any]] = field(default_factory=dict)
+    """Additional context for logging."""
+
+
+class Deny(RoutingAction):
+    """
+    Routing action that denies the envelope with a NACK.
+
+    Used when authorization fails for a routing action.
+    The denial is opaque by default - the on-wire NACK does not
+    disclose the reason for denial.
+    """
+
+    def __init__(
+        self,
+        options: Optional[Union[DenyOptions, Dict[str, Any]]] = None,
+        *,
+        internal_reason: str = "unauthorized",
+        denied_action: Optional[str] = None,
+        matched_rule: Optional[str] = None,
+        disclosure: str = "opaque",
+        context: Optional[Dict[str, Any]] = None,
+    ):
+        if options is not None:
+            if isinstance(options, DenyOptions):
+                self.internal_reason = options.internal_reason
+                self.denied_action = options.denied_action
+                self.matched_rule = options.matched_rule
+                self.disclosure = options.disclosure
+                self.context = options.context or {}
+            else:
+                self.internal_reason = options.get("internal_reason", "unauthorized")
+                self.denied_action = options.get("denied_action")
+                self.matched_rule = options.get("matched_rule")
+                self.disclosure = options.get("disclosure", "opaque")
+                self.context = options.get("context", {})
+        else:
+            self.internal_reason = internal_reason
+            self.denied_action = denied_action
+            self.matched_rule = matched_rule
+            self.disclosure = disclosure
+            self.context = context or {}
+
+    async def execute(
+        self,
+        envelope: FameEnvelope,
+        router: RoutingNodeLike,
+        state: RouterState,
+        context: Optional[FameDeliveryContext] = None,
+    ):
+        """
+        Execute denial - send NACK back to sender with opaque reason.
+        """
+        # Determine the NACK code based on disclosure mode
+        if self.disclosure == "verbose":
+            code = f"UNAUTHORIZED:{self.internal_reason}"
+        elif self.disclosure == "minimal":
+            code = "UNAUTHORIZED"
+        else:
+            # Default: opaque
+            code = "NO_ROUTE"
+
+        logger.debug(
+            "deny_routing_action",
+            internal_reason=self.internal_reason,
+            denied_action=self.denied_action,
+            matched_rule=self.matched_rule,
+            disclosure=self.disclosure,
+            envp_id=envelope.id,
+        )
+
+        await emit_delivery_nack(envelope, router, state, code=code, context=context)
+
+
+def map_routing_action_to_authorization_action(
+    action: RoutingAction,
+) -> Optional[AuthorizationAction]:
+    """
+    Maps a RoutingAction to its corresponding authorization action token.
+
+    This function uses isinstance checks to determine the action type,
+    avoiding the need to expose action objects to the authorizer.
+
+    For unknown/custom RoutingAction types, returns None. Callers should
+    treat None as "deny by default" for security (unknown actions are not
+    authorized).
+
+    Args:
+        action: The RoutingAction instance to map
+
+    Returns:
+        The authorization action token, or None for terminal/unknown actions
+    """
+    if isinstance(action, ForwardUp):
+        return "ForwardUpstream"
+    if isinstance(action, ForwardChild):
+        return "ForwardDownstream"
+    if isinstance(action, ForwardPeer):
+        return "ForwardPeer"
+    if isinstance(action, DeliverLocal):
+        return "DeliverLocal"
+    # Drop and Deny are terminal actions that don't need authorization
+    if isinstance(action, Drop | Deny):
+        return None
+    # Unknown RoutingAction: return None, caller should deny by default
+    logger.warning(
+        "unknown_routing_action_for_authorization",
+        action_type=type(action).__name__,
+    )
+    return None
 
 
 class RouterState:
