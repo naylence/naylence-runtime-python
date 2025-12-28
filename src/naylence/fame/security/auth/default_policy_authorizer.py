@@ -229,19 +229,18 @@ class DefaultPolicyAuthorizer(PolicyAuthorizer, TokenVerifierProvider):
 
         try:
             verifier = self.token_verifier
-            context = await verifier.verify(token)
+            raw_claims = await verifier.verify(token)
 
             # Extract scopes from JWT claims and set as granted_scopes
-            granted_scopes = _extract_scopes_from_claims(context)
+            granted_scopes = _extract_scopes_from_claims(raw_claims)
 
             return _create_auth_context(
-                **{
-                    **context,
-                    "authenticated": True,
-                    "authorized": False,  # Authorization happens in authorize()
-                    "auth_method": context.get("auth_method", "jwt"),
-                    "granted_scopes": granted_scopes,
-                }
+                authenticated=True,
+                authorized=False,  # Authorization happens in authorize()
+                principal=raw_claims.get("sub"),
+                claims=raw_claims,  # Pass all JWT claims to the claims field
+                auth_method=raw_claims.get("auth_method", "jwt"),
+                granted_scopes=granted_scopes,
             )
         except Exception as error:
             logger.warning(

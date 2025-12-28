@@ -292,6 +292,54 @@ class TestDefaultPolicyAuthorizerAuthenticate:
         assert result.authorized is False
 
     @pytest.mark.asyncio
+    async def test_populates_claims_field_with_jwt_claims(self):
+        """Should populate the claims field with JWT claims.
+
+        This is critical for expression-based authorization policies
+        that access claims via context.security.authorization.claims.
+        """
+        policy = mock_policy()
+        jwt_claims = {
+            "sub": "user1",
+            "aud": "/test-audience",
+            "scope": "read write",
+            "custom_claim": "custom_value",
+        }
+        verifier = mock_token_verifier(success=True, claims=jwt_claims)
+        authorizer = DefaultPolicyAuthorizer(
+            policy=policy, token_verifier=verifier
+        )
+
+        result = await authorizer.authenticate("Bearer valid-token")
+
+        assert result is not None
+        # Verify the claims field contains the JWT claims
+        assert result.claims == jwt_claims
+        assert result.claims.get("sub") == "user1"
+        assert result.claims.get("aud") == "/test-audience"
+        assert result.claims.get("custom_claim") == "custom_value"
+        # Verify principal is extracted from sub claim
+        assert result.principal == "user1"
+
+    @pytest.mark.asyncio
+    async def test_extracts_granted_scopes_from_claims(self):
+        """Should extract granted_scopes from JWT claims."""
+        policy = mock_policy()
+        jwt_claims = {
+            "sub": "user1",
+            "scope": "read write admin",
+        }
+        verifier = mock_token_verifier(success=True, claims=jwt_claims)
+        authorizer = DefaultPolicyAuthorizer(
+            policy=policy, token_verifier=verifier
+        )
+
+        result = await authorizer.authenticate("Bearer valid-token")
+
+        assert result is not None
+        assert result.granted_scopes == ["read", "write", "admin"]
+
+    @pytest.mark.asyncio
     async def test_returns_none_on_verify_failure(self):
         """Should return None when verification fails."""
         policy = mock_policy()
