@@ -28,12 +28,12 @@ from naylence.fame.node.upstream_session_manager import UpstreamSessionManager
 from naylence.fame.security.auth.default_policy_authorizer import (
     DefaultPolicyAuthorizer,
 )
-from naylence.fame.security.auth.policy import BasicAuthorizationPolicy
+from naylence.fame.security.auth.policy.basic_authorization_policy import (
+    BasicAuthorizationPolicy,
+    BasicAuthorizationPolicyOptions,
+)
 from naylence.fame.security.auth.policy.authorization_policy_definition import (
     AuthorizationPolicyDefinition,
-)
-from naylence.fame.security.auth.policy.basic_authorization_policy import (
-    BasicAuthorizationPolicyOptions,
 )
 from naylence.fame.security.default_security_manager import DefaultSecurityManager
 from naylence.fame.security.policy.default_security_policy import DefaultSecurityPolicy

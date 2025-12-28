@@ -7,12 +7,12 @@ import pytest
 from naylence.fame.core import AuthorizationContext, DeliveryOriginType, FameEnvelope
 from naylence.fame.core.protocol.delivery_context import SecurityContext
 from naylence.fame.node.node_context import FameDeliveryContext
-from naylence.fame.security.auth.policy import BasicAuthorizationPolicy
+from naylence.fame.security.auth.policy.basic_authorization_policy import (
+    BasicAuthorizationPolicy,
+    BasicAuthorizationPolicyOptions,
+)
 from naylence.fame.security.auth.policy.authorization_policy_definition import (
     AuthorizationPolicyDefinition,
-)
-from naylence.fame.security.auth.policy.basic_authorization_policy import (
-    BasicAuthorizationPolicyOptions,
 )
 
 
