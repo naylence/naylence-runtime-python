@@ -5,6 +5,10 @@ Supports:
 - Glob patterns: `*` (single segment), `**` (any depth), `?` (single char)
 - Regex patterns: patterns starting with `^` (for advanced/BSL use only)
 
+Segment separators: `.`, `/`, and `@` are all treated as equivalent segment
+boundaries. The `*` wildcard matches any characters except these separators,
+while `**` matches across all separators.
+
 The OSS/basic policy uses glob-only matching via `compile_glob_pattern()`.
 The advanced/BSL policy may use `compile_pattern()` which interprets `^` as regex.
 """
@@ -70,10 +74,14 @@ def _glob_to_regex(glob: str) -> str:
     Convert a glob pattern to a regex pattern.
 
     Glob syntax:
-    - `*` matches a single segment (no dots)
-    - `**` matches any number of segments (including zero)
-    - `?` matches a single character (not a dot)
+    - `*` matches a single segment (not crossing `.`, `/`, or `@` separators)
+    - `**` matches any number of segments (including zero), crossing all separators
+    - `?` matches a single character (not a separator)
     - Other characters are matched literally
+
+    The multi-separator approach treats `.`, `/`, and `@` as equivalent segment
+    separators. This provides clean semantics for both logical addresses
+    (e.g., `name@domain.fabric`) and physical addresses (e.g., `name@/path/to/node`).
 
     Args:
         glob: The glob pattern to convert
@@ -87,16 +95,16 @@ def _glob_to_regex(glob: str) -> str:
     while i < len(glob):
         if glob[i] == "*":
             if i + 1 < len(glob) and glob[i + 1] == "*":
-                # `**` matches any characters (including dots)
+                # `**` matches any characters (including all separators)
                 parts.append(".*")
                 i += 2
             else:
-                # `*` matches any characters except dots (single segment)
-                parts.append("[^.]*")
+                # `*` matches any characters except separators (., /, @)
+                parts.append("[^./@]*")
                 i += 1
         elif glob[i] == "?":
-            # `?` matches a single character (not a dot)
-            parts.append("[^.]")
+            # `?` matches a single character (not a separator)
+            parts.append("[^./@]")
             i += 1
         else:
             # Escape and add literal character

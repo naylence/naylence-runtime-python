@@ -233,3 +233,152 @@ class TestPatternCaching:
         regex2 = get_compiled_pattern(pattern)
         # After cache clear, different instance is created
         assert regex1 is not regex2
+
+
+class TestMultiSeparatorSemantics:
+    """Tests for multi-separator glob semantics (., /, @)."""
+
+    def test_star_stops_at_dot(self):
+        """Single * should not cross dot separators."""
+        regex = compile_glob_pattern("*")
+        assert regex.match("hello") is True
+        assert regex.match("hello.world") is False
+
+    def test_star_stops_at_slash(self):
+        """Single * should not cross slash separators."""
+        regex = compile_glob_pattern("*")
+        assert regex.match("hello/world") is False
+        regex2 = compile_glob_pattern("*/bar")
+        assert regex2.match("foo/bar") is True
+        assert regex2.match("baz/bar") is True
+        assert regex2.match("foo/baz/bar") is False
+
+    def test_star_stops_at_at(self):
+        """Single * should not cross @ separators."""
+        regex = compile_glob_pattern("*")
+        assert regex.match("user@domain") is False
+        regex2 = compile_glob_pattern("*@domain")
+        assert regex2.match("user@domain") is True
+        assert regex2.match("admin@domain") is True
+        assert regex2.match("user.name@domain") is False
+
+    def test_question_mark_does_not_match_separators(self):
+        """? should not match any separator (., /, @)."""
+        regex = compile_glob_pattern("te?t")
+        assert regex.match("test") is True
+        assert regex.match("text") is True
+        assert regex.match("te.t") is False
+        assert regex.match("te/t") is False
+        assert regex.match("te@t") is False
+
+
+class TestLogicalAddressMatching:
+    """Tests for logical address patterns (name@domain.fabric)."""
+
+    def test_star_in_each_segment(self):
+        """Should match * wildcards in each segment."""
+        regex = compile_glob_pattern("*@*.fabric")
+        assert regex.match("user@example.fabric") is True
+        assert regex.match("admin@prod.fabric") is True
+        assert regex.match("user@sub.example.fabric") is False
+
+    def test_double_star_for_multi_segment_domains(self):
+        """Should match ** across multiple domain segments."""
+        regex = compile_glob_pattern("*@**.fabric")
+        assert regex.match("user@example.fabric") is True
+        assert regex.match("user@sub.example.fabric") is True
+        assert regex.match("user@a.b.c.fabric") is True
+
+    def test_exact_address_match(self):
+        """Should match specific addresses exactly."""
+        regex = compile_glob_pattern("myservice@prod.example.com")
+        assert regex.match("myservice@prod.example.com") is True
+        assert regex.match("myservice@staging.example.com") is False
+
+
+class TestPhysicalAddressMatching:
+    """Tests for physical address patterns (name@/path/to/node)."""
+
+    def test_star_in_path_segments(self):
+        """Should match * wildcards in path segments."""
+        regex = compile_glob_pattern("service@/region/*/instance")
+        assert regex.match("service@/region/us-east/instance") is True
+        assert regex.match("service@/region/eu-west/instance") is True
+        assert regex.match("service@/region/us-east/zone-a/instance") is False
+
+    def test_double_star_for_deep_paths(self):
+        """Should match ** for deep path matching."""
+        regex = compile_glob_pattern("service@/**")
+        assert regex.match("service@/a") is True
+        assert regex.match("service@/a/b") is True
+        assert regex.match("service@/a/b/c/d") is True
+
+    def test_mixed_separators(self):
+        """Should match patterns with mixed separators."""
+        regex = compile_glob_pattern("*@/*/zone.*")
+        assert regex.match("app@/region/zone.primary") is True
+        assert regex.match("svc@/datacenter/zone.backup") is True
+
+
+class TestComplexPatterns:
+    """Tests for complex patterns with mixed separators."""
+
+    def test_consecutive_separators(self):
+        """Should handle consecutive separators correctly."""
+        regex = compile_glob_pattern("a.@/b")
+        assert regex.match("a.@/b") is True
+
+    def test_wildcards_between_separators(self):
+        """Should handle wildcards between different separators."""
+        regex = compile_glob_pattern("*.*@*/*")
+        assert regex.match("a.b@c/d") is True
+        assert regex.match("x.y@z/w") is True
+
+    def test_double_star_spanning_separator_types(self):
+        """Should match ** spanning multiple separator types."""
+        regex = compile_glob_pattern("start.**end")
+        assert regex.match("start.a.b@c/d.end") is True
+        assert regex.match("start.end") is True
+
+
+class TestGlobEdgeCases:
+    """Tests for edge cases in glob patterns."""
+
+    def test_empty_pattern_matches_empty_string(self):
+        """Empty pattern should match only empty string."""
+        regex = compile_glob_pattern("")
+        assert regex.match("") is True
+        assert regex.match("a") is False
+
+    def test_star_only_pattern(self):
+        """* alone matches single segment."""
+        regex = compile_glob_pattern("*")
+        assert regex.match("") is True
+        assert regex.match("anything") is True
+        assert regex.match("no.dots") is False
+
+    def test_double_star_only_pattern(self):
+        """** alone matches anything."""
+        regex = compile_glob_pattern("**")
+        assert regex.match("") is True
+        assert regex.match("anything") is True
+        assert regex.match("a.b.c@d/e/f") is True
+
+    def test_parentheses_in_pattern(self):
+        """Should escape parentheses correctly."""
+        regex = compile_glob_pattern("func(*)")
+        assert regex.match("func(arg)") is True
+        assert regex.match("func()") is True
+
+    def test_brackets_in_pattern(self):
+        """Should escape brackets correctly."""
+        regex = compile_glob_pattern("arr[*]")
+        assert regex.match("arr[0]") is True
+        assert regex.match("arr[123]") is True
+
+    def test_plus_in_pattern(self):
+        """Should escape + correctly."""
+        regex = compile_glob_pattern("a+b")
+        assert regex.match("a+b") is True
+        assert regex.match("ab") is False
+        assert regex.match("aab") is False
