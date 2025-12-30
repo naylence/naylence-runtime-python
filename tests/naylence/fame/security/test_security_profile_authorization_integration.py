@@ -155,14 +155,10 @@ class TestSecurityProfileAuthorizationIntegration:
 
         factory = SecurityProfileFactory()
 
-        sm_overlay_callback = await factory.create(
-            SecurityProfile(profile=PROFILE_NAME_OVERLAY_CALLBACK)
-        )
+        sm_overlay_callback = await factory.create(SecurityProfile(profile=PROFILE_NAME_OVERLAY_CALLBACK))
         assert isinstance(sm_overlay_callback.authorizer, NoopAuthorizer)
 
-        sm_gated_callback = await factory.create(
-            SecurityProfile(profile=PROFILE_NAME_GATED_CALLBACK)
-        )
+        sm_gated_callback = await factory.create(SecurityProfile(profile=PROFILE_NAME_GATED_CALLBACK))
         assert isinstance(sm_gated_callback.authorizer, NoopAuthorizer)
 
 

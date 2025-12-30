@@ -74,13 +74,11 @@ class DirectAdmissionClient(AdmissionClient):
                 NodeIdentityPolicyContext,
             )
 
-            effective_system_id = (
-                await self._node_identity_policy.resolve_admission_node_id(
-                    NodeIdentityPolicyContext(
-                        current_node_id=system_id,
-                        identities=[],
-                        grants=self._connection_grants,
-                    )
+            effective_system_id = await self._node_identity_policy.resolve_admission_node_id(
+                NodeIdentityPolicyContext(
+                    current_node_id=system_id,
+                    identities=[],
+                    grants=self._connection_grants,
                 )
             )
 

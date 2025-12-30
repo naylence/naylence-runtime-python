@@ -34,9 +34,7 @@ class BasicAuthorizationPolicyConfig(AuthorizationPolicyConfig):
     )
 
     # Whether to log warnings for unknown fields (default: True)
-    warn_on_unknown_fields: bool = Field(
-        default=True, alias="warnOnUnknownFields"
-    )
+    warn_on_unknown_fields: bool = Field(default=True, alias="warnOnUnknownFields")
 
 
 def _normalize_config(
@@ -44,10 +42,7 @@ def _normalize_config(
 ) -> dict[str, Any]:
     """Normalize configuration for BasicAuthorizationPolicy."""
     if config is None:
-        raise ValueError(
-            "BasicAuthorizationPolicyFactory requires a configuration "
-            "with a policyDefinition"
-        )
+        raise ValueError("BasicAuthorizationPolicyFactory requires a configuration with a policyDefinition")
 
     if isinstance(config, BasicAuthorizationPolicyConfig):
         candidate = config.model_dump()
@@ -55,42 +50,28 @@ def _normalize_config(
         candidate = config
 
     # Support both snake_case and camelCase for policy_definition
-    policy_definition = candidate.get("policy_definition") or candidate.get(
-        "policyDefinition"
-    )
+    policy_definition = candidate.get("policy_definition") or candidate.get("policyDefinition")
 
     if not policy_definition:
-        raise ValueError(
-            "BasicAuthorizationPolicyConfig requires a policyDefinition object"
-        )
+        raise ValueError("BasicAuthorizationPolicyConfig requires a policyDefinition object")
 
     # policy_definition can be a dict or already an AuthorizationPolicyDefinition
     if not isinstance(policy_definition, dict | AuthorizationPolicyDefinition):
-        raise ValueError(
-            "BasicAuthorizationPolicyConfig requires a policyDefinition object"
-        )
+        raise ValueError("BasicAuthorizationPolicyConfig requires a policyDefinition object")
 
     # Support both snake_case and camelCase for warn_on_unknown_fields
-    warn_on_unknown_fields = candidate.get(
-        "warn_on_unknown_fields", candidate.get("warnOnUnknownFields")
-    )
+    warn_on_unknown_fields = candidate.get("warn_on_unknown_fields", candidate.get("warnOnUnknownFields"))
 
-    if warn_on_unknown_fields is not None and not isinstance(
-        warn_on_unknown_fields, bool
-    ):
+    if warn_on_unknown_fields is not None and not isinstance(warn_on_unknown_fields, bool):
         raise ValueError("warnOnUnknownFields must be a boolean")
 
     return {
         "policy_definition": policy_definition,
-        "warn_on_unknown_fields": (
-            warn_on_unknown_fields if warn_on_unknown_fields is not None else True
-        ),
+        "warn_on_unknown_fields": (warn_on_unknown_fields if warn_on_unknown_fields is not None else True),
     }
 
 
-class BasicAuthorizationPolicyFactory(
-    AuthorizationPolicyFactory[BasicAuthorizationPolicyConfig]
-):
+class BasicAuthorizationPolicyFactory(AuthorizationPolicyFactory[BasicAuthorizationPolicyConfig]):
     """Factory for creating BasicAuthorizationPolicy instances."""
 
     type: str = "BasicAuthorizationPolicy"

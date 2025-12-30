@@ -48,12 +48,14 @@ class TestNormalizeScopeRequirement:
 
     def test_normalizes_nested_requirements(self):
         """Should normalize nested scope requirements."""
-        result = normalize_scope_requirement({
-            "all_of": [
-                "base",
-                {"any_of": ["feature-a", "feature-b"]},
-            ]
-        })
+        result = normalize_scope_requirement(
+            {
+                "all_of": [
+                    "base",
+                    {"any_of": ["feature-a", "feature-b"]},
+                ]
+            }
+        )
         assert isinstance(result, NormalizedScopeAllOf)
         assert len(result.requirements) == 2
         assert isinstance(result.requirements[0], NormalizedScopePattern)
@@ -205,9 +207,9 @@ class TestCompileGlobOnlyScopeRequirement:
 
     def test_compiles_nested_requirement(self):
         """Should compile nested requirement."""
-        compiled = compile_glob_only_scope_requirement({
-            "all_of": ["base", {"any_of": ["a", "b"]}]
-        }, "test-rule")
+        compiled = compile_glob_only_scope_requirement(
+            {"all_of": ["base", {"any_of": ["a", "b"]}]}, "test-rule"
+        )
         assert compiled.evaluate(["base", "a"]) is True
         assert compiled.evaluate(["base"]) is False
 
@@ -220,9 +222,7 @@ class TestCompileGlobOnlyScopeRequirement:
     def test_rejects_regex_in_nested(self):
         """Should reject regex patterns nested in scope requirements."""
         with pytest.raises(ValueError) as exc_info:
-            compile_glob_only_scope_requirement({
-                "any_of": ["read", "^admin\\..*$"]
-            }, "test-rule")
+            compile_glob_only_scope_requirement({"any_of": ["read", "^admin\\..*$"]}, "test-rule")
         assert "Regex patterns are not supported" in str(exc_info.value)
 
     def test_includes_rule_id_in_error(self):
@@ -237,25 +237,19 @@ class TestScopeRequirementEdgeCases:
 
     def test_single_item_any_of(self):
         """Single-item any_of should work correctly."""
-        compiled = compile_glob_only_scope_requirement(
-            {"any_of": ["read"]}, "test-rule"
-        )
+        compiled = compile_glob_only_scope_requirement({"any_of": ["read"]}, "test-rule")
         assert compiled.evaluate(["read"]) is True
         assert compiled.evaluate(["write"]) is False
 
     def test_single_item_all_of(self):
         """Single-item all_of should work correctly."""
-        compiled = compile_glob_only_scope_requirement(
-            {"all_of": ["read"]}, "test-rule"
-        )
+        compiled = compile_glob_only_scope_requirement({"all_of": ["read"]}, "test-rule")
         assert compiled.evaluate(["read"]) is True
         assert compiled.evaluate(["write"]) is False
 
     def test_single_item_none_of(self):
         """Single-item none_of should work correctly."""
-        compiled = compile_glob_only_scope_requirement(
-            {"none_of": ["blocked"]}, "test-rule"
-        )
+        compiled = compile_glob_only_scope_requirement({"none_of": ["blocked"]}, "test-rule")
         assert compiled.evaluate(["read"]) is True
         assert compiled.evaluate(["blocked"]) is False
 
@@ -272,9 +266,7 @@ class TestScopeRequirementEdgeCases:
 
     def test_any_of_with_all_matching(self):
         """any_of should return True if any scope matches."""
-        compiled = compile_glob_only_scope_requirement(
-            {"any_of": ["a", "b", "c"]}, "test-rule"
-        )
+        compiled = compile_glob_only_scope_requirement({"any_of": ["a", "b", "c"]}, "test-rule")
         assert compiled.evaluate(["a"]) is True
         assert compiled.evaluate(["b"]) is True
         assert compiled.evaluate(["a", "b", "c"]) is True
@@ -282,18 +274,14 @@ class TestScopeRequirementEdgeCases:
 
     def test_all_of_with_partial_match(self):
         """all_of should return False if only partial match."""
-        compiled = compile_glob_only_scope_requirement(
-            {"all_of": ["a", "b", "c"]}, "test-rule"
-        )
+        compiled = compile_glob_only_scope_requirement({"all_of": ["a", "b", "c"]}, "test-rule")
         assert compiled.evaluate(["a", "b"]) is False
         assert compiled.evaluate(["a", "b", "c"]) is True
         assert compiled.evaluate(["a", "b", "c", "d"]) is True
 
     def test_none_of_with_partial_forbidden(self):
         """none_of should return False if any forbidden scope present."""
-        compiled = compile_glob_only_scope_requirement(
-            {"none_of": ["x", "y", "z"]}, "test-rule"
-        )
+        compiled = compile_glob_only_scope_requirement({"none_of": ["x", "y", "z"]}, "test-rule")
         assert compiled.evaluate(["a", "b"]) is True
         assert compiled.evaluate(["a", "x"]) is False
         assert compiled.evaluate(["x", "y", "z"]) is False

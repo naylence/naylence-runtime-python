@@ -63,6 +63,7 @@ STORAGE_PROVIDER_FACTORY_BASE_TYPE = "StorageProviderFactory"
 # Register built-in profiles
 _profiles_registered = False
 
+
 def _ensure_profiles_registered() -> None:
     """Ensure built-in storage profiles are registered."""
     global _profiles_registered
@@ -72,10 +73,14 @@ def _ensure_profiles_registered() -> None:
     opts = RegisterProfileOptions(source="storage-profile-factory")
     register_profile(STORAGE_PROVIDER_FACTORY_BASE_TYPE, PROFILE_NAME_MEMORY, MEMORY_PROFILE, opts)
     register_profile(STORAGE_PROVIDER_FACTORY_BASE_TYPE, PROFILE_NAME_SQLITE, SQLITE_PROFILE, opts)
-    register_profile(STORAGE_PROVIDER_FACTORY_BASE_TYPE, PROFILE_NAME_ENCRYPTED_SQLITE, ENCRYPTED_SQLITE_PROFILE, opts)
+    register_profile(
+        STORAGE_PROVIDER_FACTORY_BASE_TYPE, PROFILE_NAME_ENCRYPTED_SQLITE, ENCRYPTED_SQLITE_PROFILE, opts
+    )
     _profiles_registered = True
 
+
 _ensure_profiles_registered()
+
 
 def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
     """Resolve storage profile by name."""
@@ -93,6 +98,7 @@ def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
         raise ValueError(f"Unknown storage profile: {profile_name}")
 
     return profile
+
 
 class StorageProfileConfig(StorageProviderConfig):
     type: str = "StorageProfile"

@@ -55,46 +55,48 @@ from naylence.fame.sentinel.store.route_store import RouteStore
 
 def create_allow_all_policy() -> BasicAuthorizationPolicy:
     """Create a policy that allows all routing actions."""
-    policy_def = AuthorizationPolicyDefinition.from_dict({
-        "version": "1.0",
-        "default_effect": "allow",
-        "rules": [],
-    })
-    return BasicAuthorizationPolicy(
-        BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+    policy_def = AuthorizationPolicyDefinition.from_dict(
+        {
+            "version": "1.0",
+            "default_effect": "allow",
+            "rules": [],
+        }
     )
+    return BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
 
 def create_deny_all_policy() -> BasicAuthorizationPolicy:
     """Create a policy that denies all routing actions."""
-    policy_def = AuthorizationPolicyDefinition.from_dict({
-        "version": "1.0",
-        "default_effect": "deny",
-        "rules": [],
-    })
-    return BasicAuthorizationPolicy(
-        BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+    policy_def = AuthorizationPolicyDefinition.from_dict(
+        {
+            "version": "1.0",
+            "default_effect": "deny",
+            "rules": [],
+        }
     )
+    return BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
 
 def create_selective_policy(allowed_actions: list[str]) -> BasicAuthorizationPolicy:
     """Create a policy that allows specific actions and denies others."""
     rules = []
     if allowed_actions:
-        rules.append({
-            "id": "allow-specific",
-            "effect": "allow",
-            "action": allowed_actions,
-        })
+        rules.append(
+            {
+                "id": "allow-specific",
+                "effect": "allow",
+                "action": allowed_actions,
+            }
+        )
 
-    policy_def = AuthorizationPolicyDefinition.from_dict({
-        "version": "1.0",
-        "default_effect": "deny",
-        "rules": rules,
-    })
-    return BasicAuthorizationPolicy(
-        BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+    policy_def = AuthorizationPolicyDefinition.from_dict(
+        {
+            "version": "1.0",
+            "default_effect": "deny",
+            "rules": rules,
+        }
     )
+    return BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
 
 def create_address_based_policy(
@@ -106,69 +108,77 @@ def create_address_based_policy(
 
     # Deny rules come first (evaluated first in first-match-wins)
     if denied_patterns:
-        rules.extend([
-            {
-                "id": f"deny-{pattern}",
-                "effect": "deny",
-                "address": pattern,
-            }
-            for pattern in denied_patterns
-        ])
+        rules.extend(
+            [
+                {
+                    "id": f"deny-{pattern}",
+                    "effect": "deny",
+                    "address": pattern,
+                }
+                for pattern in denied_patterns
+            ]
+        )
 
     # Then allow rules
-    rules.extend([
-        {
-            "id": f"allow-{pattern}",
-            "effect": "allow",
-            "address": pattern,
-        }
-        for pattern in allowed_patterns
-    ])
-
-    policy_def = AuthorizationPolicyDefinition.from_dict({
-        "version": "1.0",
-        "default_effect": "deny",
-        "rules": rules,
-    })
-    return BasicAuthorizationPolicy(
-        BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+    rules.extend(
+        [
+            {
+                "id": f"allow-{pattern}",
+                "effect": "allow",
+                "address": pattern,
+            }
+            for pattern in allowed_patterns
+        ]
     )
+
+    policy_def = AuthorizationPolicyDefinition.from_dict(
+        {
+            "version": "1.0",
+            "default_effect": "deny",
+            "rules": rules,
+        }
+    )
+    return BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
 
 def create_origin_type_policy(
     allowed_origins: list[str],
 ) -> BasicAuthorizationPolicy:
     """Create a policy that allows specific origin types."""
-    policy_def = AuthorizationPolicyDefinition.from_dict({
-        "version": "1.0",
-        "default_effect": "deny",
-        "rules": [{
-            "id": "allow-specific-origins",
-            "effect": "allow",
-            "origin_type": allowed_origins,
-        }],
-    })
-    return BasicAuthorizationPolicy(
-        BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+    policy_def = AuthorizationPolicyDefinition.from_dict(
+        {
+            "version": "1.0",
+            "default_effect": "deny",
+            "rules": [
+                {
+                    "id": "allow-specific-origins",
+                    "effect": "allow",
+                    "origin_type": allowed_origins,
+                }
+            ],
+        }
     )
+    return BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
 
 def create_scope_required_policy(
     required_scope: str,
 ) -> BasicAuthorizationPolicy:
     """Create a policy that requires a specific scope."""
-    policy_def = AuthorizationPolicyDefinition.from_dict({
-        "version": "1.0",
-        "default_effect": "deny",
-        "rules": [{
-            "id": "require-scope",
-            "effect": "allow",
-            "scope": required_scope,
-        }],
-    })
-    return BasicAuthorizationPolicy(
-        BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+    policy_def = AuthorizationPolicyDefinition.from_dict(
+        {
+            "version": "1.0",
+            "default_effect": "deny",
+            "rules": [
+                {
+                    "id": "require-scope",
+                    "effect": "allow",
+                    "scope": required_scope,
+                }
+            ],
+        }
     )
+    return BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
 
 def create_complex_policy() -> BasicAuthorizationPolicy:
@@ -182,49 +192,49 @@ def create_complex_policy() -> BasicAuthorizationPolicy:
     4. Allow ForwardPeer from peer origins only
     5. Deny everything else
     """
-    policy_def = AuthorizationPolicyDefinition.from_dict({
-        "version": "1.0",
-        "default_effect": "deny",
-        "rules": [
-            # Rule 1: Deny admin addresses (first-match-wins, so deny checked first)
-            {
-                "id": "deny-admin",
-                "effect": "deny",
-                "address": "*@/admin/**",
-                "description": "Block all access to admin paths",
-            },
-            # Rule 2: Allow ForwardUpstream to services with proper scope from local
-            {
-                "id": "allow-service-forward",
-                "effect": "allow",
-                "action": "ForwardUpstream",
-                "address": "*@/services/**",
-                "origin_type": "local",
-                "scope": "messaging.send",
-                "description": "Allow local clients to send to services",
-            },
-            # Rule 3: Allow local delivery to inbox from downstream or local
-            {
-                "id": "allow-inbox-delivery",
-                "effect": "allow",
-                "action": "DeliverLocal",
-                "address": "*@/inbox/**",
-                "origin_type": ["downstream", "local"],
-                "description": "Allow message delivery to local inboxes",
-            },
-            # Rule 4: Allow peer forwarding from peers
-            {
-                "id": "allow-peer-forward",
-                "effect": "allow",
-                "action": "ForwardPeer",
-                "origin_type": "peer",
-                "description": "Allow peer-to-peer forwarding",
-            },
-        ],
-    })
-    return BasicAuthorizationPolicy(
-        BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+    policy_def = AuthorizationPolicyDefinition.from_dict(
+        {
+            "version": "1.0",
+            "default_effect": "deny",
+            "rules": [
+                # Rule 1: Deny admin addresses (first-match-wins, so deny checked first)
+                {
+                    "id": "deny-admin",
+                    "effect": "deny",
+                    "address": "*@/admin/**",
+                    "description": "Block all access to admin paths",
+                },
+                # Rule 2: Allow ForwardUpstream to services with proper scope from local
+                {
+                    "id": "allow-service-forward",
+                    "effect": "allow",
+                    "action": "ForwardUpstream",
+                    "address": "*@/services/**",
+                    "origin_type": "local",
+                    "scope": "messaging.send",
+                    "description": "Allow local clients to send to services",
+                },
+                # Rule 3: Allow local delivery to inbox from downstream or local
+                {
+                    "id": "allow-inbox-delivery",
+                    "effect": "allow",
+                    "action": "DeliverLocal",
+                    "address": "*@/inbox/**",
+                    "origin_type": ["downstream", "local"],
+                    "description": "Allow message delivery to local inboxes",
+                },
+                # Rule 4: Allow peer forwarding from peers
+                {
+                    "id": "allow-peer-forward",
+                    "effect": "allow",
+                    "action": "ForwardPeer",
+                    "origin_type": "peer",
+                    "description": "Allow peer-to-peer forwarding",
+                },
+            ],
+        }
     )
+    return BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
 
 def mock_delivery_tracker() -> MagicMock:
@@ -646,9 +656,7 @@ class TestAddressBasedPolicies:
     async def test_address_pattern_allows_matching(self):
         """Test that address patterns correctly allow matching addresses."""
         # Allow only addresses matching *@/services/**
-        policy = create_address_based_policy(
-            allowed_patterns=["*@/services/**"]
-        )
+        policy = create_address_based_policy(allowed_patterns=["*@/services/**"])
         authorizer = DefaultPolicyAuthorizer(policy=policy)
 
         security_manager = DefaultSecurityManager(
@@ -683,9 +691,7 @@ class TestAddressBasedPolicies:
     async def test_address_pattern_denies_non_matching(self):
         """Test that address patterns correctly deny non-matching addresses."""
         # Allow only addresses matching *@/services/**
-        policy = create_address_based_policy(
-            allowed_patterns=["*@/services/**"]
-        )
+        policy = create_address_based_policy(allowed_patterns=["*@/services/**"])
         authorizer = DefaultPolicyAuthorizer(policy=policy)
 
         security_manager = DefaultSecurityManager(
@@ -827,9 +833,7 @@ class TestOriginTypePolicies:
     @pytest.mark.asyncio
     async def test_multiple_origins_allowed(self):
         """Test that multiple origin types can be allowed."""
-        policy = create_origin_type_policy(
-            allowed_origins=["local", "downstream"]
-        )
+        policy = create_origin_type_policy(allowed_origins=["local", "downstream"])
         authorizer = DefaultPolicyAuthorizer(policy=policy)
 
         security_manager = DefaultSecurityManager(

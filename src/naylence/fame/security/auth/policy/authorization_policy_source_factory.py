@@ -68,9 +68,7 @@ class AuthorizationPolicySourceFactory(ResourceFactory[AuthorizationPolicySource
             )
 
             if not source:
-                raise ValueError(
-                    "Failed to create authorization policy source from configuration"
-                )
+                raise ValueError("Failed to create authorization policy source from configuration")
 
             return source
 

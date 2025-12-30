@@ -44,6 +44,7 @@ TRACE_EMITTER_FACTORY_BASE_TYPE = "TraceEmitterFactory"
 # Register built-in profiles
 _profiles_registered = False
 
+
 def _ensure_profiles_registered() -> None:
     """Ensure built-in trace emitter profiles are registered."""
     global _profiles_registered
@@ -52,10 +53,14 @@ def _ensure_profiles_registered() -> None:
 
     opts = RegisterProfileOptions(source="trace-emitter-profile-factory")
     register_profile(TRACE_EMITTER_FACTORY_BASE_TYPE, PROFILE_NAME_NOOP, NOOP_PROFILE, opts)
-    register_profile(TRACE_EMITTER_FACTORY_BASE_TYPE, PROFILE_NAME_OPEN_TELEMETRY, OPEN_TELEMETRY_PROFILE, opts)
+    register_profile(
+        TRACE_EMITTER_FACTORY_BASE_TYPE, PROFILE_NAME_OPEN_TELEMETRY, OPEN_TELEMETRY_PROFILE, opts
+    )
     _profiles_registered = True
 
+
 _ensure_profiles_registered()
+
 
 def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
     """Resolve trace emitter profile by name."""
@@ -73,6 +78,7 @@ def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
         raise ValueError(f"Unknown trace emitter profile: {profile_name}")
 
     return profile
+
 
 class TraceEmitterProfileConfig(TraceEmitterConfig):
     """Configuration for TraceEmitter profile factory."""

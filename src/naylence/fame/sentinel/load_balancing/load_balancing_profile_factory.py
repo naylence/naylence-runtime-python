@@ -57,6 +57,7 @@ LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE = "LoadBalancingStrategyFactory"
 # Register built-in profiles
 _profiles_registered = False
 
+
 def _ensure_profiles_registered() -> None:
     """Ensure built-in load balancing profiles are registered."""
     global _profiles_registered
@@ -65,13 +66,21 @@ def _ensure_profiles_registered() -> None:
 
     opts = RegisterProfileOptions(source="load-balancing-profile-factory")
     register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_RANDOM, RANDOM_PROFILE, opts)
-    register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_ROUND_ROBIN, ROUND_ROBIN_PROFILE, opts)
+    register_profile(
+        LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_ROUND_ROBIN, ROUND_ROBIN_PROFILE, opts
+    )
     register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_HRW, HRW_PROFILE, opts)
-    register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_STICKY_HRW, STICKY_HRW_PROFILE, opts)
-    register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_DEVELOPMENT, DEVELOPMENT_PROFILE, opts)
+    register_profile(
+        LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_STICKY_HRW, STICKY_HRW_PROFILE, opts
+    )
+    register_profile(
+        LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_DEVELOPMENT, DEVELOPMENT_PROFILE, opts
+    )
     _profiles_registered = True
 
+
 _ensure_profiles_registered()
+
 
 def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
     """Resolve load balancing profile by name."""
@@ -89,6 +98,7 @@ def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
         raise ValueError(f"Unknown load balancing profile: {profile_name}")
 
     return profile
+
 
 class LoadBalancingProfileConfig(LoadBalancingStrategyConfig):
     type: str = "LoadBalancingProfile"

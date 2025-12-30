@@ -36,6 +36,7 @@ NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE = "NodeIdentityPolicyFactory"
 # Register built-in profiles
 _profiles_registered = False
 
+
 def _ensure_profiles_registered() -> None:
     """Ensure built-in node identity policy profiles are registered."""
     global _profiles_registered
@@ -44,9 +45,17 @@ def _ensure_profiles_registered() -> None:
 
     opts = RegisterProfileOptions(source="node-identity-policy-profile-factory")
     register_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_DEFAULT, DEFAULT_PROFILE, opts)
-    register_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_TOKEN_SUBJECT, TOKEN_SUBJECT_PROFILE, opts)
-    register_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_TOKEN_SUBJECT_ALIAS, TOKEN_SUBJECT_PROFILE, opts)
+    register_profile(
+        NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_TOKEN_SUBJECT, TOKEN_SUBJECT_PROFILE, opts
+    )
+    register_profile(
+        NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE,
+        PROFILE_NAME_TOKEN_SUBJECT_ALIAS,
+        TOKEN_SUBJECT_PROFILE,
+        opts,
+    )
     _profiles_registered = True
+
 
 _ensure_profiles_registered()
 

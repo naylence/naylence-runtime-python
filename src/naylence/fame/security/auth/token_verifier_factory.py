@@ -44,9 +44,7 @@ class TokenVerifierFactory(ABC, ResourceFactory[TokenVerifier, C]):
             ValueError: If token verifier creation fails
         """
         if config:
-            instance = await create_resource(
-                TokenVerifierFactory, config=config, **kwargs
-            )
+            instance = await create_resource(TokenVerifierFactory, config=config, **kwargs)
 
             if not instance:
                 raise ValueError("Failed to create token verifier from configuration")

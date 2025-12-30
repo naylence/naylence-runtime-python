@@ -71,48 +71,60 @@ class TestNormalizeConfig:
 
     def test_accepts_snake_case_policy_definition(self):
         """Should accept snake_case policy_definition."""
-        result = _normalize_config({
-            "policy_definition": {"version": "1.0", "rules": []},
-        })
+        result = _normalize_config(
+            {
+                "policy_definition": {"version": "1.0", "rules": []},
+            }
+        )
         assert result["policy_definition"]["version"] == "1.0"
 
     def test_accepts_camel_case_policy_definition(self):
         """Should accept camelCase policyDefinition."""
-        result = _normalize_config({
-            "policyDefinition": {"version": "1.0", "rules": []},
-        })
+        result = _normalize_config(
+            {
+                "policyDefinition": {"version": "1.0", "rules": []},
+            }
+        )
         assert result["policy_definition"]["version"] == "1.0"
 
     def test_accepts_snake_case_warn_on_unknown_fields(self):
         """Should accept snake_case warn_on_unknown_fields."""
-        result = _normalize_config({
-            "policy_definition": {"version": "1.0", "rules": []},
-            "warn_on_unknown_fields": False,
-        })
+        result = _normalize_config(
+            {
+                "policy_definition": {"version": "1.0", "rules": []},
+                "warn_on_unknown_fields": False,
+            }
+        )
         assert result["warn_on_unknown_fields"] is False
 
     def test_accepts_camel_case_warn_on_unknown_fields(self):
         """Should accept camelCase warnOnUnknownFields."""
-        result = _normalize_config({
-            "policyDefinition": {"version": "1.0", "rules": []},
-            "warnOnUnknownFields": False,
-        })
+        result = _normalize_config(
+            {
+                "policyDefinition": {"version": "1.0", "rules": []},
+                "warnOnUnknownFields": False,
+            }
+        )
         assert result["warn_on_unknown_fields"] is False
 
     def test_defaults_warn_on_unknown_fields_to_true(self):
         """Should default warn_on_unknown_fields to True."""
-        result = _normalize_config({
-            "policy_definition": {"version": "1.0", "rules": []},
-        })
+        result = _normalize_config(
+            {
+                "policy_definition": {"version": "1.0", "rules": []},
+            }
+        )
         assert result["warn_on_unknown_fields"] is True
 
     def test_raises_when_warn_on_unknown_fields_not_boolean(self):
         """Should raise ValueError when warnOnUnknownFields is not boolean."""
         with pytest.raises(ValueError, match="must be a boolean"):
-            _normalize_config({
-                "policy_definition": {"version": "1.0", "rules": []},
-                "warn_on_unknown_fields": "not-a-bool",
-            })
+            _normalize_config(
+                {
+                    "policy_definition": {"version": "1.0", "rules": []},
+                    "warn_on_unknown_fields": "not-a-bool",
+                }
+            )
 
     def test_handles_basic_authorization_policy_config_object(self):
         """Should handle BasicAuthorizationPolicyConfig object."""
@@ -120,10 +132,12 @@ class TestNormalizeConfig:
             AuthorizationPolicyDefinition,
         )
 
-        policy_def = AuthorizationPolicyDefinition.from_dict({
-            "version": "1.0",
-            "rules": [],
-        })
+        policy_def = AuthorizationPolicyDefinition.from_dict(
+            {
+                "version": "1.0",
+                "rules": [],
+            }
+        )
         config = BasicAuthorizationPolicyConfig(
             policy_definition=policy_def,
             warn_on_unknown_fields=False,
@@ -204,10 +218,12 @@ class TestBasicAuthorizationPolicyFactory:
             AuthorizationPolicyDefinition,
         )
 
-        policy_def = AuthorizationPolicyDefinition.from_dict({
-            "version": "1.0",
-            "rules": [],
-        })
+        policy_def = AuthorizationPolicyDefinition.from_dict(
+            {
+                "version": "1.0",
+                "rules": [],
+            }
+        )
 
         config = BasicAuthorizationPolicyConfig(
             policy_definition=policy_def,

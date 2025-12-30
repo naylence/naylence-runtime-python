@@ -50,6 +50,7 @@ DELIVERY_POLICY_FACTORY_BASE_TYPE = "DeliveryPolicyFactory"
 # Register built-in profiles
 _profiles_registered = False
 
+
 def _ensure_profiles_registered() -> None:
     """Ensure built-in delivery profiles are registered."""
     global _profiles_registered
@@ -57,11 +58,17 @@ def _ensure_profiles_registered() -> None:
         return
 
     opts = RegisterProfileOptions(source="delivery-profile-factory")
-    register_profile(DELIVERY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_AT_LEAST_ONCE, AT_LEAST_ONCE_PROFILE, opts)
-    register_profile(DELIVERY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_AT_MOST_ONCE, AT_MOST_ONCE_PROFILE, opts)
+    register_profile(
+        DELIVERY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_AT_LEAST_ONCE, AT_LEAST_ONCE_PROFILE, opts
+    )
+    register_profile(
+        DELIVERY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_AT_MOST_ONCE, AT_MOST_ONCE_PROFILE, opts
+    )
     _profiles_registered = True
 
+
 _ensure_profiles_registered()
+
 
 def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
     """Resolve delivery profile by name."""
@@ -79,6 +86,7 @@ def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
         raise ValueError(f"Unknown delivery profile: {profile_name}")
 
     return profile
+
 
 class DeliveryProfileConfig(DeliveryPolicyConfig):
     type: str = "DeliveryProfile"

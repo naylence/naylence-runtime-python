@@ -70,6 +70,7 @@ ROUTING_POLICY_FACTORY_BASE_TYPE = "RoutingPolicyFactory"
 # Register built-in profiles
 _profiles_registered = False
 
+
 def _ensure_profiles_registered() -> None:
     """Ensure built-in routing profiles are registered."""
     global _profiles_registered
@@ -80,11 +81,15 @@ def _ensure_profiles_registered() -> None:
     register_profile(ROUTING_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_DEVELOPMENT, DEVELOPMENT_PROFILE, opts)
     register_profile(ROUTING_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_PRODUCTION, PRODUCTION_PROFILE, opts)
     register_profile(ROUTING_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_BASIC, BASIC_PROFILE, opts)
-    register_profile(ROUTING_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_CAPABILITY_AWARE, CAPABILITY_AWARE_PROFILE, opts)
+    register_profile(
+        ROUTING_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_CAPABILITY_AWARE, CAPABILITY_AWARE_PROFILE, opts
+    )
     register_profile(ROUTING_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_HYBRID_ONLY, HYBRID_ONLY_PROFILE, opts)
     _profiles_registered = True
 
+
 _ensure_profiles_registered()
+
 
 def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
     """Resolve routing profile by name."""
@@ -102,6 +107,7 @@ def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
         raise ValueError(f"Unknown routing profile: {profile_name}")
 
     return profile
+
 
 class RoutingProfileConfig(RoutingPolicyConfig):
     type: str = "RoutingProfile"

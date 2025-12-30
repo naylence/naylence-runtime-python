@@ -905,8 +905,10 @@ def create_oauth2_token_router(
 
         cookie_value = quote(session_id)
         max_age = int(dev_login_session_ttl_ms / 1000)
-        cookie_header = f"{dev_login_cookie_name_resolved}={cookie_value};" \
+        cookie_header = (
+            f"{dev_login_cookie_name_resolved}={cookie_value};"
             " Path={session_cookie_path}; HttpOnly; SameSite=Lax; Max-Age={max_age}"
+        )
         if dev_login_secure_cookie_resolved:
             cookie_header += "; Secure"
 

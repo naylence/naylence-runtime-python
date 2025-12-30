@@ -12,7 +12,7 @@ from naylence.fame.node.admission.admission_client_factory import (
     AdmissionClientFactory,
     AdmissionConfig,
 )
-from naylence.fame.profile import get_profile
+from naylence.fame.profile import RegisterProfileOptions, get_profile, register_profile
 from naylence.fame.profile.profile_discovery import discover_profile
 from naylence.fame.util.logging import getLogger
 
@@ -141,9 +141,8 @@ class AdmissionProfileConfig(AdmissionConfig):
 ADMISSION_CLIENT_FACTORY_BASE_TYPE = "AdmissionClientFactory"
 
 # Register built-in profiles
-from naylence.fame.profile import RegisterProfileOptions, register_profile
-
 _profiles_registered = False
+
 
 def _ensure_profiles_registered() -> None:
     """Ensure built-in admission profiles are registered."""
@@ -155,12 +154,18 @@ def _ensure_profiles_registered() -> None:
     register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_NOOP, NOOP_PROFILE, opts)
     register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_NONE, NOOP_PROFILE, opts)
     register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_DIRECT, DIRECT_PROFILE, opts)
-    register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_DIRECT_HTTP, DIRECT_HTTP_PROFILE, opts)
+    register_profile(
+        ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_DIRECT_HTTP, DIRECT_HTTP_PROFILE, opts
+    )
     register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_OPEN, OPEN_PROFILE, opts)
-    register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_WELCOME, WELCOME_SERVICE_PROFILE, opts)
+    register_profile(
+        ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_WELCOME, WELCOME_SERVICE_PROFILE, opts
+    )
     _profiles_registered = True
 
+
 _ensure_profiles_registered()
+
 
 def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
     """Resolve admission profile by name."""
@@ -178,6 +183,7 @@ def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
         raise ValueError(f"Unknown admission profile: {profile_name}")
 
     return profile
+
 
 class AdmissionProfileFactory(AdmissionClientFactory):
     async def create(

@@ -233,17 +233,19 @@ KNOWN_POLICY_FIELDS = frozenset(["version", "default_effect", "rules"])
 
 # Known fields in AuthorizationRuleDefinition
 # Fields not in this set trigger a warning.
-KNOWN_RULE_FIELDS = frozenset([
-    "id",
-    "description",
-    "effect",
-    "action",
-    "address",
-    "frame_type",  # Reserved for advanced-security
-    "origin_type",
-    "scope",
-    "when",  # Reserved for advanced-security
-])
+KNOWN_RULE_FIELDS = frozenset(
+    [
+        "id",
+        "description",
+        "effect",
+        "action",
+        "address",
+        "frame_type",  # Reserved for advanced-security
+        "origin_type",
+        "scope",
+        "when",  # Reserved for advanced-security
+    ]
+)
 
 # Valid action values
 VALID_ACTIONS: tuple[str, ...] = (

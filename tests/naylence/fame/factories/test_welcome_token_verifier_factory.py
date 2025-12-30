@@ -127,9 +127,7 @@ class TestTokenVerifierFactory:
     @pytest.mark.asyncio
     async def test_create_token_verifier_with_jwt_config(self):
         """Test create_token_verifier with JWTVerifier config."""
-        config = JWTVerifierConfig(
-            issuer="test-issuer", kid="test-kid", allowed_algorithms=["EdDSA"]
-        )
+        config = JWTVerifierConfig(issuer="test-issuer", kid="test-kid", allowed_algorithms=["EdDSA"])
         verifier = await TokenVerifierFactory.create_token_verifier(config)
 
         assert isinstance(verifier, JWTTokenVerifier)
@@ -151,4 +149,3 @@ class TestTokenVerifierFactory:
         config = {"type": "InvalidTokenVerifier"}
         with pytest.raises(Exception):  # Will raise from create_resource lookup failure
             await TokenVerifierFactory.create_token_verifier(config)
-

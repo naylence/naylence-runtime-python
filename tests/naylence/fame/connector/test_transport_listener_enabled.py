@@ -1,6 +1,5 @@
 """Tests for TransportListenerConfig enabled flag functionality."""
 
-
 from naylence.fame.connector.transport_listener_config import TransportListenerConfig
 
 
@@ -24,9 +23,7 @@ class TestTransportListenerConfigEnabled:
 
     def test_enabled_from_dict_with_camel_case(self):
         """Test that enabled works with camelCase alias."""
-        config = TransportListenerConfig.model_validate(
-            {"type": "HttpListener", "enabled": False}
-        )
+        config = TransportListenerConfig.model_validate({"type": "HttpListener", "enabled": False})
         assert config.enabled is False
 
     def test_enabled_not_in_dict_defaults_to_true(self):

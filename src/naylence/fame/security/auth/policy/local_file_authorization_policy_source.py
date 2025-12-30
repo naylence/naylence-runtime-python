@@ -28,9 +28,7 @@ from naylence.fame.security.auth.policy.authorization_policy_source import (
     AuthorizationPolicySource,
 )
 
-logger = logging.getLogger(
-    "naylence.fame.security.auth.policy.local_file_authorization_policy_source"
-)
+logger = logging.getLogger("naylence.fame.security.auth.policy.local_file_authorization_policy_source")
 
 # Format of the policy file
 PolicyFileFormat = Literal["yaml", "json", "auto"]
@@ -127,11 +125,7 @@ class LocalFileAuthorizationPolicySource(AuthorizationPolicySource):
             content = f.read()
 
         # Determine format
-        effective_format = (
-            _detect_format(self._path)
-            if self._format == "auto"
-            else self._format
-        )
+        effective_format = _detect_format(self._path) if self._format == "auto" else self._format
 
         # Parse the content
         if effective_format == "json":
@@ -160,9 +154,7 @@ class LocalFileAuthorizationPolicySource(AuthorizationPolicySource):
         )
 
         # Ensure we have a type field for the factory
-        if "type" not in factory_config or not isinstance(
-            factory_config["type"], str
-        ):
+        if "type" not in factory_config or not isinstance(factory_config["type"], str):
             logger.warning(
                 "policy_type_missing_defaulting_to_basic",
                 extra={"path": self._path},
@@ -176,9 +168,7 @@ class LocalFileAuthorizationPolicySource(AuthorizationPolicySource):
         rest_of_file = {k: v for k, v in policy_definition.items() if k != "type"}
 
         resolved_type = (
-            file_type
-            if isinstance(file_type, str) and file_type.strip()
-            else factory_config.get("type")
+            file_type if isinstance(file_type, str) and file_type.strip() else factory_config.get("type")
         )
 
         if self._policy_factory_config is not None:
@@ -193,9 +183,7 @@ class LocalFileAuthorizationPolicySource(AuthorizationPolicySource):
             }
 
         # Create the policy using the factory system
-        policy = await AuthorizationPolicyFactory.create_authorization_policy(
-            merged_config
-        )
+        policy = await AuthorizationPolicyFactory.create_authorization_policy(merged_config)
 
         if not policy:
             raise ValueError(f"Failed to create authorization policy from {self._path}")

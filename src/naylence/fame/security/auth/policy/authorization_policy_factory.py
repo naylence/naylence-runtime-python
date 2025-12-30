@@ -65,9 +65,7 @@ class AuthorizationPolicyFactory(ResourceFactory[AuthorizationPolicy, C]):
             policy = await create_resource(AuthorizationPolicyFactory, config)
 
             if not policy:
-                raise ValueError(
-                    "Failed to create authorization policy from configuration"
-                )
+                raise ValueError("Failed to create authorization policy from configuration")
 
             return policy
 
@@ -75,4 +73,3 @@ class AuthorizationPolicyFactory(ResourceFactory[AuthorizationPolicy, C]):
         policy = await create_default_resource(AuthorizationPolicyFactory)
 
         return policy
-

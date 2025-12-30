@@ -92,9 +92,7 @@ class TestAuthorizationPolicyFactory:
         ) as mock_create:
             mock_create.return_value = mock_policy
 
-            result = await AuthorizationPolicyFactory.create_authorization_policy(
-                config
-            )
+            result = await AuthorizationPolicyFactory.create_authorization_policy(config)
 
             assert result == mock_policy
             mock_create.assert_called_once()

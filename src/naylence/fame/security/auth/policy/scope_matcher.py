@@ -55,10 +55,7 @@ def normalize_scope_requirement(
         ValueError: If requirement is invalid
     """
     if depth > MAX_SCOPE_NESTING_DEPTH:
-        raise ValueError(
-            f"Scope requirement nesting exceeds maximum depth of "
-            f"{MAX_SCOPE_NESTING_DEPTH}"
-        )
+        raise ValueError(f"Scope requirement nesting exceeds maximum depth of {MAX_SCOPE_NESTING_DEPTH}")
 
     # Simple string pattern
     if isinstance(requirement, str):
@@ -66,24 +63,15 @@ def normalize_scope_requirement(
 
     # Handle Pydantic models (from parsed AuthorizationPolicyDefinition)
     if isinstance(requirement, ScopeRequirementAnyOf):
-        nested = [
-            normalize_scope_requirement(item, depth + 1)
-            for item in requirement.any_of
-        ]
+        nested = [normalize_scope_requirement(item, depth + 1) for item in requirement.any_of]
         return NormalizedScopeAnyOf(requirements=nested)
 
     if isinstance(requirement, ScopeRequirementAllOf):
-        nested = [
-            normalize_scope_requirement(item, depth + 1)
-            for item in requirement.all_of
-        ]
+        nested = [normalize_scope_requirement(item, depth + 1) for item in requirement.all_of]
         return NormalizedScopeAllOf(requirements=nested)
 
     if isinstance(requirement, ScopeRequirementNoneOf):
-        nested = [
-            normalize_scope_requirement(item, depth + 1)
-            for item in requirement.none_of
-        ]
+        nested = [normalize_scope_requirement(item, depth + 1) for item in requirement.none_of]
         return NormalizedScopeNoneOf(requirements=nested)
 
     # Object with logical operator (raw dict input)
@@ -101,15 +89,9 @@ def normalize_scope_requirement(
     value = requirement[key]
 
     if not isinstance(value, list):
-        raise ValueError(
-            f'Scope requirement "{key}" must have a list value, '
-            f"got: {type(value).__name__}"
-        )
+        raise ValueError(f'Scope requirement "{key}" must have a list value, got: {type(value).__name__}')
 
-    nested = [
-        normalize_scope_requirement(item, depth + 1)
-        for item in value
-    ]
+    nested = [normalize_scope_requirement(item, depth + 1) for item in value]
 
     if key == "any_of":
         return NormalizedScopeAnyOf(requirements=nested)
@@ -119,8 +101,7 @@ def normalize_scope_requirement(
         return NormalizedScopeNoneOf(requirements=nested)
     else:
         raise ValueError(
-            f'Unknown scope requirement operator: "{key}". '
-            f"Expected any_of, all_of, or none_of"
+            f'Unknown scope requirement operator: "{key}". Expected any_of, all_of, or none_of'
         )
 
 
@@ -143,20 +124,17 @@ def evaluate_normalized_scope_requirement(
 
     if isinstance(requirement, NormalizedScopeAnyOf):
         return any(
-            evaluate_normalized_scope_requirement(req, granted_scopes)
-            for req in requirement.requirements
+            evaluate_normalized_scope_requirement(req, granted_scopes) for req in requirement.requirements
         )
 
     if isinstance(requirement, NormalizedScopeAllOf):
         return all(
-            evaluate_normalized_scope_requirement(req, granted_scopes)
-            for req in requirement.requirements
+            evaluate_normalized_scope_requirement(req, granted_scopes) for req in requirement.requirements
         )
 
     if isinstance(requirement, NormalizedScopeNoneOf):
         return not any(
-            evaluate_normalized_scope_requirement(req, granted_scopes)
-            for req in requirement.requirements
+            evaluate_normalized_scope_requirement(req, granted_scopes) for req in requirement.requirements
         )
 
     # Exhaustive check
@@ -196,9 +174,7 @@ def compile_scope_requirement(
         A function that evaluates the requirement against granted scopes
     """
     normalized = normalize_scope_requirement(requirement)
-    return lambda granted_scopes: evaluate_normalized_scope_requirement(
-        normalized, granted_scopes
-    )
+    return lambda granted_scopes: evaluate_normalized_scope_requirement(normalized, granted_scopes)
 
 
 # Compiled scope requirement for efficient repeated evaluation with glob-only patterns
@@ -262,26 +238,17 @@ def _compile_glob_only_normalized(
 
     if isinstance(requirement, NormalizedScopeAnyOf):
         node = CompiledScopeAnyOfNode()
-        node.requirements = [
-            _compile_glob_only_normalized(r, context)
-            for r in requirement.requirements
-        ]
+        node.requirements = [_compile_glob_only_normalized(r, context) for r in requirement.requirements]
         return node
 
     if isinstance(requirement, NormalizedScopeAllOf):
         node = CompiledScopeAllOfNode()
-        node.requirements = [
-            _compile_glob_only_normalized(r, context)
-            for r in requirement.requirements
-        ]
+        node.requirements = [_compile_glob_only_normalized(r, context) for r in requirement.requirements]
         return node
 
     if isinstance(requirement, NormalizedScopeNoneOf):
         node = CompiledScopeNoneOfNode()
-        node.requirements = [
-            _compile_glob_only_normalized(r, context)
-            for r in requirement.requirements
-        ]
+        node.requirements = [_compile_glob_only_normalized(r, context) for r in requirement.requirements]
         return node
 
     raise ValueError(f"Unknown scope requirement type: {type(requirement)}")
@@ -296,22 +263,13 @@ def _evaluate_compiled_scope(
         return any(node.matcher.match(scope) for scope in granted_scopes)
 
     if isinstance(node, CompiledScopeAnyOfNode):
-        return any(
-            _evaluate_compiled_scope(r, granted_scopes)
-            for r in node.requirements
-        )
+        return any(_evaluate_compiled_scope(r, granted_scopes) for r in node.requirements)
 
     if isinstance(node, CompiledScopeAllOfNode):
-        return all(
-            _evaluate_compiled_scope(r, granted_scopes)
-            for r in node.requirements
-        )
+        return all(_evaluate_compiled_scope(r, granted_scopes) for r in node.requirements)
 
     if isinstance(node, CompiledScopeNoneOfNode):
-        return not any(
-            _evaluate_compiled_scope(r, granted_scopes)
-            for r in node.requirements
-        )
+        return not any(_evaluate_compiled_scope(r, granted_scopes) for r in node.requirements)
 
     raise ValueError(f"Unknown compiled scope node type: {type(node)}")
 
@@ -344,7 +302,5 @@ def compile_glob_only_scope_requirement(
     )
 
     return CompiledScopeRequirement(
-        evaluate=lambda granted_scopes: _evaluate_compiled_scope(
-            compiled, granted_scopes
-        )
+        evaluate=lambda granted_scopes: _evaluate_compiled_scope(compiled, granted_scopes)
     )

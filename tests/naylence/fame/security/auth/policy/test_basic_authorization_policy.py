@@ -52,14 +52,14 @@ def make_policy(
     version: str = "1",
 ) -> BasicAuthorizationPolicy:
     """Create a BasicAuthorizationPolicy with the given definition."""
-    policy_def = AuthorizationPolicyDefinition.from_dict({
-        "version": version,
-        "default_effect": default_effect,
-        "rules": rules or [],
-    })
-    return BasicAuthorizationPolicy(
-        BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+    policy_def = AuthorizationPolicyDefinition.from_dict(
+        {
+            "version": version,
+            "default_effect": default_effect,
+            "rules": rules or [],
+        }
     )
+    return BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
 
 def mock_node():
@@ -109,11 +109,15 @@ class TestConstructorValidation:
     def test_throws_on_invalid_scope_requirement(self):
         """Should throw on invalid scope requirement."""
         with pytest.raises(ValueError) as exc_info:
-            make_policy(rules=[{
-                "id": "bad-scope",
-                "effect": "allow",
-                "scope": {"invalid_operator": ["a"]},
-            }])
+            make_policy(
+                rules=[
+                    {
+                        "id": "bad-scope",
+                        "effect": "allow",
+                        "scope": {"invalid_operator": ["a"]},
+                    }
+                ]
+            )
         assert "scope" in str(exc_info.value).lower()
 
     def test_accepts_valid_policy_with_allow_default(self):
@@ -141,13 +145,13 @@ class TestDefaultEffect:
     @pytest.mark.asyncio
     async def test_defaults_to_deny_when_missing(self):
         """Should default to deny when default_effect is missing."""
-        policy_def = AuthorizationPolicyDefinition.from_dict({
-            "version": "1",
-            "rules": [],
-        })
-        policy = BasicAuthorizationPolicy(
-            BasicAuthorizationPolicyOptions(policy_definition=policy_def)
+        policy_def = AuthorizationPolicyDefinition.from_dict(
+            {
+                "version": "1",
+                "rules": [],
+            }
         )
+        policy = BasicAuthorizationPolicy(BasicAuthorizationPolicyOptions(policy_definition=policy_def))
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
@@ -169,9 +173,7 @@ class TestDefaultEffect:
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
 
         # ForwardUpstream won't match Connect rule
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardUpstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardUpstream")
 
         assert result.effect == "allow"
         assert "No rule matched" in result.reason
@@ -188,9 +190,7 @@ class TestDefaultEffect:
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardUpstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardUpstream")
 
         assert result.effect == "deny"
         assert "No rule matched" in result.reason
@@ -202,14 +202,10 @@ class TestActionMatching:
     @pytest.mark.asyncio
     async def test_matches_connect_action(self):
         """Should match Connect action."""
-        policy = make_policy(
-            rules=[{"id": "allow-connect", "effect": "allow", "action": "Connect"}]
-        )
+        policy = make_policy(rules=[{"id": "allow-connect", "effect": "allow", "action": "Connect"}])
 
         envelope = make_envelope()
-        result = await policy.evaluate_request(
-            mock_node(), envelope, None, "Connect"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, None, "Connect")
 
         assert result.effect == "allow"
         assert result.matched_rule == "allow-connect"
@@ -217,18 +213,20 @@ class TestActionMatching:
     @pytest.mark.asyncio
     async def test_matches_forward_upstream_action(self):
         """Should match ForwardUpstream action."""
-        policy = make_policy(rules=[{
-            "id": "allow-forward-up",
-            "effect": "allow",
-            "action": "ForwardUpstream",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-forward-up",
+                    "effect": "allow",
+                    "action": "ForwardUpstream",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardUpstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardUpstream")
 
         assert result.effect == "allow"
         assert result.matched_rule == "allow-forward-up"
@@ -236,18 +234,20 @@ class TestActionMatching:
     @pytest.mark.asyncio
     async def test_matches_forward_downstream_action(self):
         """Should match ForwardDownstream action."""
-        policy = make_policy(rules=[{
-            "id": "allow-forward-down",
-            "effect": "allow",
-            "action": "ForwardDownstream",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-forward-down",
+                    "effect": "allow",
+                    "action": "ForwardDownstream",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.DOWNSTREAM)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardDownstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardDownstream")
 
         assert result.effect == "allow"
         assert result.matched_rule == "allow-forward-down"
@@ -255,18 +255,20 @@ class TestActionMatching:
     @pytest.mark.asyncio
     async def test_matches_snake_case_action_values(self):
         """Should match snake_case action values."""
-        policy = make_policy(rules=[{
-            "id": "allow-forward-down",
-            "effect": "allow",
-            "action": "forward_downstream",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-forward-down",
+                    "effect": "allow",
+                    "action": "forward_downstream",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.DOWNSTREAM)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardDownstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardDownstream")
 
         assert result.effect == "allow"
         assert result.matched_rule == "allow-forward-down"
@@ -274,18 +276,20 @@ class TestActionMatching:
     @pytest.mark.asyncio
     async def test_matches_forward_peer_action(self):
         """Should match ForwardPeer action."""
-        policy = make_policy(rules=[{
-            "id": "allow-forward-peer",
-            "effect": "allow",
-            "action": "ForwardPeer",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-forward-peer",
+                    "effect": "allow",
+                    "action": "ForwardPeer",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.PEER)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardPeer"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardPeer")
 
         assert result.effect == "allow"
         assert result.matched_rule == "allow-forward-peer"
@@ -293,18 +297,20 @@ class TestActionMatching:
     @pytest.mark.asyncio
     async def test_matches_deliver_local_action(self):
         """Should match DeliverLocal action."""
-        policy = make_policy(rules=[{
-            "id": "allow-deliver-local",
-            "effect": "allow",
-            "action": "DeliverLocal",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-deliver-local",
+                    "effect": "allow",
+                    "action": "DeliverLocal",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "DeliverLocal"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "DeliverLocal")
 
         assert result.effect == "allow"
         assert result.matched_rule == "allow-deliver-local"
@@ -312,50 +318,43 @@ class TestActionMatching:
     @pytest.mark.asyncio
     async def test_matches_wildcard_action(self):
         """Should match wildcard action for any action type."""
-        policy = make_policy(
-            rules=[{"id": "allow-all", "effect": "allow", "action": "*"}]
-        )
+        policy = make_policy(rules=[{"id": "allow-all", "effect": "allow", "action": "*"}])
 
         # Test Connect
         envelope = make_envelope()
-        result = await policy.evaluate_request(
-            mock_node(), envelope, None, "Connect"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, None, "Connect")
         assert result.matched_rule == "allow-all"
 
         # Test ForwardUpstream
         result = await policy.evaluate_request(
-            mock_node(),
-            envelope,
-            make_context(origin_type=DeliveryOriginType.LOCAL),
-            "ForwardUpstream"
+            mock_node(), envelope, make_context(origin_type=DeliveryOriginType.LOCAL), "ForwardUpstream"
         )
         assert result.matched_rule == "allow-all"
 
     @pytest.mark.asyncio
     async def test_does_not_match_when_action_differs(self):
         """Should not match when action does not match."""
-        policy = make_policy(
-            rules=[{"id": "connect-only", "effect": "allow", "action": "Connect"}]
-        )
+        policy = make_policy(rules=[{"id": "connect-only", "effect": "allow", "action": "Connect"}])
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardUpstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardUpstream")
 
         assert result.effect == "deny"
 
     @pytest.mark.asyncio
     async def test_matches_when_action_in_array(self):
         """Should match when action is in array."""
-        policy = make_policy(rules=[{
-            "id": "forward-actions",
-            "effect": "allow",
-            "action": ["ForwardUpstream", "ForwardDownstream"],
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "forward-actions",
+                    "effect": "allow",
+                    "action": ["ForwardUpstream", "ForwardDownstream"],
+                }
+            ]
+        )
 
         node = mock_node()
         envelope = make_envelope()
@@ -391,9 +390,11 @@ class TestFrameTypeHandling:
         # The policy creation logs a warning about reserved field
         # which causes a logging error. Instead, we test that rules
         # without frame_type work correctly.
-        policy = make_policy(rules=[
-            {"id": "no-frame-type", "effect": "allow"},
-        ])
+        policy = make_policy(
+            rules=[
+                {"id": "no-frame-type", "effect": "allow"},
+            ]
+        )
 
         envelope = make_envelope()
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -418,11 +419,15 @@ class TestAddressPatternMatching:
     @pytest.mark.asyncio
     async def test_matches_exact_address(self):
         """Should match exact address."""
-        policy = make_policy(rules=[{
-            "id": "exact-match",
-            "effect": "allow",
-            "address": "api@services.v1",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "exact-match",
+                    "effect": "allow",
+                    "address": "api@services.v1",
+                }
+            ]
+        )
 
         envelope = make_envelope(to="api@services.v1")
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -433,11 +438,15 @@ class TestAddressPatternMatching:
     @pytest.mark.asyncio
     async def test_matches_glob_pattern_with_single_wildcard(self):
         """Should match glob pattern with single wildcard."""
-        policy = make_policy(rules=[{
-            "id": "glob-single",
-            "effect": "allow",
-            "address": "api@*.v1",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "glob-single",
+                    "effect": "allow",
+                    "address": "api@*.v1",
+                }
+            ]
+        )
 
         envelope = make_envelope(to="api@services.v1")
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -448,11 +457,15 @@ class TestAddressPatternMatching:
     @pytest.mark.asyncio
     async def test_matches_glob_pattern_with_double_wildcard(self):
         """Should match glob pattern with double wildcard."""
-        policy = make_policy(rules=[{
-            "id": "glob-double",
-            "effect": "allow",
-            "address": "*@services.**",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "glob-double",
+                    "effect": "allow",
+                    "address": "*@services.**",
+                }
+            ]
+        )
 
         envelope = make_envelope(to="api@services.v1.endpoint")
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -463,21 +476,29 @@ class TestAddressPatternMatching:
     def test_rejects_regex_patterns_in_address(self):
         """Should reject regex patterns (^ prefix) in address."""
         with pytest.raises(ValueError) as exc_info:
-            make_policy(rules=[{
-                "id": "regex-attempt",
-                "effect": "allow",
-                "address": "^api@public\\..*$",
-            }])
+            make_policy(
+                rules=[
+                    {
+                        "id": "regex-attempt",
+                        "effect": "allow",
+                        "address": "^api@public\\..*$",
+                    }
+                ]
+            )
         assert "Regex patterns are not supported" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_matches_address_from_array(self):
         """Should match address from array (any-of)."""
-        policy = make_policy(rules=[{
-            "id": "multi-addr",
-            "effect": "allow",
-            "address": ["api@services.v1", "web@services.*"],
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "multi-addr",
+                    "effect": "allow",
+                    "address": ["api@services.v1", "web@services.*"],
+                }
+            ]
+        )
 
         node = mock_node()
 
@@ -499,11 +520,15 @@ class TestAddressPatternMatching:
     @pytest.mark.asyncio
     async def test_does_not_match_when_address_pattern_differs(self):
         """Should not match when address pattern does not match."""
-        policy = make_policy(rules=[{
-            "id": "specific",
-            "effect": "allow",
-            "address": "api@services.v1",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "specific",
+                    "effect": "allow",
+                    "address": "api@services.v1",
+                }
+            ]
+        )
 
         envelope = make_envelope(to="other@external.svc")
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -513,9 +538,7 @@ class TestAddressPatternMatching:
     @pytest.mark.asyncio
     async def test_does_not_match_when_address_required_but_not_provided(self):
         """Should not match when address is required but not provided."""
-        policy = make_policy(
-            rules=[{"id": "needs-address", "effect": "allow", "address": "service.*"}]
-        )
+        policy = make_policy(rules=[{"id": "needs-address", "effect": "allow", "address": "service.*"}])
 
         envelope = make_envelope(to=None)
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -540,9 +563,7 @@ class TestScopeMatching:
     @pytest.mark.asyncio
     async def test_matches_simple_scope_string(self):
         """Should match simple scope string."""
-        policy = make_policy(
-            rules=[{"id": "needs-read", "effect": "allow", "scope": "read"}]
-        )
+        policy = make_policy(rules=[{"id": "needs-read", "effect": "allow", "scope": "read"}])
 
         context = make_context(granted_scopes=["read", "write"])
         envelope = make_envelope()
@@ -554,11 +575,15 @@ class TestScopeMatching:
     @pytest.mark.asyncio
     async def test_matches_any_of_scope_requirement(self):
         """Should match any_of scope requirement."""
-        policy = make_policy(rules=[{
-            "id": "needs-any",
-            "effect": "allow",
-            "scope": {"any_of": ["admin", "superuser"]},
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "needs-any",
+                    "effect": "allow",
+                    "scope": {"any_of": ["admin", "superuser"]},
+                }
+            ]
+        )
 
         context = make_context(granted_scopes=["user", "admin"])
         envelope = make_envelope()
@@ -569,11 +594,15 @@ class TestScopeMatching:
     @pytest.mark.asyncio
     async def test_matches_all_of_scope_requirement(self):
         """Should match all_of scope requirement."""
-        policy = make_policy(rules=[{
-            "id": "needs-all",
-            "effect": "allow",
-            "scope": {"all_of": ["read", "write"]},
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "needs-all",
+                    "effect": "allow",
+                    "scope": {"all_of": ["read", "write"]},
+                }
+            ]
+        )
 
         context = make_context(granted_scopes=["read", "write", "delete"])
         envelope = make_envelope()
@@ -584,11 +613,15 @@ class TestScopeMatching:
     @pytest.mark.asyncio
     async def test_matches_none_of_scope_requirement(self):
         """Should match none_of scope requirement."""
-        policy = make_policy(rules=[{
-            "id": "no-restricted",
-            "effect": "allow",
-            "scope": {"none_of": ["restricted", "blocked"]},
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "no-restricted",
+                    "effect": "allow",
+                    "scope": {"none_of": ["restricted", "blocked"]},
+                }
+            ]
+        )
 
         context = make_context(granted_scopes=["read", "write"])
         envelope = make_envelope()
@@ -599,9 +632,7 @@ class TestScopeMatching:
     @pytest.mark.asyncio
     async def test_does_not_match_when_scope_not_satisfied(self):
         """Should not match when scope requirement not satisfied."""
-        policy = make_policy(
-            rules=[{"id": "needs-admin", "effect": "allow", "scope": "admin"}]
-        )
+        policy = make_policy(rules=[{"id": "needs-admin", "effect": "allow", "scope": "admin"}])
 
         context = make_context(granted_scopes=["read", "write"])
         envelope = make_envelope()
@@ -612,9 +643,7 @@ class TestScopeMatching:
     @pytest.mark.asyncio
     async def test_handles_empty_scopes_when_no_context(self):
         """Should handle empty scopes when no authorization context."""
-        policy = make_policy(
-            rules=[{"id": "needs-scope", "effect": "allow", "scope": "any"}]
-        )
+        policy = make_policy(rules=[{"id": "needs-scope", "effect": "allow", "scope": "any"}])
 
         envelope = make_envelope()
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -624,9 +653,7 @@ class TestScopeMatching:
     @pytest.mark.asyncio
     async def test_matches_glob_pattern_in_scope(self):
         """Should match glob pattern in scope."""
-        policy = make_policy(
-            rules=[{"id": "api-any", "effect": "allow", "scope": "api.*"}]
-        )
+        policy = make_policy(rules=[{"id": "api-any", "effect": "allow", "scope": "api.*"}])
 
         context = make_context(granted_scopes=["api.read"])
         envelope = make_envelope()
@@ -637,11 +664,15 @@ class TestScopeMatching:
     def test_rejects_regex_patterns_in_scope(self):
         """Should reject regex patterns (^ prefix) in scope."""
         with pytest.raises(ValueError) as exc_info:
-            make_policy(rules=[{
-                "id": "regex-scope",
-                "effect": "allow",
-                "scope": "^api\\..*$",
-            }])
+            make_policy(
+                rules=[
+                    {
+                        "id": "regex-scope",
+                        "effect": "allow",
+                        "scope": "^api\\..*$",
+                    }
+                ]
+            )
         assert "Regex patterns are not supported" in str(exc_info.value)
 
 
@@ -651,17 +682,17 @@ class TestFirstMatchWinsSemantics:
     @pytest.mark.asyncio
     async def test_returns_first_matching_rule(self):
         """Should return first matching rule."""
-        policy = make_policy(rules=[
-            {"id": "first", "effect": "allow", "action": "ForwardUpstream"},
-            {"id": "second", "effect": "deny", "action": "ForwardUpstream"},
-        ])
+        policy = make_policy(
+            rules=[
+                {"id": "first", "effect": "allow", "action": "ForwardUpstream"},
+                {"id": "second", "effect": "deny", "action": "ForwardUpstream"},
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardUpstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardUpstream")
 
         assert result.effect == "allow"
         assert result.matched_rule == "first"
@@ -669,18 +700,18 @@ class TestFirstMatchWinsSemantics:
     @pytest.mark.asyncio
     async def test_skips_non_matching_rules(self):
         """Should skip non-matching rules."""
-        policy = make_policy(rules=[
-            {"id": "connect-rule", "effect": "deny", "action": "Connect"},
-            {"id": "downstream-rule", "effect": "deny", "action": "ForwardDownstream"},
-            {"id": "upstream-rule", "effect": "allow", "action": "ForwardUpstream"},
-        ])
+        policy = make_policy(
+            rules=[
+                {"id": "connect-rule", "effect": "deny", "action": "Connect"},
+                {"id": "downstream-rule", "effect": "deny", "action": "ForwardDownstream"},
+                {"id": "upstream-rule", "effect": "allow", "action": "ForwardUpstream"},
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardUpstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardUpstream")
 
         assert result.effect == "allow"
         assert result.matched_rule == "upstream-rule"
@@ -692,10 +723,12 @@ class TestWhenClauseHandling:
     @pytest.mark.asyncio
     async def test_skips_rules_with_when_clause(self):
         """Should skip rules with when clause."""
-        policy = make_policy(rules=[
-            {"id": "with-when", "effect": "allow", "when": 'claims.role == "admin"'},
-            {"id": "fallback", "effect": "allow"},
-        ])
+        policy = make_policy(
+            rules=[
+                {"id": "with-when", "effect": "allow", "when": 'claims.role == "admin"'},
+                {"id": "fallback", "effect": "allow"},
+            ]
+        )
 
         envelope = make_envelope()
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -705,9 +738,7 @@ class TestWhenClauseHandling:
     @pytest.mark.asyncio
     async def test_does_not_skip_rules_with_empty_when_clause(self):
         """Should not skip rules with empty when clause."""
-        policy = make_policy(
-            rules=[{"id": "empty-when", "effect": "allow", "when": ""}]
-        )
+        policy = make_policy(rules=[{"id": "empty-when", "effect": "allow", "when": ""}])
 
         envelope = make_envelope()
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -721,11 +752,15 @@ class TestRuleDescription:
     @pytest.mark.asyncio
     async def test_uses_rule_description_as_reason(self):
         """Should use rule description as reason when provided."""
-        policy = make_policy(rules=[{
-            "id": "my-rule",
-            "description": "Allow all authenticated requests",
-            "effect": "allow",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "my-rule",
+                    "description": "Allow all authenticated requests",
+                    "effect": "allow",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -749,11 +784,15 @@ class TestOriginTypeGating:
     @pytest.mark.asyncio
     async def test_matches_downstream_origin(self):
         """Should match when context.origin_type equals rule origin_type."""
-        policy = make_policy(rules=[{
-            "id": "allow-downstream",
-            "effect": "allow",
-            "origin_type": "downstream",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-downstream",
+                    "effect": "allow",
+                    "origin_type": "downstream",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.DOWNSTREAM)
@@ -766,11 +805,15 @@ class TestOriginTypeGating:
     @pytest.mark.asyncio
     async def test_matches_upstream_origin(self):
         """Should match upstream origin_type."""
-        policy = make_policy(rules=[{
-            "id": "allow-upstream",
-            "effect": "allow",
-            "origin_type": "upstream",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-upstream",
+                    "effect": "allow",
+                    "origin_type": "upstream",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.UPSTREAM)
@@ -782,11 +825,15 @@ class TestOriginTypeGating:
     @pytest.mark.asyncio
     async def test_matches_peer_origin(self):
         """Should match peer origin_type."""
-        policy = make_policy(rules=[{
-            "id": "allow-peer",
-            "effect": "allow",
-            "origin_type": "peer",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-peer",
+                    "effect": "allow",
+                    "origin_type": "peer",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.PEER)
@@ -798,11 +845,15 @@ class TestOriginTypeGating:
     @pytest.mark.asyncio
     async def test_matches_local_origin(self):
         """Should match local origin_type."""
-        policy = make_policy(rules=[{
-            "id": "allow-local",
-            "effect": "allow",
-            "origin_type": "local",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-local",
+                    "effect": "allow",
+                    "origin_type": "local",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.LOCAL)
@@ -814,11 +865,15 @@ class TestOriginTypeGating:
     @pytest.mark.asyncio
     async def test_does_not_match_when_origin_type_differs(self):
         """Should not match when context.origin_type differs from rule."""
-        policy = make_policy(rules=[{
-            "id": "allow-downstream-only",
-            "effect": "allow",
-            "origin_type": "downstream",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-downstream-only",
+                    "effect": "allow",
+                    "origin_type": "downstream",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         context = make_context(origin_type=DeliveryOriginType.UPSTREAM)
@@ -830,11 +885,15 @@ class TestOriginTypeGating:
     @pytest.mark.asyncio
     async def test_matches_origin_type_array(self):
         """Should match when context.origin_type is in array."""
-        policy = make_policy(rules=[{
-            "id": "allow-upstream-or-peer",
-            "effect": "allow",
-            "origin_type": ["upstream", "peer"],
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "allow-upstream-or-peer",
+                    "effect": "allow",
+                    "origin_type": ["upstream", "peer"],
+                }
+            ]
+        )
 
         node = mock_node()
         envelope = make_envelope()
@@ -857,11 +916,15 @@ class TestOriginTypeGating:
     @pytest.mark.asyncio
     async def test_does_not_match_when_rule_requires_origin_but_context_missing(self):
         """Should not match when rule requires origin_type but context has none."""
-        policy = make_policy(rules=[{
-            "id": "require-downstream",
-            "effect": "allow",
-            "origin_type": "downstream",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "require-downstream",
+                    "effect": "allow",
+                    "origin_type": "downstream",
+                }
+            ]
+        )
 
         envelope = make_envelope()
         result = await policy.evaluate_request(mock_node(), envelope)
@@ -892,22 +955,24 @@ class TestComplexScenarios:
     @pytest.mark.asyncio
     async def test_combined_action_address_scope_conditions(self):
         """Should handle combined action, address, and scope conditions."""
-        policy = make_policy(rules=[
-            {
-                "id": "admin-api",
-                "effect": "allow",
-                "action": "ForwardUpstream",
-                "address": "admin@**",
-                "scope": "admin",
-            },
-            {
-                "id": "user-api",
-                "effect": "allow",
-                "action": "ForwardUpstream",
-                "address": "api@**",
-                "scope": {"any_of": ["user", "admin"]},
-            },
-        ])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "admin-api",
+                    "effect": "allow",
+                    "action": "ForwardUpstream",
+                    "address": "admin@**",
+                    "scope": "admin",
+                },
+                {
+                    "id": "user-api",
+                    "effect": "allow",
+                    "action": "ForwardUpstream",
+                    "address": "api@**",
+                    "scope": {"any_of": ["user", "admin"]},
+                },
+            ]
+        )
 
         envelope = make_envelope(to="api@users.list")
         context = make_context(
@@ -915,9 +980,7 @@ class TestComplexScenarios:
             granted_scopes=["user"],
         )
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardUpstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardUpstream")
 
         assert result.effect == "allow"
         assert result.matched_rule == "user-api"
@@ -925,13 +988,17 @@ class TestComplexScenarios:
     @pytest.mark.asyncio
     async def test_denies_when_all_conditions_not_met(self):
         """Should deny when all conditions not met."""
-        policy = make_policy(rules=[{
-            "id": "restricted",
-            "effect": "allow",
-            "action": "ForwardUpstream",
-            "address": "restricted@*",
-            "scope": "superadmin",
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "restricted",
+                    "effect": "allow",
+                    "action": "ForwardUpstream",
+                    "address": "restricted@*",
+                    "scope": "superadmin",
+                }
+            ]
+        )
 
         # Has correct action and address, but wrong scope
         envelope = make_envelope(to="restricted@endpoint")
@@ -940,25 +1007,27 @@ class TestComplexScenarios:
             granted_scopes=["admin"],
         )
 
-        result = await policy.evaluate_request(
-            mock_node(), envelope, context, "ForwardUpstream"
-        )
+        result = await policy.evaluate_request(mock_node(), envelope, context, "ForwardUpstream")
 
         assert result.effect == "deny"
 
     @pytest.mark.asyncio
     async def test_nested_scope_requirements(self):
         """Should handle nested scope requirements."""
-        policy = make_policy(rules=[{
-            "id": "complex-scope",
-            "effect": "allow",
-            "scope": {
-                "all_of": [
-                    "base",
-                    {"any_of": ["feature-a", "feature-b"]},
-                ],
-            },
-        }])
+        policy = make_policy(
+            rules=[
+                {
+                    "id": "complex-scope",
+                    "effect": "allow",
+                    "scope": {
+                        "all_of": [
+                            "base",
+                            {"any_of": ["feature-a", "feature-b"]},
+                        ],
+                    },
+                }
+            ]
+        )
 
         context = make_context(granted_scopes=["base", "feature-a"])
         envelope = make_envelope()

@@ -16,9 +16,7 @@ from naylence.fame.profile.profile_discovery import discover_profile
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.auth.authorizer_factory import AuthorizerConfig, AuthorizerFactory
 
-logger = logging.getLogger(
-    "naylence.fame.security.auth.authorization_profile_factory"
-)
+logger = logging.getLogger("naylence.fame.security.auth.authorization_profile_factory")
 
 # Base type for authorizer factory registration
 AUTHORIZER_FACTORY_BASE_TYPE = "Authorizer"
@@ -83,16 +81,12 @@ OAUTH2_GATED_PROFILE: dict[str, Any] = {
     "enforce_token_subject_node_identity": Expressions.env(
         ENV_VAR_ENFORCE_TOKEN_SUBJECT_NODE_IDENTITY, default="false"
     ),
-    "trusted_client_scope": Expressions.env(
-        ENV_VAR_TRUSTED_CLIENT_SCOPE, default="node.trusted"
-    ),
+    "trusted_client_scope": Expressions.env(ENV_VAR_TRUSTED_CLIENT_SCOPE, default="node.trusted"),
 }
 
 OAUTH2_CALLBACK_PROFILE: dict[str, Any] = {
     "type": "OAuth2Authorizer",
-    "issuer": Expressions.env(
-        ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER, default=DEFAULT_REVERSE_AUTH_ISSUER
-    ),
+    "issuer": Expressions.env(ENV_VAR_JWT_REVERSE_AUTH_TRUSTED_ISSUER, default=DEFAULT_REVERSE_AUTH_ISSUER),
     "audience": Expressions.env(ENV_VAR_JWT_REVERSE_AUTH_AUDIENCE),
     "require_scope": True,
     "default_ttl_sec": 3600,
@@ -331,9 +325,7 @@ class AuthorizationProfileFactory(AuthorizerFactory[AuthorizationProfileConfig])
         )
 
         if authorizer is None:
-            raise ValueError(
-                f"Failed to create authorizer for profile: {normalized['profile']}"
-            )
+            raise ValueError(f"Failed to create authorizer for profile: {normalized['profile']}")
 
         return authorizer
 

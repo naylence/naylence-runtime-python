@@ -269,9 +269,7 @@ class TestDefaultPolicyAuthorizerAuthenticate:
         """Should return None for empty token."""
         policy = mock_policy()
         verifier = mock_token_verifier()
-        authorizer = DefaultPolicyAuthorizer(
-            policy=policy, token_verifier=verifier
-        )
+        authorizer = DefaultPolicyAuthorizer(policy=policy, token_verifier=verifier)
 
         result = await authorizer.authenticate("")
         assert result is None
@@ -281,9 +279,7 @@ class TestDefaultPolicyAuthorizerAuthenticate:
         """Should return auth context on successful verification."""
         policy = mock_policy()
         verifier = mock_token_verifier(success=True, claims={"sub": "user1"})
-        authorizer = DefaultPolicyAuthorizer(
-            policy=policy, token_verifier=verifier
-        )
+        authorizer = DefaultPolicyAuthorizer(policy=policy, token_verifier=verifier)
 
         result = await authorizer.authenticate("Bearer valid-token")
 
@@ -306,9 +302,7 @@ class TestDefaultPolicyAuthorizerAuthenticate:
             "custom_claim": "custom_value",
         }
         verifier = mock_token_verifier(success=True, claims=jwt_claims)
-        authorizer = DefaultPolicyAuthorizer(
-            policy=policy, token_verifier=verifier
-        )
+        authorizer = DefaultPolicyAuthorizer(policy=policy, token_verifier=verifier)
 
         result = await authorizer.authenticate("Bearer valid-token")
 
@@ -330,9 +324,7 @@ class TestDefaultPolicyAuthorizerAuthenticate:
             "scope": "read write admin",
         }
         verifier = mock_token_verifier(success=True, claims=jwt_claims)
-        authorizer = DefaultPolicyAuthorizer(
-            policy=policy, token_verifier=verifier
-        )
+        authorizer = DefaultPolicyAuthorizer(policy=policy, token_verifier=verifier)
 
         result = await authorizer.authenticate("Bearer valid-token")
 
@@ -344,9 +336,7 @@ class TestDefaultPolicyAuthorizerAuthenticate:
         """Should return None when verification fails."""
         policy = mock_policy()
         verifier = mock_token_verifier(success=False)
-        authorizer = DefaultPolicyAuthorizer(
-            policy=policy, token_verifier=verifier
-        )
+        authorizer = DefaultPolicyAuthorizer(policy=policy, token_verifier=verifier)
 
         result = await authorizer.authenticate("Bearer invalid-token")
         assert result is None
@@ -423,9 +413,7 @@ class TestDefaultPolicyAuthorizerAuthorizeRoute:
         envelope = mock_envelope()
         context = mock_context(authenticated=False)
 
-        result = await authorizer.authorize_route(
-            node, envelope, "ForwardUpstream", context
-        )
+        result = await authorizer.authorize_route(node, envelope, "ForwardUpstream", context)
 
         assert result is not None
         assert result.authorized is False
@@ -440,9 +428,7 @@ class TestDefaultPolicyAuthorizerAuthorizeRoute:
         envelope = mock_envelope()
         context = mock_context(authenticated=True)
 
-        result = await authorizer.authorize_route(
-            node, envelope, "ForwardUpstream", context
-        )
+        result = await authorizer.authorize_route(node, envelope, "ForwardUpstream", context)
 
         assert result is not None
         assert result.authorized is True
@@ -458,9 +444,7 @@ class TestDefaultPolicyAuthorizerAuthorizeRoute:
         envelope = mock_envelope()
         context = mock_context(authenticated=True)
 
-        result = await authorizer.authorize_route(
-            node, envelope, "ForwardDownstream", context
-        )
+        result = await authorizer.authorize_route(node, envelope, "ForwardDownstream", context)
 
         assert result is not None
         assert result.authorized is False
@@ -477,9 +461,7 @@ class TestDefaultPolicyAuthorizerAuthorizeRoute:
         envelope = mock_envelope()
         context = mock_context(authenticated=True)
 
-        result = await authorizer.authorize_route(
-            node, envelope, "DeliverLocal", context
-        )
+        result = await authorizer.authorize_route(node, envelope, "DeliverLocal", context)
 
         assert result is not None
         assert result.authorized is False

@@ -197,11 +197,13 @@ class TestResolveProfileName:
 
     def test_prefers_profile_over_legacy_keys(self):
         """Should prefer 'profile' over legacy keys."""
-        result = _resolve_profile_name({
-            "profile": "noop",
-            "profile_name": "oauth2",
-            "profileName": "jwt",
-        })
+        result = _resolve_profile_name(
+            {
+                "profile": "noop",
+                "profile_name": "oauth2",
+                "profileName": "jwt",
+            }
+        )
         assert result == "noop"
 
 
@@ -312,16 +314,13 @@ class TestAuthorizationProfileFactory:
     def mock_authorizer_factory(self):
         """Mock the AuthorizerFactory.create_authorizer method."""
         with patch(
-            "naylence.fame.security.auth.authorization_profile_factory."
-            "AuthorizerFactory.create_authorizer"
+            "naylence.fame.security.auth.authorization_profile_factory.AuthorizerFactory.create_authorizer"
         ) as mock:
             mock.return_value = MagicMock()
             yield mock
 
     @pytest.mark.asyncio
-    async def test_defaults_to_oauth2_profile_when_config_missing(
-        self, factory, mock_authorizer_factory
-    ):
+    async def test_defaults_to_oauth2_profile_when_config_missing(self, factory, mock_authorizer_factory):
         """Should default to oauth2 profile when config is missing."""
         await factory.create(None)
 
@@ -330,14 +329,14 @@ class TestAuthorizationProfileFactory:
         assert profile_config["type"] == "OAuth2Authorizer"
 
     @pytest.mark.asyncio
-    async def test_accepts_snake_case_profile_alias(
-        self, factory, mock_authorizer_factory
-    ):
+    async def test_accepts_snake_case_profile_alias(self, factory, mock_authorizer_factory):
         """Should accept snake_case profile alias."""
-        await factory.create({
-            "type": "AuthorizationProfile",
-            "profile_name": "no_op",
-        })
+        await factory.create(
+            {
+                "type": "AuthorizationProfile",
+                "profile_name": "no_op",
+            }
+        )
 
         mock_authorizer_factory.assert_called_once()
         profile_config = mock_authorizer_factory.call_args[0][0]
@@ -348,10 +347,12 @@ class TestAuthorizationProfileFactory:
         self, factory, mock_authorizer_factory
     ):
         """Should accept camelCase profile alias and normalize casing."""
-        await factory.create({
-            "type": "AuthorizationProfile",
-            "profileName": "OAUTH2",
-        })
+        await factory.create(
+            {
+                "type": "AuthorizationProfile",
+                "profileName": "OAUTH2",
+            }
+        )
 
         mock_authorizer_factory.assert_called_once()
         profile_config = mock_authorizer_factory.call_args[0][0]
@@ -380,10 +381,12 @@ class TestAuthorizationProfileFactory:
         self, factory, mock_authorizer_factory
     ):
         """Should map compact aliases onto canonical profile names."""
-        await factory.create({
-            "type": "AuthorizationProfile",
-            "profile": "oidc",
-        })
+        await factory.create(
+            {
+                "type": "AuthorizationProfile",
+                "profile": "oidc",
+            }
+        )
 
         mock_authorizer_factory.assert_called_once()
         profile_config = mock_authorizer_factory.call_args[0][0]
@@ -393,61 +396,58 @@ class TestAuthorizationProfileFactory:
     async def test_throws_for_unknown_profiles_after_normalization(self, factory):
         """Should throw for unknown profiles after normalization."""
         with pytest.raises(ValueError, match="Unknown authorization profile"):
-            await factory.create({
-                "type": "AuthorizationProfile",
-                "profile": "custom-profile",
-            })
+            await factory.create(
+                {
+                    "type": "AuthorizationProfile",
+                    "profile": "custom-profile",
+                }
+            )
 
     @pytest.mark.asyncio
-    async def test_resolves_explicit_oauth2_profile_name(
-        self, factory, mock_authorizer_factory
-    ):
+    async def test_resolves_explicit_oauth2_profile_name(self, factory, mock_authorizer_factory):
         """Should resolve explicit oauth2 profile name."""
-        await factory.create({
-            "type": "AuthorizationProfile",
-            "profile": PROFILE_NAME_OAUTH2,
-        })
+        await factory.create(
+            {
+                "type": "AuthorizationProfile",
+                "profile": PROFILE_NAME_OAUTH2,
+            }
+        )
 
         mock_authorizer_factory.assert_called_once()
         profile_config = mock_authorizer_factory.call_args[0][0]
         assert profile_config["type"] == "OAuth2Authorizer"
 
     @pytest.mark.asyncio
-    async def test_resolves_policy_localfile_profile_name(
-        self, factory, mock_authorizer_factory
-    ):
+    async def test_resolves_policy_localfile_profile_name(self, factory, mock_authorizer_factory):
         """Should resolve policy-localfile to PolicyAuthorizer with policy_source."""
-        await factory.create({
-            "type": "AuthorizationProfile",
-            "profile": PROFILE_NAME_POLICY_LOCALFILE,
-        })
+        await factory.create(
+            {
+                "type": "AuthorizationProfile",
+                "profile": PROFILE_NAME_POLICY_LOCALFILE,
+            }
+        )
 
         mock_authorizer_factory.assert_called_once()
         profile_config = mock_authorizer_factory.call_args[0][0]
         assert profile_config["type"] == "PolicyAuthorizer"
         assert "policy_source" in profile_config
-        assert (
-            profile_config["policy_source"]["type"]
-            == "LocalFileAuthorizationPolicySource"
-        )
+        assert profile_config["policy_source"]["type"] == "LocalFileAuthorizationPolicySource"
 
     @pytest.mark.asyncio
-    async def test_throws_when_authorizer_creation_fails(
-        self, factory, mock_authorizer_factory
-    ):
+    async def test_throws_when_authorizer_creation_fails(self, factory, mock_authorizer_factory):
         """Should throw when authorizer creation returns None."""
         mock_authorizer_factory.return_value = None
 
         with pytest.raises(ValueError, match="Failed to create authorizer"):
-            await factory.create({
-                "type": "AuthorizationProfile",
-                "profile": PROFILE_NAME_NOOP,
-            })
+            await factory.create(
+                {
+                    "type": "AuthorizationProfile",
+                    "profile": PROFILE_NAME_NOOP,
+                }
+            )
 
     @pytest.mark.asyncio
-    async def test_handles_authorization_profile_config_object(
-        self, factory, mock_authorizer_factory
-    ):
+    async def test_handles_authorization_profile_config_object(self, factory, mock_authorizer_factory):
         """Should handle AuthorizationProfileConfig object."""
         config = AuthorizationProfileConfig(profile="noop")
         await factory.create(config)

@@ -60,7 +60,7 @@ def assert_not_regex_pattern(pattern: str, context: Optional[str] = None) -> Non
         context_str = f" in {context}" if context else ""
         raise ValueError(
             f"Regex patterns are not supported{context_str} in OSS/basic policy. "
-            f'Pattern "{pattern}" starts with \'^\'.. Use glob patterns instead.'
+            f"Pattern \"{pattern}\" starts with '^'.. Use glob patterns instead."
         )
 
 

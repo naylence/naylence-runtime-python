@@ -197,9 +197,7 @@ class TestMatchPattern:
         """Should handle complex glob patterns."""
         pattern = "*@**.services.**"
         assert match_pattern(pattern, "api@public.services.v1") is True
-        assert (
-            match_pattern(pattern, "web@internal.deep.services.api.endpoint") is True
-        )
+        assert match_pattern(pattern, "web@internal.deep.services.api.endpoint") is True
 
 
 class TestPatternCaching:

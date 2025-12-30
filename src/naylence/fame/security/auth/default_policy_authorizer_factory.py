@@ -50,9 +50,9 @@ class DefaultPolicyAuthorizerConfig(AuthorizerConfig):
     """Authorization policy configuration.
     Either policy or policy_source must be provided."""
 
-    policy_source: Optional[
-        Union[AuthorizationPolicySourceConfig, dict[str, Any]]
-    ] = Field(None, alias="policySource")
+    policy_source: Optional[Union[AuthorizationPolicySourceConfig, dict[str, Any]]] = Field(
+        None, alias="policySource"
+    )
     """Authorization policy source configuration.
     Either policy or policy_source must be provided.
     Supports both policySource (camelCase) and policy_source (snake_case) keys."""
@@ -60,26 +60,17 @@ class DefaultPolicyAuthorizerConfig(AuthorizerConfig):
 
 def _is_token_verifier(candidate: Any) -> bool:
     """Check if candidate is a TokenVerifier instance."""
-    return (
-        candidate is not None
-        and callable(getattr(candidate, "verify", None))
-    )
+    return candidate is not None and callable(getattr(candidate, "verify", None))
 
 
 def _is_authorization_policy(candidate: Any) -> bool:
     """Check if candidate is an AuthorizationPolicy instance."""
-    return (
-        candidate is not None
-        and callable(getattr(candidate, "evaluate_request", None))
-    )
+    return candidate is not None and callable(getattr(candidate, "evaluate_request", None))
 
 
 def _is_authorization_policy_source(candidate: Any) -> bool:
     """Check if candidate is an AuthorizationPolicySource instance."""
-    return (
-        candidate is not None
-        and callable(getattr(candidate, "load_policy", None))
-    )
+    return candidate is not None and callable(getattr(candidate, "load_policy", None))
 
 
 # Factory metadata for registration
@@ -147,14 +138,10 @@ class DefaultPolicyAuthorizerFactory(AuthorizerFactory[DefaultPolicyAuthorizerCo
             token_verifier = factory_args["token_verifier"]
 
         if not token_verifier and verifier_config:
-            token_verifier = await create_resource(
-                TokenVerifierFactory, verifier_config
-            )
+            token_verifier = await create_resource(TokenVerifierFactory, verifier_config)
 
         if not token_verifier:
-            raise ValueError(
-                "PolicyAuthorizer requires a verifier configuration or instance"
-            )
+            raise ValueError("PolicyAuthorizer requires a verifier configuration or instance")
 
         # Resolve policy from args or config
         policy: Optional[AuthorizationPolicy] = None
@@ -168,13 +155,9 @@ class DefaultPolicyAuthorizerFactory(AuthorizerFactory[DefaultPolicyAuthorizerCo
 
         if not policy and policy_config:
             if isinstance(policy_config, dict) and policy_config:
-                policy = await AuthorizationPolicyFactory.create_authorization_policy(
-                    policy_config
-                )
+                policy = await AuthorizationPolicyFactory.create_authorization_policy(policy_config)
             elif policy_config:
-                policy = await AuthorizationPolicyFactory.create_authorization_policy(
-                    policy_config
-                )
+                policy = await AuthorizationPolicyFactory.create_authorization_policy(policy_config)
 
         # Resolve policy source from args or config
         policy_source: Optional[AuthorizationPolicySource] = None
@@ -188,23 +171,17 @@ class DefaultPolicyAuthorizerFactory(AuthorizerFactory[DefaultPolicyAuthorizerCo
 
         if not policy_source and policy_source_config:
             if isinstance(policy_source_config, dict) and policy_source_config:
-                policy_source = (
-                    await AuthorizationPolicySourceFactory.create_authorization_policy_source(
-                        policy_source_config
-                    )
+                policy_source = await AuthorizationPolicySourceFactory.create_authorization_policy_source(
+                    policy_source_config
                 )
             elif policy_source_config:
-                policy_source = (
-                    await AuthorizationPolicySourceFactory.create_authorization_policy_source(
-                        policy_source_config
-                    )
+                policy_source = await AuthorizationPolicySourceFactory.create_authorization_policy_source(
+                    policy_source_config
                 )
 
         # Validate that we have either policy or policy source
         if not policy and not policy_source:
-            raise ValueError(
-                "PolicyAuthorizer requires either a policy or policy_source configuration"
-            )
+            raise ValueError("PolicyAuthorizer requires either a policy or policy_source configuration")
 
         return DefaultPolicyAuthorizer(
             DefaultPolicyAuthorizerOptions(

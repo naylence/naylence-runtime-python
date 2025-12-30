@@ -47,10 +47,7 @@ def _normalize_config(
 ) -> dict[str, Any]:
     """Normalize and validate configuration."""
     if not config:
-        raise ValueError(
-            "LocalFileAuthorizationPolicySourceFactory requires a "
-            "configuration with a path"
-        )
+        raise ValueError("LocalFileAuthorizationPolicySourceFactory requires a configuration with a path")
 
     if isinstance(config, LocalFileAuthorizationPolicySourceConfig):
         candidate = config.model_dump()
@@ -59,15 +56,11 @@ def _normalize_config(
 
     path = candidate.get("path")
     if not isinstance(path, str) or not path.strip():
-        raise ValueError(
-            "LocalFileAuthorizationPolicySourceConfig requires a non-empty path"
-        )
+        raise ValueError("LocalFileAuthorizationPolicySourceConfig requires a non-empty path")
 
     fmt = candidate.get("format", "auto")
     if fmt not in ("yaml", "json", "auto"):
-        raise ValueError(
-            f'Invalid format "{fmt}". Must be "yaml", "json", or "auto"'
-        )
+        raise ValueError(f'Invalid format "{fmt}". Must be "yaml", "json", or "auto"')
 
     policy_factory = candidate.get("policy_factory") or candidate.get("policyFactory")
 

@@ -260,9 +260,7 @@ class OAuth2Authorizer(NodeEventListener, Authorizer, TokenVerifierProvider):
                     trusted_scope=self._trusted_client_scope,
                 )
             else:
-                validation_result = self._validate_token_subject_node_identity(
-                    frame.system_id, claims
-                )
+                validation_result = self._validate_token_subject_node_identity(frame.system_id, claims)
                 if not validation_result:
                     return None
 

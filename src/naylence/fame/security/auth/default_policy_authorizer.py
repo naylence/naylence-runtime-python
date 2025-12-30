@@ -155,17 +155,13 @@ class DefaultPolicyAuthorizer(PolicyAuthorizer, TokenVerifierProvider):
 
         # Validate that we have either a policy or a policy source
         if not self._policy_impl and not self._policy_source:
-            raise ValueError(
-                "DefaultPolicyAuthorizer requires either a policy or a policy_source"
-            )
+            raise ValueError("DefaultPolicyAuthorizer requires either a policy or a policy_source")
 
     @property
     def policy(self) -> AuthorizationPolicy:
         """The currently active authorization policy."""
         if not self._policy_impl:
-            raise RuntimeError(
-                "Authorization policy not loaded. Call ensure_policy_loaded() first."
-            )
+            raise RuntimeError("Authorization policy not loaded. Call ensure_policy_loaded() first.")
         return self._policy_impl
 
     @property
@@ -211,9 +207,7 @@ class DefaultPolicyAuthorizer(PolicyAuthorizer, TokenVerifierProvider):
         self._policy_loaded = True
         logger.info("policy_reloaded_from_source")
 
-    async def authenticate(
-        self, credentials: Union[str, bytes]
-    ) -> Optional[AuthorizationContext]:
+    async def authenticate(self, credentials: Union[str, bytes]) -> Optional[AuthorizationContext]:
         """
         Authenticates credentials and returns an authorization context.
 
@@ -296,9 +290,7 @@ class DefaultPolicyAuthorizer(PolicyAuthorizer, TokenVerifierProvider):
         if frame_type == "NodeAttach":
             decision: AuthorizationDecision
             try:
-                decision = await self.policy.evaluate_request(
-                    node, envelope, context, "Connect"
-                )
+                decision = await self.policy.evaluate_request(node, envelope, context, "Connect")
             except Exception as error:
                 logger.error(
                     "policy_evaluation_failed",

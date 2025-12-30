@@ -80,8 +80,7 @@ def register_profile(
     if normalized_name in profiles and not opts.allow_override:
         source_label = f" ({opts.source})" if opts.source else ""
         raise ValueError(
-            f"Profile '{normalized_name}' already registered for "
-            f"{normalized_base}{source_label}"
+            f"Profile '{normalized_name}' already registered for {normalized_base}{source_label}"
         )
 
     profiles[normalized_name] = config

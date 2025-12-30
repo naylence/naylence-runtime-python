@@ -32,9 +32,7 @@ from .authorization_policy_definition import (
 from .pattern_matcher import CompiledPattern, compile_glob_pattern
 from .scope_matcher import compile_glob_only_scope_requirement
 
-logger = logging.getLogger(
-    "naylence.fame.security.auth.policy.basic_authorization_policy"
-)
+logger = logging.getLogger("naylence.fame.security.auth.policy.basic_authorization_policy")
 
 
 @dataclass
@@ -137,9 +135,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
         warn_on_unknown_fields = options.warn_on_unknown_fields
 
         # Validate and extract default effect
-        self._default_effect = self._validate_default_effect(
-            policy_definition.default_effect
-        )
+        self._default_effect = self._validate_default_effect(policy_definition.default_effect)
 
         # Warn about unknown policy fields
         if warn_on_unknown_fields:
@@ -181,9 +177,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
         # Action must be explicitly provided; default to wildcard if omitted
         # for backward compatibility during transition
         resolved_action: RuleAction = action or "*"
-        resolved_action_normalized = (
-            self._normalize_action_token(resolved_action) or resolved_action
-        )
+        resolved_action_normalized = self._normalize_action_token(resolved_action) or resolved_action
         address = _extract_address(envelope)
         granted_scopes = _extract_granted_scopes(context)
 
@@ -245,12 +239,8 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
 
                 if origin_type_normalized not in rule.origin_types:
                     origin_list = ", ".join(sorted(rule.origin_types))
-                    raw_display = (
-                        str(raw_origin_type) if raw_origin_type else "unknown"
-                    )
-                    step.expression = (
-                        f"origin_type: {raw_display} not in [{origin_list}]"
-                    )
+                    raw_display = str(raw_origin_type) if raw_origin_type else "unknown"
+                    step.expression = f"origin_type: {raw_display} not in [{origin_list}]"
                     step.result = False
                     evaluation_trace.append(step)
                     continue
@@ -258,9 +248,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
             # Check action match
             if "*" not in rule.actions and resolved_action_normalized not in rule.actions:
                 action_list = ", ".join(sorted(rule.actions))
-                step.expression = (
-                    f"action: {resolved_action_normalized} not in [{action_list}]"
-                )
+                step.expression = f"action: {resolved_action_normalized} not in [{action_list}]"
                 step.result = False
                 evaluation_trace.append(step)
                 continue
@@ -268,9 +256,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
             # Check address match (any pattern in the list matches)
             if rule.address_patterns is not None:
                 if not address:
-                    step.expression = (
-                        "address: pattern requires address, but none provided"
-                    )
+                    step.expression = "address: pattern requires address, but none provided"
                     step.result = False
                     evaluation_trace.append(step)
                     continue
@@ -278,9 +264,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
                 matched = any(p.match(address) for p in rule.address_patterns)
                 if not matched:
                     patterns = ", ".join(p.source for p in rule.address_patterns)
-                    step.expression = (
-                        f"address: none of [{patterns}] matched {address}"
-                    )
+                    step.expression = f"address: none of [{patterns}] matched {address}"
                     step.result = False
                     evaluation_trace.append(step)
                     continue
@@ -342,9 +326,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
         if effect is None:
             return "deny"
         if effect not in ("allow", "deny"):
-            raise ValueError(
-                f'Invalid default_effect: "{effect}". Must be "allow" or "deny"'
-            )
+            raise ValueError(f'Invalid default_effect: "{effect}". Must be "allow" or "deny"')
         return effect
 
     def _warn_unknown_policy_fields(
@@ -367,10 +349,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
         warn_on_unknown: bool,
     ) -> list[CompiledRule]:
         """Compile all rules for efficient evaluation."""
-        return [
-            self._compile_rule(rule, index, warn_on_unknown)
-            for index, rule in enumerate(rules)
-        ]
+        return [self._compile_rule(rule, index, warn_on_unknown) for index, rule in enumerate(rules)]
 
     def _compile_rule(
         self,
@@ -385,8 +364,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
         # Validate effect
         if rule.effect not in VALID_EFFECTS:
             raise ValueError(
-                f'Invalid effect in rule "{rule_id}": "{rule.effect}". '
-                f'Must be "allow" or "deny"'
+                f'Invalid effect in rule "{rule_id}": "{rule.effect}". Must be "allow" or "deny"'
             )
 
         # Validate and compile action(s)
@@ -423,9 +401,7 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
                 )
                 scope_matcher = compiled.evaluate
             except Exception as e:
-                raise ValueError(
-                    f'Invalid scope requirement in rule "{rule_id}": {e}'
-                )
+                raise ValueError(f'Invalid scope requirement in rule "{rule_id}": {e}')
 
         # Warn about unknown fields
         if warn_on_unknown:
@@ -468,37 +444,24 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
             normalized = self._normalize_action_token(action)
             if normalized is None:
                 valid = ", ".join(VALID_ACTIONS)
-                raise ValueError(
-                    f'Invalid action in rule "{rule_id}": "{action}". '
-                    f"Must be one of: {valid}"
-                )
+                raise ValueError(f'Invalid action in rule "{rule_id}": "{action}". Must be one of: {valid}')
             return {normalized}
 
         # Handle array of actions
         if not isinstance(action, list):
-            raise ValueError(
-                f'Invalid action in rule "{rule_id}": '
-                f"must be a string or array of strings"
-            )
+            raise ValueError(f'Invalid action in rule "{rule_id}": must be a string or array of strings')
 
         if len(action) == 0:
-            raise ValueError(
-                f'Invalid action in rule "{rule_id}": array must not be empty'
-            )
+            raise ValueError(f'Invalid action in rule "{rule_id}": array must not be empty')
 
         actions: set[RuleAction] = set()
         for a in action:
             if not isinstance(a, str):
-                raise ValueError(
-                    f'Invalid action in rule "{rule_id}": all values must be strings'
-                )
+                raise ValueError(f'Invalid action in rule "{rule_id}": all values must be strings')
             normalized = self._normalize_action_token(a)
             if normalized is None:
                 valid = ", ".join(VALID_ACTIONS)
-                raise ValueError(
-                    f'Invalid action in rule "{rule_id}": "{a}". '
-                    f"Must be one of: {valid}"
-                )
+                raise ValueError(f'Invalid action in rule "{rule_id}": "{a}". Must be one of: {valid}')
             actions.add(normalized)
 
         return actions
@@ -525,45 +488,30 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
         if isinstance(address, str):
             trimmed = address.strip()
             if not trimmed:
-                raise ValueError(
-                    f'Invalid address in rule "{rule_id}": value must not be empty'
-                )
+                raise ValueError(f'Invalid address in rule "{rule_id}": value must not be empty')
             try:
                 return [compile_glob_pattern(trimmed, context)]
             except Exception as e:
-                raise ValueError(
-                    f'Invalid address in rule "{rule_id}": {e}'
-                )
+                raise ValueError(f'Invalid address in rule "{rule_id}": {e}')
 
         # Handle array of address patterns
         if not isinstance(address, list):
-            raise ValueError(
-                f'Invalid address in rule "{rule_id}": '
-                f"must be a string or array of strings"
-            )
+            raise ValueError(f'Invalid address in rule "{rule_id}": must be a string or array of strings')
 
         if len(address) == 0:
-            raise ValueError(
-                f'Invalid address in rule "{rule_id}": array must not be empty'
-            )
+            raise ValueError(f'Invalid address in rule "{rule_id}": array must not be empty')
 
         patterns: list[CompiledPattern] = []
         for addr in address:
             if not isinstance(addr, str):
-                raise ValueError(
-                    f'Invalid address in rule "{rule_id}": all values must be strings'
-                )
+                raise ValueError(f'Invalid address in rule "{rule_id}": all values must be strings')
             trimmed = addr.strip()
             if not trimmed:
-                raise ValueError(
-                    f'Invalid address in rule "{rule_id}": values must not be empty'
-                )
+                raise ValueError(f'Invalid address in rule "{rule_id}": values must not be empty')
             try:
                 patterns.append(compile_glob_pattern(trimmed, context))
             except Exception as e:
-                raise ValueError(
-                    f'Invalid address in rule "{rule_id}": {e}'
-                )
+                raise ValueError(f'Invalid address in rule "{rule_id}": {e}')
 
         return patterns
 
@@ -586,49 +534,36 @@ class BasicAuthorizationPolicy(AuthorizationPolicy):
         if isinstance(origin_type, str):
             trimmed = origin_type.strip()
             if not trimmed:
-                raise ValueError(
-                    f'Invalid origin_type in rule "{rule_id}": value must not be empty'
-                )
+                raise ValueError(f'Invalid origin_type in rule "{rule_id}": value must not be empty')
             normalized = self._normalize_origin_type_token(trimmed)
             if normalized is None:
                 valid = ", ".join(VALID_ORIGIN_TYPES)
                 raise ValueError(
-                    f'Invalid origin_type in rule "{rule_id}": "{origin_type}". '
-                    f"Must be one of: {valid}"
+                    f'Invalid origin_type in rule "{rule_id}": "{origin_type}". Must be one of: {valid}'
                 )
             return {normalized}
 
         # Handle array of origin types
         if not isinstance(origin_type, list):
             raise ValueError(
-                f'Invalid origin_type in rule "{rule_id}": '
-                f"must be a string or array of strings"
+                f'Invalid origin_type in rule "{rule_id}": must be a string or array of strings'
             )
 
         if len(origin_type) == 0:
-            raise ValueError(
-                f'Invalid origin_type in rule "{rule_id}": array must not be empty'
-            )
+            raise ValueError(f'Invalid origin_type in rule "{rule_id}": array must not be empty')
 
         origin_types: set[str] = set()
         for ot in origin_type:
             if not isinstance(ot, str):
-                raise ValueError(
-                    f'Invalid origin_type in rule "{rule_id}": '
-                    f"all values must be strings"
-                )
+                raise ValueError(f'Invalid origin_type in rule "{rule_id}": all values must be strings')
             trimmed = ot.strip()
             if not trimmed:
-                raise ValueError(
-                    f'Invalid origin_type in rule "{rule_id}": '
-                    f"values must not be empty"
-                )
+                raise ValueError(f'Invalid origin_type in rule "{rule_id}": values must not be empty')
             normalized = self._normalize_origin_type_token(trimmed)
             if normalized is None:
                 valid = ", ".join(VALID_ORIGIN_TYPES)
                 raise ValueError(
-                    f'Invalid origin_type in rule "{rule_id}": "{ot}". '
-                    f"Must be one of: {valid}"
+                    f'Invalid origin_type in rule "{rule_id}": "{ot}". Must be one of: {valid}'
                 )
             origin_types.add(normalized)
 

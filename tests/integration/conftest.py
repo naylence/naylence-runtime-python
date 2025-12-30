@@ -25,14 +25,14 @@ def _get_docker_client():
             os.path.expanduser("~/.docker/run/docker.sock"),
             "/var/run/docker.sock",
         ]
-        
+
         for socket_path in macos_socket_paths:
             if os.path.exists(socket_path):
                 try:
                     return docker.DockerClient(base_url=f"unix://{socket_path}")
                 except docker.errors.DockerException:
                     continue
-        
+
         # If all else fails, re-raise the original exception
         raise
 

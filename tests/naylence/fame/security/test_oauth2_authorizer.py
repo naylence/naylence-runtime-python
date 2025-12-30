@@ -250,9 +250,7 @@ async def test_oauth2_authorizer_rejects_mismatched_node_identity():
         target_node = MockNodeLike(physical_path="fame-sentinel")
 
         auth_context = await authorizer.authenticate("mock-jwt-token")
-        result = await authorizer.validate_node_attach_request(
-            target_node, attach_frame, auth_context
-        )
+        result = await authorizer.validate_node_attach_request(target_node, attach_frame, auth_context)
 
         # Should reject because system_id doesn't match fingerprint of token subject
         assert result is None
@@ -305,9 +303,7 @@ async def test_oauth2_authorizer_accepts_matching_node_identity():
         target_node = MockNodeLike(physical_path="fame-sentinel")
 
         auth_context = await authorizer.authenticate("mock-jwt-token")
-        result = await authorizer.validate_node_attach_request(
-            target_node, attach_frame, auth_context
-        )
+        result = await authorizer.validate_node_attach_request(target_node, attach_frame, auth_context)
 
         # Should accept because system_id starts with fingerprint of token subject
         assert result is not None
@@ -357,9 +353,7 @@ async def test_oauth2_authorizer_trusted_client_bypasses_identity_check():
         target_node = MockNodeLike(physical_path="fame-sentinel")
 
         auth_context = await authorizer.authenticate("mock-jwt-token")
-        result = await authorizer.validate_node_attach_request(
-            target_node, attach_frame, auth_context
-        )
+        result = await authorizer.validate_node_attach_request(target_node, attach_frame, auth_context)
 
         # Should accept because token has trusted scope, bypassing identity check
         assert result is not None
