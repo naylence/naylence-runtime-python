@@ -7,6 +7,8 @@ from pydantic import Field
 from naylence.fame.delivery.delivery_policy import DeliveryPolicy
 from naylence.fame.delivery.delivery_policy_factory import DeliveryPolicyConfig, DeliveryPolicyFactory
 from naylence.fame.factory import Expressions, create_resource
+from naylence.fame.profile import RegisterProfileOptions, get_profile, register_profile
+from naylence.fame.profile.profile_discovery import discover_profile
 from naylence.fame.util.logging import getLogger
 
 logger = getLogger(__name__)
@@ -42,6 +44,41 @@ AT_LEAST_ONCE_PROFILE = {
 
 AT_MOST_ONCE_PROFILE = {"type": "AtMostOnceDeliveryPolicy"}
 
+# Delivery policy factory base type constant
+DELIVERY_POLICY_FACTORY_BASE_TYPE = "DeliveryPolicyFactory"
+
+# Register built-in profiles
+_profiles_registered = False
+
+def _ensure_profiles_registered() -> None:
+    """Ensure built-in delivery profiles are registered."""
+    global _profiles_registered
+    if _profiles_registered:
+        return
+
+    opts = RegisterProfileOptions(source="delivery-profile-factory")
+    register_profile(DELIVERY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_AT_LEAST_ONCE, AT_LEAST_ONCE_PROFILE, opts)
+    register_profile(DELIVERY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_AT_MOST_ONCE, AT_MOST_ONCE_PROFILE, opts)
+    _profiles_registered = True
+
+_ensure_profiles_registered()
+
+def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
+    """Resolve delivery profile by name."""
+    _ensure_profiles_registered()
+
+    profile = get_profile(DELIVERY_POLICY_FACTORY_BASE_TYPE, profile_name)
+    if profile is not None:
+        return profile
+
+    # Try to discover from entry points
+    discover_profile(DELIVERY_POLICY_FACTORY_BASE_TYPE, profile_name)
+
+    profile = get_profile(DELIVERY_POLICY_FACTORY_BASE_TYPE, profile_name)
+    if profile is None:
+        raise ValueError(f"Unknown delivery profile: {profile_name}")
+
+    return profile
 
 class DeliveryProfileConfig(DeliveryPolicyConfig):
     type: str = "DeliveryProfile"
@@ -61,22 +98,7 @@ class DeliveryProfileFactory(DeliveryPolicyFactory):
             config = DeliveryProfileConfig(profile=PROFILE_NAME_AT_LEAST_ONCE)
 
         profile = config.profile
-
-        if profile == PROFILE_NAME_AT_LEAST_ONCE:
-            from naylence.fame.delivery.at_least_once_delivery_policy_factory import (
-                AtLeastOnceDeliveryPolicyConfig,
-            )
-
-            delivery_policy_config = AtLeastOnceDeliveryPolicyConfig(**AT_LEAST_ONCE_PROFILE)
-        elif profile == PROFILE_NAME_AT_MOST_ONCE:
-            from naylence.fame.delivery.at_most_once_delivery_policy_factory import (
-                AtMostOnceDeliveryPolicyConfig,
-            )
-
-            delivery_policy_config = AtMostOnceDeliveryPolicyConfig(**AT_MOST_ONCE_PROFILE)
-
-        else:
-            raise ValueError(f"Unknown delivery profile: {profile}")
+        delivery_policy_config = _resolve_profile_config(profile)
 
         logger.debug("enabling_delivery_profile", profile=profile)  # type: ignore
 

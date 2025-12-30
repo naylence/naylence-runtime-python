@@ -12,6 +12,8 @@ from naylence.fame.node.admission.admission_client_factory import (
     AdmissionClientFactory,
     AdmissionConfig,
 )
+from naylence.fame.profile import get_profile
+from naylence.fame.profile.profile_discovery import discover_profile
 from naylence.fame.util.logging import getLogger
 
 logger = getLogger(__name__)
@@ -135,6 +137,48 @@ class AdmissionProfileConfig(AdmissionConfig):
     profile: Optional[str] = Field(default=None, description="Admission profile name")
 
 
+# Admission client factory base type constant
+ADMISSION_CLIENT_FACTORY_BASE_TYPE = "AdmissionClientFactory"
+
+# Register built-in profiles
+from naylence.fame.profile import RegisterProfileOptions, register_profile
+
+_profiles_registered = False
+
+def _ensure_profiles_registered() -> None:
+    """Ensure built-in admission profiles are registered."""
+    global _profiles_registered
+    if _profiles_registered:
+        return
+
+    opts = RegisterProfileOptions(source="admission-profile-factory")
+    register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_NOOP, NOOP_PROFILE, opts)
+    register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_NONE, NOOP_PROFILE, opts)
+    register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_DIRECT, DIRECT_PROFILE, opts)
+    register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_DIRECT_HTTP, DIRECT_HTTP_PROFILE, opts)
+    register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_OPEN, OPEN_PROFILE, opts)
+    register_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, PROFILE_NAME_WELCOME, WELCOME_SERVICE_PROFILE, opts)
+    _profiles_registered = True
+
+_ensure_profiles_registered()
+
+def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
+    """Resolve admission profile by name."""
+    _ensure_profiles_registered()
+
+    profile = get_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, profile_name)
+    if profile is not None:
+        return profile
+
+    # Try to discover from entry points
+    discover_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, profile_name)
+
+    profile = get_profile(ADMISSION_CLIENT_FACTORY_BASE_TYPE, profile_name)
+    if profile is None:
+        raise ValueError(f"Unknown admission profile: {profile_name}")
+
+    return profile
+
 class AdmissionProfileFactory(AdmissionClientFactory):
     async def create(
         self,
@@ -147,39 +191,7 @@ class AdmissionProfileFactory(AdmissionClientFactory):
             config = AdmissionProfileConfig(profile=PROFILE_NAME_DIRECT)
 
         profile = config.profile
-
-        if profile in [PROFILE_NAME_NOOP, PROFILE_NAME_NONE]:
-            from naylence.fame.node.admission.noop_admission_client_factory import (
-                NoopAdmissionConfig,
-            )
-
-            admission_config = NoopAdmissionConfig(**NOOP_PROFILE)
-        elif profile == PROFILE_NAME_DIRECT:
-            from naylence.fame.node.admission.direct_admission_client_factory import (
-                DirectNodeAdmissionConfig,
-            )
-
-            admission_config = DirectNodeAdmissionConfig(**DIRECT_PROFILE)
-        elif profile == PROFILE_NAME_DIRECT_HTTP:
-            from naylence.fame.node.admission.direct_admission_client_factory import (
-                DirectNodeAdmissionConfig,
-            )
-
-            admission_config = DirectNodeAdmissionConfig(**DIRECT_HTTP_PROFILE)
-        elif profile == PROFILE_NAME_OPEN:
-            from naylence.fame.node.admission.direct_admission_client_factory import (
-                DirectNodeAdmissionConfig,
-            )
-
-            admission_config = DirectNodeAdmissionConfig(**OPEN_PROFILE)
-        elif profile == PROFILE_NAME_WELCOME:
-            from naylence.fame.node.admission.welcome_service_client_factory import (
-                WelcomeServiceClientConfig,
-            )
-
-            admission_config = WelcomeServiceClientConfig(**WELCOME_SERVICE_PROFILE)
-        else:
-            raise ValueError(f"Unknown admission profile: {profile}")
+        admission_config = _resolve_profile_config(profile)
 
         logger.debug("enabling_admission_profile", profile=profile)  # type: ignore
 

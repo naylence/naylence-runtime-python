@@ -9,6 +9,8 @@ from typing import Any, Optional
 from pydantic import Field
 
 from naylence.fame.factory import create_resource
+from naylence.fame.profile import RegisterProfileOptions, get_profile, register_profile
+from naylence.fame.profile.profile_discovery import discover_profile
 from naylence.fame.util.logging import getLogger
 
 from .load_balancing_strategy import LoadBalancingStrategy
@@ -49,6 +51,44 @@ DEVELOPMENT_PROFILE = {
     "type": "RoundRobinLoadBalancingStrategy",
 }
 
+# Load balancing strategy factory base type constant
+LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE = "LoadBalancingStrategyFactory"
+
+# Register built-in profiles
+_profiles_registered = False
+
+def _ensure_profiles_registered() -> None:
+    """Ensure built-in load balancing profiles are registered."""
+    global _profiles_registered
+    if _profiles_registered:
+        return
+
+    opts = RegisterProfileOptions(source="load-balancing-profile-factory")
+    register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_RANDOM, RANDOM_PROFILE, opts)
+    register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_ROUND_ROBIN, ROUND_ROBIN_PROFILE, opts)
+    register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_HRW, HRW_PROFILE, opts)
+    register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_STICKY_HRW, STICKY_HRW_PROFILE, opts)
+    register_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, PROFILE_NAME_DEVELOPMENT, DEVELOPMENT_PROFILE, opts)
+    _profiles_registered = True
+
+_ensure_profiles_registered()
+
+def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
+    """Resolve load balancing profile by name."""
+    _ensure_profiles_registered()
+
+    profile = get_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, profile_name)
+    if profile is not None:
+        return profile
+
+    # Try to discover from entry points
+    discover_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, profile_name)
+
+    profile = get_profile(LOAD_BALANCING_STRATEGY_FACTORY_BASE_TYPE, profile_name)
+    if profile is None:
+        raise ValueError(f"Unknown load balancing profile: {profile_name}")
+
+    return profile
 
 class LoadBalancingProfileConfig(LoadBalancingStrategyConfig):
     type: str = "LoadBalancingProfile"
@@ -73,17 +113,6 @@ class LoadBalancingProfileFactory(LoadBalancingStrategyFactory):
 
         logger.debug("enabling_load_balancing_profile", profile=profile)
 
-        if profile == PROFILE_NAME_RANDOM:
-            lb_config = RANDOM_PROFILE
-        elif profile == PROFILE_NAME_ROUND_ROBIN:
-            lb_config = ROUND_ROBIN_PROFILE
-        elif profile == PROFILE_NAME_HRW:
-            lb_config = HRW_PROFILE
-        elif profile == PROFILE_NAME_STICKY_HRW:
-            lb_config = STICKY_HRW_PROFILE
-        elif profile == PROFILE_NAME_DEVELOPMENT:
-            lb_config = DEVELOPMENT_PROFILE
-        else:
-            raise ValueError(f"Unknown load balancing profile: {profile}")
+        lb_config = _resolve_profile_config(profile)
 
         return await create_resource(LoadBalancingStrategyFactory, lb_config, **kwargs)

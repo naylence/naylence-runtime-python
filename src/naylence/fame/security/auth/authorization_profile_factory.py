@@ -12,6 +12,7 @@ from typing import Any, Optional
 
 from naylence.fame.factory import Expressions
 from naylence.fame.profile import RegisterProfileOptions, get_profile, register_profile
+from naylence.fame.profile.profile_discovery import discover_profile
 from naylence.fame.security.auth.authorizer import Authorizer
 from naylence.fame.security.auth.authorizer_factory import AuthorizerConfig, AuthorizerFactory
 
@@ -272,6 +273,13 @@ def _normalize_config(
 def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
     """Resolve the profile configuration by name."""
     _ensure_profiles_registered()
+
+    profile = get_profile(AUTHORIZER_FACTORY_BASE_TYPE, profile_name)
+    if profile is not None:
+        return profile
+
+    # Try to discover from entry points
+    discover_profile(AUTHORIZER_FACTORY_BASE_TYPE, profile_name)
 
     profile = get_profile(AUTHORIZER_FACTORY_BASE_TYPE, profile_name)
     if profile is None:

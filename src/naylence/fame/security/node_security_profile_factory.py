@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 from naylence.fame.factory import Expressions, create_resource
 from naylence.fame.profile import RegisterProfileOptions, get_profile, register_profile
+from naylence.fame.profile.profile_discovery import discover_profile
 from naylence.fame.security.default_security_manager_factory import (
     DefaultSecurityManagerConfig,
 )
@@ -334,6 +335,15 @@ def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
     # Ensure profiles are registered before lookup (handles test cleanup scenarios)
     _ensure_builtin_profiles_registered()
 
+    template = get_profile(SECURITY_MANAGER_FACTORY_BASE_TYPE, profile_name)
+    if template is not None:
+        return template
+
+    # Profile not found in registry - try to discover from entry points
+    # This allows external packages (e.g., naylence-advanced-security) to provide profiles
+    discover_profile(SECURITY_MANAGER_FACTORY_BASE_TYPE, profile_name)
+
+    # Try again after discovery
     template = get_profile(SECURITY_MANAGER_FACTORY_BASE_TYPE, profile_name)
     if template is None:
         raise ValueError(f"Unknown security profile: {profile_name}")

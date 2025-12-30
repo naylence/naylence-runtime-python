@@ -14,6 +14,8 @@ from naylence.fame.node.node_identity_policy_factory import (
     NodeIdentityPolicyConfig,
     NodeIdentityPolicyFactory,
 )
+from naylence.fame.profile import RegisterProfileOptions, get_profile, register_profile
+from naylence.fame.profile.profile_discovery import discover_profile
 from naylence.fame.util.logging import getLogger
 
 logger = getLogger(__name__)
@@ -25,16 +27,28 @@ PROFILE_NAME_TOKEN_SUBJECT = "token-subject"
 PROFILE_NAME_TOKEN_SUBJECT_ALIAS = "token_subject"
 
 # Profile configurations
-DEFAULT_PROFILE: NodeIdentityPolicyConfig = NodeIdentityPolicyConfig(type="DefaultNodeIdentityPolicy")
-TOKEN_SUBJECT_PROFILE: NodeIdentityPolicyConfig = NodeIdentityPolicyConfig(
-    type="TokenSubjectNodeIdentityPolicy"
-)
+DEFAULT_PROFILE: dict[str, Any] = {"type": "DefaultNodeIdentityPolicy"}
+TOKEN_SUBJECT_PROFILE: dict[str, Any] = {"type": "TokenSubjectNodeIdentityPolicy"}
 
-PROFILE_MAP: dict[str, NodeIdentityPolicyConfig] = {
-    PROFILE_NAME_DEFAULT: DEFAULT_PROFILE,
-    PROFILE_NAME_TOKEN_SUBJECT: TOKEN_SUBJECT_PROFILE,
-    PROFILE_NAME_TOKEN_SUBJECT_ALIAS: TOKEN_SUBJECT_PROFILE,
-}
+# Node identity policy factory base type constant
+NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE = "NodeIdentityPolicyFactory"
+
+# Register built-in profiles
+_profiles_registered = False
+
+def _ensure_profiles_registered() -> None:
+    """Ensure built-in node identity policy profiles are registered."""
+    global _profiles_registered
+    if _profiles_registered:
+        return
+
+    opts = RegisterProfileOptions(source="node-identity-policy-profile-factory")
+    register_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_DEFAULT, DEFAULT_PROFILE, opts)
+    register_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_TOKEN_SUBJECT, TOKEN_SUBJECT_PROFILE, opts)
+    register_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, PROFILE_NAME_TOKEN_SUBJECT_ALIAS, TOKEN_SUBJECT_PROFILE, opts)
+    _profiles_registered = True
+
+_ensure_profiles_registered()
 
 
 class NodeIdentityPolicyProfileConfig(NodeIdentityPolicyConfig):
@@ -94,16 +108,23 @@ class NodeIdentityPolicyProfileFactory(NodeIdentityPolicyFactory):
 
     def _resolve_profile_config(self, profile_name: str) -> NodeIdentityPolicyConfig:
         """Resolve a profile name to its corresponding configuration."""
+        _ensure_profiles_registered()
         normalized_name = profile_name.lower().strip()
 
-        if normalized_name in PROFILE_MAP:
-            # Return a copy to avoid mutation
-            original = PROFILE_MAP[normalized_name]
-            return NodeIdentityPolicyConfig(type=original.type)
+        profile = get_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, normalized_name)
+        if profile is not None:
+            return NodeIdentityPolicyConfig(**profile)
+
+        # Try to discover from entry points
+        discover_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, normalized_name)
+
+        profile = get_profile(NODE_IDENTITY_POLICY_FACTORY_BASE_TYPE, normalized_name)
+        if profile is not None:
+            return NodeIdentityPolicyConfig(**profile)
 
         logger.warning(
             "unknown_identity_policy_profile",
             profile=profile_name,
             falling_back_to="default",
         )
-        return NodeIdentityPolicyConfig(type=DEFAULT_PROFILE.type)
+        return NodeIdentityPolicyConfig(**DEFAULT_PROFILE)
