@@ -34,7 +34,6 @@ from naylence.fame.security.node_security_profile_factory import (
     PROFILE_NAME_OPEN,
     PROFILE_NAME_OVERLAY,
     PROFILE_NAME_OVERLAY_CALLBACK,
-    STRICT_OVERLAY_PROFILE,
     SecurityProfileFactory,
 )
 from naylence.fame.security.security_manager_config import SecurityProfile
@@ -103,11 +102,6 @@ class TestSecurityProfileAuthorizationExpressions:
         gated_callback = GATED_CALLBACK_PROFILE["authorizer"]["profile"]
         assert ":oauth2-callback}" in overlay_callback
         assert ":oauth2-callback}" in gated_callback
-
-    def test_strict_overlay_defaults_to_jwt(self):
-        """STRICT_OVERLAY_PROFILE should default to jwt authorization."""
-        profile_value = STRICT_OVERLAY_PROFILE["authorizer"]["profile"]
-        assert ":jwt}" in profile_value, "Strict overlay default should be jwt"
 
 
 class TestSecurityProfileAuthorizationIntegration:

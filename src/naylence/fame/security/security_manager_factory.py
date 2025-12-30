@@ -15,6 +15,9 @@ from naylence.fame.security.signing.envelope_verifier import EnvelopeVerifier
 
 from .security_manager import SecurityManager
 
+# Base type constant for profile registry
+SECURITY_MANAGER_FACTORY_BASE_TYPE = "SecurityManagerFactory"
+
 if TYPE_CHECKING:
     from naylence.fame.node.node_event_listener import NodeEventListener
     from naylence.fame.security.auth.authorizer import Authorizer

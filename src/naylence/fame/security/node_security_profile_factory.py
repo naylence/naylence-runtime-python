@@ -3,11 +3,15 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from naylence.fame.factory import Expressions, create_resource
+from naylence.fame.profile import RegisterProfileOptions, get_profile, register_profile
 from naylence.fame.security.default_security_manager_factory import (
     DefaultSecurityManagerConfig,
 )
 from naylence.fame.security.security_manager_config import SecurityProfile
-from naylence.fame.security.security_manager_factory import SecurityManagerFactory
+from naylence.fame.security.security_manager_factory import (
+    SECURITY_MANAGER_FACTORY_BASE_TYPE,
+    SecurityManagerFactory,
+)
 from naylence.fame.util.logging import getLogger
 
 from .security_manager import SecurityManager
@@ -29,63 +33,12 @@ ENV_VAR_TRUSTED_CLIENT_SCOPE = "FAME_TRUSTED_CLIENT_SCOPE"
 ENV_VAR_AUTHORIZATION_PROFILE = "FAME_AUTHORIZATION_PROFILE"
 
 
-PROFILE_NAME_STRICT_OVERLAY = "strict-overlay"
 PROFILE_NAME_OVERLAY = "overlay"
 PROFILE_NAME_OVERLAY_CALLBACK = "overlay-callback"
 PROFILE_NAME_GATED = "gated"
 PROFILE_NAME_GATED_CALLBACK = "gated-callback"
 PROFILE_NAME_OPEN = "open"
 
-
-STRICT_OVERLAY_PROFILE = {
-    "type": "DefaultSecurityManager",
-    "security_policy": {
-        "type": "DefaultSecurityPolicy",
-        "signing": {
-            "signing_material": "x509-chain",
-            "require_cert_sid_match": True,
-            "inbound": {
-                "signature_policy": "required",
-                "unsigned_violation_action": "nack",
-                "invalid_signature_action": "nack",
-            },
-            "response": {
-                "mirror_request_signing": True,
-                "always_sign_responses": False,
-                "sign_error_responses": True,
-            },
-            "outbound": {
-                "default_signing": True,
-                "sign_sensitive_operations": True,
-                "sign_if_recipient_expects": True,
-            },
-        },
-        "encryption": {
-            "inbound": {
-                "allow_plaintext": True,
-                "allow_channel": True,
-                "allow_sealed": True,
-                "plaintext_violation_action": "nack",
-                "channel_violation_action": "nack",
-                "sealed_violation_action": "nack",
-            },
-            "response": {
-                "mirror_request_level": True,
-                "minimum_response_level": "plaintext",
-                "escalate_sealed_responses": False,
-            },
-            "outbound": {
-                "default_level": Expressions.env(ENV_VAR_DEFAULT_ENCRYPTION_LEVEL, default="plaintext"),
-                "escalate_if_peer_supports": False,
-                "prefer_sealed_for_sensitive": False,
-            },
-        },
-    },
-    "authorizer": {
-        "type": "AuthorizationProfile",
-        "profile": Expressions.env(ENV_VAR_AUTHORIZATION_PROFILE, default="jwt"),
-    },
-}
 
 OVERLAY_PROFILE = {
     "type": "DefaultSecurityManager",
@@ -294,32 +247,107 @@ OPEN_PROFILE = {
 }
 
 
+# Profile registration state
+_PROFILE_SOURCE = "node-security-profile-factory"
+_profiles_registered = False
+
+
+def _ensure_builtin_profiles_registered() -> None:
+    """Ensure built-in security profiles are registered.
+
+    This function is idempotent and can be called multiple times safely.
+    It re-registers profiles if they were cleared (e.g., during testing).
+    """
+    global _profiles_registered
+
+    # Check if already registered by looking for a known profile
+    if get_profile(SECURITY_MANAGER_FACTORY_BASE_TYPE, PROFILE_NAME_OVERLAY) is not None:
+        return
+
+    opts = RegisterProfileOptions(source=_PROFILE_SOURCE)
+
+    register_profile(
+        SECURITY_MANAGER_FACTORY_BASE_TYPE,
+        PROFILE_NAME_OVERLAY,
+        OVERLAY_PROFILE,
+        opts,
+    )
+    register_profile(
+        SECURITY_MANAGER_FACTORY_BASE_TYPE,
+        PROFILE_NAME_OVERLAY_CALLBACK,
+        OVERLAY_CALLBACK_PROFILE,
+        opts,
+    )
+    register_profile(
+        SECURITY_MANAGER_FACTORY_BASE_TYPE,
+        PROFILE_NAME_GATED,
+        GATED_PROFILE,
+        opts,
+    )
+    register_profile(
+        SECURITY_MANAGER_FACTORY_BASE_TYPE,
+        PROFILE_NAME_GATED_CALLBACK,
+        GATED_CALLBACK_PROFILE,
+        opts,
+    )
+    register_profile(
+        SECURITY_MANAGER_FACTORY_BASE_TYPE,
+        PROFILE_NAME_OPEN,
+        OPEN_PROFILE,
+        opts,
+    )
+    _profiles_registered = True
+
+
+# Register built-in security profiles at module load time
+_ensure_builtin_profiles_registered()
+
+
+def _normalize_profile(
+    config: Optional[SecurityProfile | dict[str, Any]],
+) -> str:
+    """Normalize profile configuration to a profile name string."""
+    if config is None:
+        return PROFILE_NAME_OVERLAY
+
+    if isinstance(config, SecurityProfile):
+        profile = config.profile
+    elif isinstance(config, dict):
+        # Support multiple key variants for profile name
+        profile = (
+            config.get("profile")
+            or config.get("profile_name")
+            or config.get("profileName")
+            or PROFILE_NAME_OVERLAY
+        )
+    else:
+        return PROFILE_NAME_OVERLAY
+
+    if not isinstance(profile, str) or not profile.strip():
+        return PROFILE_NAME_OVERLAY
+
+    return profile.lower()
+
+
+def _resolve_profile_config(profile_name: str) -> dict[str, Any]:
+    """Resolve a profile name to its configuration dict."""
+    # Ensure profiles are registered before lookup (handles test cleanup scenarios)
+    _ensure_builtin_profiles_registered()
+
+    template = get_profile(SECURITY_MANAGER_FACTORY_BASE_TYPE, profile_name)
+    if template is None:
+        raise ValueError(f"Unknown security profile: {profile_name}")
+    return template
+
+
 class SecurityProfileFactory(SecurityManagerFactory):
     async def create(
         self, config: Optional[SecurityProfile | dict[str, Any]] = None, **kwargs: Any
     ) -> SecurityManager:
-        if isinstance(config, dict):
-            config = SecurityProfile(**config)
-        elif config is None:
-            config = SecurityProfile(profile=PROFILE_NAME_OVERLAY)
-
-        profile = config.profile
-
-        if profile == PROFILE_NAME_OVERLAY:
-            security_config = DefaultSecurityManagerConfig(**OVERLAY_PROFILE)
-        elif profile == PROFILE_NAME_OVERLAY_CALLBACK:
-            security_config = DefaultSecurityManagerConfig(**OVERLAY_CALLBACK_PROFILE)
-        elif profile == PROFILE_NAME_STRICT_OVERLAY:
-            security_config = DefaultSecurityManagerConfig(**STRICT_OVERLAY_PROFILE)
-        elif profile == PROFILE_NAME_GATED:
-            security_config = DefaultSecurityManagerConfig(**GATED_PROFILE)
-        elif profile == PROFILE_NAME_GATED_CALLBACK:
-            security_config = DefaultSecurityManagerConfig(**GATED_CALLBACK_PROFILE)
-        elif profile == PROFILE_NAME_OPEN:
-            security_config = DefaultSecurityManagerConfig(**OPEN_PROFILE)
-        else:
-            raise ValueError(f"Unknown security profile: {profile}")
+        profile = _normalize_profile(config)
+        profile_config = _resolve_profile_config(profile)
 
         logger.debug("enabling_security_profile", profile=profile)  # type: ignore
 
+        security_config = DefaultSecurityManagerConfig(**profile_config)
         return await create_resource(SecurityManagerFactory, security_config, **kwargs)
